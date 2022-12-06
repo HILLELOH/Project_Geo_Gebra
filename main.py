@@ -5,14 +5,14 @@
 import GUI_Graph
 
 
+
 def print_hi(name):
     # Use a breakpoint in the code line below to debug your script.
     print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
 
+gg = GUI_Graph.Gui()
 
-# Press the green button in the gutter to run the script.
-gui_graph = GUI_Graph.Gui()
 if __name__ == '__main__':
-    gui_graph.main_loop()
+    gg.plot()
 
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/
