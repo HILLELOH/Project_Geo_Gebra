@@ -1,4 +1,0 @@
-pynput
-numpy
-matplotlib
-pyautogui
