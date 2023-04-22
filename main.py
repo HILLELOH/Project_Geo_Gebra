@@ -1,19 +1,18 @@
 # This is a sample Python script.
-import Shapes
+
 # Press Shift+F10 to execute it or replace it with your code.
 # Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
-from Graphics import GUI_Graph
-from Shapes.Point2D import Point2D
+import GUI_Graph
 
 
-def print_hi():
-    p = Point2D(3, 4, 0)
-    q = Point2D(8, 5, 1)
-    print(p.distance_from(q))
+
+def print_hi(name):
+    # Use a breakpoint in the code line below to debug your script.
+    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
 
 gg = GUI_Graph.Gui()
 
 if __name__ == '__main__':
-    print_hi()
+    gg.plot()
 
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/

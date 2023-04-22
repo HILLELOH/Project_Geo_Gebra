@@ -1,14 +1,12 @@
 from matplotlib.widgets import Cursor
 
-# https://matplotlib.org/stable/users/explain/event_handling.html
-# https://matplotlib.org/stable/gallery/event_handling/coords_demo.html
-
+#https://matplotlib.org/stable/users/explain/event_handling.html
+#https://matplotlib.org/stable/gallery/event_handling/coords_demo.html
 
 from matplotlib.backend_bases import MouseButton
 import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib.widgets import Cursor
-
 
 class PointBuilder:
     def __init__(self, point):
@@ -19,12 +17,11 @@ class PointBuilder:
 
     def __call__(self, event):
         print('click', event)
-        if event.inaxes != self.point.axes: return
+        if event.inaxes!=self.point.axes: return
         self.xs.append(event.xdata)
         self.ys.append(event.ydata)
         self.point.set_data(self.xs, self.ys)
         self.point.figure.canvas.draw()
-
 
 class DraggableRectangle:
     def __init__(self, rect):
@@ -59,8 +56,8 @@ class DraggableRectangle:
         dy = event.ydata - ypress
         # print(f'x0={x0}, xpress={xpress}, event.xdata={event.xdata}, '
         #       f'dx={dx}, x0+dx={x0+dx}')
-        self.rect.set_x(x0 + dx)
-        self.rect.set_y(y0 + dy)
+        self.rect.set_x(x0+dx)
+        self.rect.set_y(y0+dy)
 
         self.rect.figure.canvas.draw()
 
@@ -75,38 +72,30 @@ class DraggableRectangle:
         self.rect.figure.canvas.mpl_disconnect(self.cidrelease)
         self.rect.figure.canvas.mpl_disconnect(self.cidmotion)
 
-
 def enter_axes(event):
     print('enter_axes', event.inaxes)
     event.inaxes.patch.set_facecolor('yellow')
     event.canvas.draw()
-
 
 def leave_axes(event):
     print('leave_axes', event.inaxes)
     event.inaxes.patch.set_facecolor('white')
     event.canvas.draw()
 
-
 def enter_figure(event):
     print('enter_figure', event.canvas.figure)
     event.canvas.figure.patch.set_facecolor('red')
     event.canvas.draw()
 
-
 def leave_figure(event):
     print('leave_figure', event.canvas.figure)
     event.canvas.figure.patch.set_facecolor('grey')
     event.canvas.draw()
-
-
 '''
 fig, ax = plt.subplots()
 ax.set_title('click on points')
-
 line, = ax.plot(np.random.rand(100), 'o',
                 picker=True, pickradius=5)  # 5 points tolerance
-
 def onpick(event):
     thisline = event.artist
     xdata = thisline.get_xdata()
@@ -114,17 +103,12 @@ def onpick(event):
     ind = event.ind
     points = tuple(zip(xdata[ind], ydata[ind]))
     print('onpick points:', points)
-
-
 X = np.random.rand(100, 1000)
 xs = np.mean(X, axis=1)
 ys = np.std(X, axis=1)
-
 fig, ax = plt.subplots()
 ax.set_title('click on point to plot time series')
 line, = ax.plot(xs, ys, 'o', picker=True, pickradius=5)  # 5 points tolerance
-
-
 def onpick(event):
     if event.artist != line:
         return
@@ -140,88 +124,58 @@ def onpick(event):
         ax.set_ylim(-0.5, 1.5)
     fig.show()
     return True
-
-
 fig = plt.figure()
 ax = fig.add_subplot(111)
 ax.set_xlim([0, 10])
 ax.set_ylim([0, 10])
-
-
 def onclick(event):
     print('button=%d, x=%d, y=%d, xdata=%f, ydata=%f' %
           (event.button, event.x, event.y, event.xdata, event.ydata))
     plt.plot(event.xdata, event.ydata, ',')
     fig.canvas.draw()
-
-
 t = np.arange(0.0, 1.0, 0.01)
 s = np.sin(2 * np.pi * t)
 fig, ax = plt.subplots()
 ax.plot(t, s)
 '''
 
-
 def on_move(event):
     if event.inaxes:
         print(f'data coords {event.xdata} {event.ydata},',
               f'pixel coords {event.x} {event.y}')
-
 
 '''
 def on_click(event):
     if event.button is MouseButton.LEFT:
         print('disconnecting callback')
         plt.disconnect(binding_id)
-
-
 binding_id = plt.connect('motion_notify_event', on_move)
 plt.connect('button_press_event', on_click)
-
 plt.show()
-
-
 cid = fig.canvas.mpl_connect('button_press_event', onclick)
 plt.show()
-
-
-
 fig.canvas.mpl_connect('pick_event', onpick)
 plt.show()
-
-
 fig.canvas.mpl_connect('pick_event', onpick)
-
 plt.show()
-
-
 fig1, axs = plt.subplots(2)
 fig1.suptitle('mouse hover over figure or axes to trigger events')
-
 fig1.canvas.mpl_connect('figure_enter_event', enter_figure)
 fig1.canvas.mpl_connect('figure_leave_event', leave_figure)
 fig1.canvas.mpl_connect('axes_enter_event', enter_axes)
 fig1.canvas.mpl_connect('axes_leave_event', leave_axes)
-
 fig2, axs = plt.subplots(2)
 fig2.suptitle('mouse hover over figure or axes to trigger events')
-
 fig2.canvas.mpl_connect('figure_enter_event', enter_figure)
 fig2.canvas.mpl_connect('figure_leave_event', leave_figure)
 fig2.canvas.mpl_connect('axes_enter_event', enter_axes)
 fig2.canvas.mpl_connect('axes_leave_event', leave_axes)
-
 plt.show()
-
-
 fig, ax = plt.subplots()
 ax.set_title('click to build point segments')
 point, = ax.plot([0], [0])  # empty point
 pointbuilder = PointBuilder(point)
-
 plt.show()
-
-
 fig, ax = plt.subplots()
 rects = ax.bar(range(10), 20*np.random.rand(10))
 drs = []
@@ -229,14 +183,10 @@ for rect in rects:
     dr = DraggableRectangle(rect)
     dr.connect()
     drs.append(dr)
-
 plt.show()
-
-
 data = {'apple': 10, 'orange': 15, 'lemon': 5, 'lime': 20}
 names = list(data.keys())
 values = list(data.values())
-
 fig, axs = plt.subplots(1, 3, figsize=(9, 3), sharey=True)
 axs[0].bar(names, values)
 axs[1].scatter(names, values)
@@ -249,7 +199,6 @@ ax = fig.add_subplot(111)
 ax.set_xlim([0, 10])
 ax.set_ylim([0, 10])
 
-
 def onclick(event):
     print('button=%d, x=%d, y=%d, xdata=%f, ydata=%f' %
           (event.button, event.x, event.y, event.xdata, event.ydata))
@@ -257,18 +206,15 @@ def onclick(event):
     plt.plot(event.xdata, event.ydata, ',')
     fig.canvas.draw()
 
-
 plt.connect('button_press_event', onclick)
 #    plt.plot(x, y, color='red', linestyle='dashed', linewidth=2, marker='o', markersize=6, markerfacecolor='red',
 #             markeredgecolor='red')
 plt.show()
 
-
 class AnnotatedCursor(Cursor):
     """
     A crosshair cursor like `~matplotlib.widgets.Cursor` with a text showing \
     the current coordinates.
-
     For the cursor to remain responsive you must keep a reference to it.
     The data of the axis specified as *dataaxis* must be in ascending
     order. Otherwise, the `numpy.searchsorted` call might fail and the text
@@ -276,21 +222,17 @@ class AnnotatedCursor(Cursor):
     Usually the data is already sorted (if it was created e.g. using
     `numpy.linspace`), but e.g. scatter plots might cause this problem.
     The cursor sticks to the plotted line.
-
     Parameters
     ----------
     line : `matplotlib.lines.Line2D`
         The plot line from which the data coordinates are displayed.
-
     numberformat : `python format string <https://docs.python.org/3/\
     library/string.html#formatstrings>`_, optional, default: "{0:.4g};{1:.4g}"
         The displayed text is created by calling *format()* on this string
         with the two coordinates.
-
     offset : (float, float) default: (5, 5)
         The offset in display (pixel) coordinates of the text position
         relative to the cross hair.
-
     dataaxis : {"x", "y"}, optional, default: "x"
         If "x" is specified, the vertical cursor line sticks to the mouse
         pointer. The horizontal cursor line sticks to *line*
@@ -301,17 +243,14 @@ class AnnotatedCursor(Cursor):
         Cursor and text coordinate will always refer to only one x value.
         So if you use the parameter value "y", ensure that your function is
         biunique.
-
     Other Parameters
     ----------------
     textprops : `matplotlib.text` properties as dictionary
         Specifies the appearance of the rendered text object.
-
     **cursorargs : `matplotlib.widgets.Cursor` properties
         Arguments passed to the internal `~matplotlib.widgets.Cursor` instance.
         The `matplotlib.axes.Axes` argument is mandatory! The parameter
         *useblit* can be set to *True* in order to achieve faster rendering.
-
     """
 
     def __init__(self, line, numberformat="{0:.4g};{1:.4g}", offset=(5, 5),
@@ -442,10 +381,8 @@ class AnnotatedCursor(Cursor):
     def set_position(self, xpos, ypos):
         """
         Finds the coordinates, which have to be shown in text.
-
         The behaviour depends on the *dataaxis* attribute. Function looks
         up the matching plot coordinate for the given mouse position.
-
         Parameters
         ----------
         xpos : float
@@ -454,7 +391,6 @@ class AnnotatedCursor(Cursor):
         ypos : float
             The current y position of the cursor in data coordinates.
             Important if *dataaxis* is set to 'y'.
-
         Returns
         -------
         ret : {2D array-like, None}
@@ -510,7 +446,6 @@ class AnnotatedCursor(Cursor):
     def _update(self):
         """
         Overridden method for either blitting or drawing the widget canvas.
-
         Passes call to base class if blitting is activated, only.
         In other cases, one draw_idle call is enough, which is placed
         explicitly in this class (see *onmove()*).
@@ -521,23 +456,18 @@ class AnnotatedCursor(Cursor):
         if self.useblit:
             super()._update()
 
-
 '''
 fig, ax = plt.subplots(figsize=(8, 6))
 ax.set_title("Cursor Tracking x Position")
-
 x = np.linspace(-5, 5, 1000)
 y = x**2
-
 line, = ax.plot(x, y)
 ax.set_xlim(-5, 5)
 ax.set_ylim(0, 25)
-
 # A minimum call
 # Set useblit=True on most backends for enhanced performance
 # and pass the ax parameter to the Cursor base class.
 # cursor = AnnotatedCursor(line=lin[0], ax=ax, useblit=True)
-
 # A more advanced call. Properties for text and lines are passed.
 # Watch the passed color names and the color of cursor line and text, to
 # relate the passed options to graphical elements.
@@ -551,21 +481,14 @@ cursor = AnnotatedCursor(
     useblit=True,
     color='red',
     linewidth=2)
-
 plt.show()
-
-
-
 fig, ax = plt.subplots()
-
-
 def onclick(event):
     plt.plot(event.x, event.y, color='red', linestyle='dashed', linewidth=2, marker='o', markersize=6,
              markerfacecolor='red', markeredgecolor='red')
     print('%s click: button=%d, x=%d, y=%d, xdata=%f, ydata=%f' %
           ('double' if event.dblclick else 'single', event.button,
            event.x, event.y, event.xdata, event.ydata))
-
 cid = fig.canvas.mpl_connect('button_press_event', onclick)
 #plt.grid()
 plt.show()
