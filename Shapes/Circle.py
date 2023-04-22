@@ -13,3 +13,6 @@ class Circle(Shape):
         x, y = self.coords[0]
         circle = plt.Circle((x, y), self.radius, fill=False)
         ax.add_patch(circle)
+
+    def getShape(self):
+        return f'{Circle}'

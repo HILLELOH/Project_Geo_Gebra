@@ -10,3 +10,6 @@ class Point(Shape):
 
     def __str__(self):
         return f"({list(self.coords)[0][0][0]:0.2f} , {list(self.coords)[0][0][1]:0.2f})"
+
+    def getShape(self):
+        return f'{Point}'

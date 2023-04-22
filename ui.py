@@ -1,7 +1,10 @@
+import json
+import os
+
 import matplotlib.pyplot as plt
 import tkinter as tk
 import numpy as np
-from tkinter import ttk, filedialog
+from tkinter import ttk, filedialog, simpledialog
 
 from matplotlib.backends._backend_tk import NavigationToolbar2Tk
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
@@ -27,6 +30,8 @@ class SidePanel(tk.Frame):
 class MainWindow:
     def __init__(self):
         self.root = tk.Tk()
+        self.root.geometry("1400x900")
+        self.root.resizable(False, False)
         self.root.wm_title("Geogebra-like Tool")
 
         # Create the squared XY plane
@@ -80,7 +85,7 @@ class MainWindow:
         self.align_buttons(buttons)
 
         self.side_panel = SidePanel(self.root)
-        self.side_panel.pack(side=tk.LEFT, fill=tk.BOTH, expand=False)
+        self.side_panel.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
         self.cid = None
         self.circle_cid = None
@@ -116,12 +121,45 @@ class MainWindow:
         plt.draw()
 
     def save(self):
-        for shape in self.shapes:
+        filepath = filedialog.asksaveasfilename(defaultextension=".json", filetypes=[("JSON Files", "*.json")])
+        if not filepath:
             return
-        print("hi")
+        with open(filepath, "w") as f:
+            json.dump([s.__dict__ for s in self.shapes], f)
+        print(f"Shapes saved to {filepath}")
 
     def load(self):
-        return
+        dirpath = filedialog.askdirectory()
+        if not dirpath:
+            return
+        self.reset()
+        for filename in os.listdir(dirpath):
+            if not filename.endswith(".json"):
+                continue
+            filepath = os.path.join(dirpath, filename)
+            with open(filepath, "r") as f:
+                shapes = json.load(f)
+            label_text = ""
+            for shape in shapes:
+                if isinstance(shape, Point):
+                    label_text = f'. Point: ({shape.coords[0][0][0]:.1f}, {shape.coords[0][0][1]:.1f})'
+                    self.draw_point_shape(shape.coords[0][0][0], shape.coords[0][0][1])
+
+                elif isinstance(shape, Circle):
+                    x, y = shape.coords[0]
+                    r = shape.radius
+                    label_text = f'Circle: (x-{x:.1f})^2 + (y-{x:.1f})^2 = {r ** 2:.1f}'
+                    self.draw_circle_shape(x, y, r)
+
+                elif isinstance(shape, Line):
+                    label_text = f'Line: y = {shape.m:.1f}x + {shape.b:.1f}'
+                    self.draw_line_shape(shape.m, shape.b)
+
+            label_widget = tk.Label(self.side_panel.text, text=label_text, bg='white')
+            label_widget.pack(anchor='w')
+            self.label_widgets.append(label_widget)
+
+
 
     def shape_clicked(self, x, y):
         threshold = 0.5
@@ -214,41 +252,22 @@ class MainWindow:
         plt.title("Click left mouse button to set center")
         plt.draw()
 
-    # def handle_input_circle(self, event):
-    #     if event.button == 2:  # Left mouse button
-    #         if event.xdata is not None and event.ydata is not None:
-    #             x1, y1 = event.xdata, event.ydata
-    #             plt.title("Click left click to set the radius")
-    #             plt.draw()
-    #             points = plt.ginput(1, timeout=-1)
-    #             if points:
-    #                 x2, y2 = points[0]
-    #                 radius = np.sqrt((x2 - x1)**2 + (y2 - y1)**2)
-    #                 self.draw_circle_shape(x1, y1, radius)
-    #                 # Disconnect the circle event listener so it doesn't interfere with other shapes
-    #                 self.ax.figure.canvas.mpl_disconnect(self.circle_cid)
-    #                 self.circle_cid = None  # Reset the circle event listener variable to None
-
     def handle_input_circle(self, event):
         if event.button == 1:  # Left mouse button
-            if not hasattr(self, 'center_point'):
-                # First click sets the center point
-                if event.xdata is not None and event.ydata is not None:
-                    self.center_point = (event.xdata, event.ydata)
-                    plt.title("Click left click to set the radius")
+            if event.xdata is not None and event.ydata is not None:
+                if not hasattr(self, 'x1') or not hasattr(self, 'y1'):  # first click
+                    self.x1, self.y1 = event.xdata, event.ydata
+                    plt.title("Click left click again to set the radius")
                     plt.draw()
-            else:
-                # Second click sets the radius
-                if not event.xdata and not event.ydata:
+                else:  # second click
                     x2, y2 = event.xdata, event.ydata
-                    radius = np.sqrt((x2 - self.center_point[0]) ** 2 + (y2 - self.center_point[1]) ** 2)
-                    self.draw_circle_shape(self.center_point[0], self.center_point[1], radius)
+                    radius = np.sqrt((x2 - self.x1) ** 2 + (y2 - self.y1) ** 2)
+                    self.draw_circle_shape(self.x1, self.y1, radius)
                     # Disconnect the circle event listener so it doesn't interfere with other shapes
                     self.ax.figure.canvas.mpl_disconnect(self.circle_cid)
                     self.circle_cid = None  # Reset the circle event listener variable to None
-                    delattr(self, 'center_point')
-                    plt.title("")
-                    plt.draw()
+                    # Reset x1 and y1 for the next circle
+                    self.x1, self.y1 = None, None
 
     def handle_input_point(self, event):
         if event.button == 1:  # Left mouse button
@@ -256,17 +275,6 @@ class MainWindow:
             self.draw_point_shape(x, y)
             # Disconnect the event listener so points can't be drawn anymore
             self.ax.figure.canvas.mpl_disconnect(self.cid)
-
-    # def handle_input_line(self, event):
-    #     if event.button == 2:  # Left mouse button
-    #         x1, y1 = event.xdata, event.ydata
-    #         plt.title("Click left click to draw a line")
-    #         plt.draw()
-    #         event2 = plt.ginput(1, timeout=-1)[0]
-    #         x2, y2 = event2[0], event2[1]
-    #         self.draw_line_shape(x1, y1, x2, y2)
-    #         # Disconnect the event listener so lines can't be drawn anymore
-    #         self.ax.figure.canvas.mpl_disconnect(self.cid)
 
     def handle_input_line(self, event):
         if event.button == 1:  # Left mouse button
@@ -278,7 +286,8 @@ class MainWindow:
             else:
                 # Second click sets the end point
                 end_point = (event.xdata, event.ydata)
-                self.draw_line_shape(self.start_point[0], self.start_point[1], end_point[0], end_point[1])
+                m, b = self.m_b(self.start_point[0], self.start_point[1], end_point[0], end_point[1])
+                self.draw_line_shape(m, b)
                 # Remove start_point attribute so user can draw another line
                 delattr(self, 'start_point')
                 plt.title("")
@@ -291,10 +300,12 @@ class MainWindow:
         self.update_display()
         self.update_label()
 
-    def draw_line_shape(self, x1, y1, x2, y2):
+    def m_b(self, x1, y1, x2, y2):
         m = (y2 - y1) / (x2 - x1)
         b = y1 - m * x1
+        return m, b
 
+    def draw_line_shape(self, m, b):
         x = np.linspace(-10, 10, 100)
         y = m * x + b
         line = Line(m, b)
@@ -304,7 +315,6 @@ class MainWindow:
         self.shapes.append(line)
         self.update_display()
         self.update_label()
-
     
     def draw_circle_shape(self, x, y, radius):
         circle = Circle([(x, y)], radius)
@@ -338,7 +348,7 @@ class MainWindow:
 
         for shape in self.shapes:
             if isinstance(shape, Point):
-                label_text = f'. Point: ({shape.coords[0][0][0]:.1f}, {shape.coords[0][0][1]:.1f})'
+                label_text = f'Point: ({shape.coords[0][0][0]:.1f}, {shape.coords[0][0][1]:.1f})'
 
             elif isinstance(shape, Circle):
                 x, y = shape.coords[0]

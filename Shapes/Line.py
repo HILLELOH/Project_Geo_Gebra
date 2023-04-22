@@ -15,6 +15,9 @@ class Line(Shape):
         y = self.m * x + self.b
         self.line_obj, = ax.plot(x, y)  # Store the line object
 
+    def getShape(self):
+        return f'{Line}'
+
 
 
 
