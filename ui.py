@@ -1,7 +1,9 @@
 import matplotlib.pyplot as plt
 import tkinter as tk
 import numpy as np
-from tkinter import ttk
+from tkinter import ttk, filedialog
+
+from matplotlib.backends._backend_tk import NavigationToolbar2Tk
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.cm as cm
 
@@ -10,6 +12,7 @@ from Shapes.Circle import *
 from Shapes.Point import *
 from Shapes.Line import *
 from AdvancedShapes.circle_point import *
+
 
 class SidePanel(tk.Frame):
     def __init__(self, parent):
@@ -47,29 +50,33 @@ class MainWindow:
         # Set the number of ticks and their intervals
         ax.set_xticks(np.arange(-20, 21, 5))
         ax.set_yticks(np.arange(-20, 21, 5))
-
         self.ax = ax
         self.canvas = FigureCanvasTkAgg(fig, master=self.root)
+
+
         #self.canvas.draw()
         self.canvas.get_tk_widget().pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
 
+        self.toolbar = NavigationToolbar2Tk(self.canvas, self.root)
+        self.toolbar.update()
         # Empty list of shapes
         self.shapes = []
         self.label_widgets = []
 
         # Create buttons for drawing points, lines, and circles
         self.point_button = tk.Button(self.root, text="Draw Point", command=self.draw_point)
-
         self.line_button = tk.Button(self.root, text="Draw Line", command=self.draw_line)
-
         self.circle_button = tk.Button(self.root, text="Draw Circle", command=self.draw_circle)
-
         self.reset_button = tk.Button(self.root, text="Reset", command=self.reset)
+        self.save_button = tk.Button(self.root, text="Save state", command=self.save)
+        self.load_button = tk.Button(self.root, text="Load file", command=self.load)
 
         buttons = [self.point_button,
                    self.line_button,
                    self.circle_button,
-                   self.reset_button]
+                   self.reset_button,
+                   self.save_button,
+                   self.load_button]
         self.align_buttons(buttons)
 
         self.side_panel = SidePanel(self.root)
@@ -86,13 +93,10 @@ class MainWindow:
         self.update_display()
 
     def align_buttons(self, buttons):
-        padding = 10
+        padding = 5
         for i in range(len(buttons)):
             buttons[i].pack(padx=padding)
-            padding += buttons[i].winfo_width() + 10
-            print(padding)
-            #buttons[i].grid(row=1)
-
+            padding += buttons[i].winfo_width()
 
     def reset(self):
         self.ax.clear()
@@ -111,7 +115,14 @@ class MainWindow:
 
         plt.draw()
 
-        
+    def save(self):
+        for shape in self.shapes:
+            return
+        print("hi")
+
+    def load(self):
+        return
+
     def shape_clicked(self, x, y):
         threshold = 0.5
         for shape in self.shapes:
@@ -131,7 +142,6 @@ class MainWindow:
                 if np.abs(y - line_y) <= threshold:
                     return shape
         return None
-
 
     def on_press(self, event):
         if event.button == 1:  # Left mouse button
@@ -179,7 +189,6 @@ class MainWindow:
             self.ax.figure.canvas.mpl_disconnect(self.circle_cid)
 
         self.cid = self.ax.figure.canvas.mpl_connect('button_press_event', self.handle_input_point)
-
         plt.title("Click left mouse button to create point")
         plt.draw()
 
@@ -191,16 +200,18 @@ class MainWindow:
             self.ax.figure.canvas.mpl_disconnect(self.circle_cid)
 
         self.cid = self.ax.figure.canvas.mpl_connect('button_press_event', self.handle_input_line)
-        plt.title("Click middle mouse button to start line")
+        plt.title("Click left mouse button to start line")
         plt.draw()
 
     def draw_circle(self):
         if self.cid is not None:
             self.ax.figure.canvas.mpl_disconnect(self.cid)
+
         if self.circle_cid is not None:
             self.ax.figure.canvas.mpl_disconnect(self.circle_cid)
+
         self.circle_cid = self.ax.figure.canvas.mpl_connect('button_press_event', self.handle_input_circle)
-        plt.title("Click middle mouse button to set center")
+        plt.title("Click left mouse button to set center")
         plt.draw()
 
     # def handle_input_circle(self, event):
@@ -228,7 +239,7 @@ class MainWindow:
                     plt.draw()
             else:
                 # Second click sets the radius
-                if event.xdata is not None and event.ydata is not None:
+                if not event.xdata and not event.ydata:
                     x2, y2 = event.xdata, event.ydata
                     radius = np.sqrt((x2 - self.center_point[0]) ** 2 + (y2 - self.center_point[1]) ** 2)
                     self.draw_circle_shape(self.center_point[0], self.center_point[1], radius)
