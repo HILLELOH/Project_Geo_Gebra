@@ -64,6 +64,67 @@ def create_buttons():
         padding += buttons[i].winfo_width()
 
 
+def shape_clicked(x, y):
+    threshold = 0.5
+    for shape in config.shapes:
+        if isinstance(shape, Point):
+            point_x, point_y = shape.coords[0][0]
+            if np.abs(x - point_x) <= threshold and np.abs(y - point_y) <= threshold:
+                return shape
+
+        elif isinstance(shape, Circle):
+            circle_x, circle_y = shape.coords[0]
+            distance = np.sqrt((x - circle_x) ** 2 + (y - circle_y) ** 2)
+            if np.abs(distance - shape.radius) <= threshold:
+                return shape
+
+        elif isinstance(shape, Line):  # Add this block to handle lines
+            line_y = shape.m * x + shape.b
+            if np.abs(y - line_y) <= threshold:
+                return shape
+    return None
+
+
+def on_press(event):
+    if event.button == 1:  # Left mouse button
+        x, y = event.xdata, event.ydata
+        config.selected_shape = shape_clicked(x, y)
+        if config.selected_shape is not None:
+            config.start_drag_x, config.start_drag_y = x, y
+
+
+def on_release(event):
+    if config.selected_shape is not None:
+        config.selected_shape = None
+        config.start_drag_x, config.start_drag_y = None, None
+
+
+def on_motion(event):
+    if config.selected_shape is not None and event.xdata is not None and event.ydata is not None:
+        x, y = event.xdata, event.ydata
+        dx = x - config.start_drag_x
+        dy = y - config.start_drag_y
+        config.start_drag_x, config.start_drag_y = x, y
+
+        if isinstance(config.selected_shape, Point):
+            config.selected_shape.coords[0][0][0] += dx
+            config.selected_shape.coords[0][0][1] += dy
+
+        elif isinstance(config.selected_shape, Circle):
+            config.selected_shape.coords[0][0] += dx
+            config.selected_shape.coords[0][1] += dy
+
+        elif isinstance(config.selected_shape, Line):  # Check if the selected_shape is a Line
+            config.selected_shape.b += dy  # Update the y-intercept of the line
+            xdata, ydata = config.selected_shape.line_obj.get_data()
+            ydata = config.selected_shape.m * xdata + config.selected_shape.b
+            config.selected_shape.line_obj.set_data(xdata, ydata)
+
+        update_display()
+        update_label()
+        plt.draw()
+
+
 def draw_point():
     if not config.cid:
         config.ax.figure.canvas.mpl_disconnect(config.cid)
@@ -115,21 +176,36 @@ def draw_circle():
 #                 config.ax.figure.canvas.mpl_disconnect(config.circle_cid)
 #                 config.circle_cid = None  # Reset the circle event listener variable to None
 
+# def handle_input_circle(event):
+#     if event.button == 1:  # Left mouse button
+#         if not event.xdata and not event.ydata:
+#             x1, y1 = event.xdata, event.ydata
+#             plt.title("Click left click to set the radius")
+#             plt.draw()
+#             points = plt.ginput(1, timeout=-1)
+#             if points:
+#                 x2, y2 = points[0]
+#                 radius = np.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
+#                 draw_circle_shape(x1, y1, radius)
+#                 # Disconnect the circle event listener so it doesn't interfere with other shapes
+#                 config.ax.figure.canvas.mpl_disconnect(config.circle_cid)
+#                 config.circle_cid = None  # Reset the circle event listener variable to None
+
 def handle_input_circle(event):
     if event.button == 1:  # Left mouse button
-        if not event.xdata and not event.ydata:
-            x1, y1 = event.xdata, event.ydata
-            plt.title("Click left click to set the radius")
-            plt.draw()
-            points = plt.ginput(1, timeout=-1)
-            if points:
-                x2, y2 = points[0]
-                radius = np.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
-                draw_circle_shape(x1, y1, radius)
-                # Disconnect the circle event listener so it doesn't interfere with other shapes
-                config.ax.figure.canvas.mpl_disconnect(config.circle_cid)
-                config.circle_cid = None  # Reset the circle event listener variable to None
+        if not config.circle_x and not config.circle_x:  # first click
+            config.circle_x, config.circle_y = event.xdata, event.ydata
+            config.ax.set_title("Click left click again to set the radius")
+            config.ax.figure.canvas.draw()
 
+        else:  # second click
+            x, y = event.xdata, event.ydata
+            radius = np.sqrt((x - config.circle_x) ** 2 + (y - config.circle_y) ** 2)
+            draw_circle_shape(config.circle_x, config.circle_y, radius)
+            # Disconnect the circle event listener so it doesn't interfere with other shapes
+            config.ax.figure.canvas.mpl_disconnect(config.circle_cid)
+            config.circle_cid = None
+            config.circle_x, config.circle_y = [None]*2
 
 
 def handle_input_point(event):
@@ -140,27 +216,41 @@ def handle_input_point(event):
         config.ax.figure.canvas.mpl_disconnect(config.cid)
 
 
+# def handle_input_line(event):
+#     if event.button == 1:  # Left mouse button
+#         if not hasattr('start_point'):
+#             # First click sets the start point
+#             config.start_point = (event.xdata, event.ydata)
+#             plt.title("Click left click to draw the end point")
+#             plt.draw()
+#         else:
+#             # Second click sets the end point
+#             end_point = (event.xdata, event.ydata)
+#             m, b = m_b(config.start_point[0], config.start_point[1], end_point[0], end_point[1])
+#             draw_line_shape(m, b)
+#             # Remove start_point attribute so user can draw another line
+#             delattr('start_point')
+#             plt.title("")
+#             plt.draw()
+
 def handle_input_line(event):
     if event.button == 1:  # Left mouse button
-        if not hasattr('start_point'):
+        if not config.line_x and not config.line_y:
             # First click sets the start point
-            start_point = (event.xdata, event.ydata)
+            config.line_x, config.line_y = event.xdata, event.ydata
             plt.title("Click left click to draw the end point")
             plt.draw()
+
         else:
             # Second click sets the end point
             end_point = (event.xdata, event.ydata)
-            m, b = m_b(config.start_point[0], config.start_point[1], end_point[0], end_point[1])
+            m, b = m_b(config.line_x, config.line_y, end_point[0], end_point[1])
             draw_line_shape(m, b)
+            config.ax.figure.canvas.mpl_disconnect(config.cid)
             # Remove start_point attribute so user can draw another line
-            delattr('start_point')
+            config.line_x, config.line_y = [None]*2
             plt.title("")
             plt.draw()
-
-
-# def handle_input_line(event):
-#     if event.button == 1:  # Left mouse button
-#         start_point = (event.xdata, event.ydata)
 
 
 def draw_point_shape(x, y):
@@ -315,64 +405,6 @@ def load():
             draw_circle_shape(coords[0], coords[1], radius)
 
 
-def shape_clicked(x, y):
-    for shape in config.shapes:
-        if isinstance(shape, Point):
-            point_x, point_y = shape.coords[0][0]
-            if np.abs(x - point_x) <= config.threshold and np.abs(y - point_y) <= config.threshold:
-                return shape
-
-        elif isinstance(shape, Circle):
-            circle_x, circle_y = shape.coords[0]
-            distance = np.sqrt((x - circle_x) ** 2 + (y - circle_y) ** 2)
-            if np.abs(distance - shape.radius) <= config.threshold:
-                return shape
-
-        elif isinstance(shape, Line):  # Add this block to handle lines
-            line_y = shape.m * x + shape.b
-            if np.abs(y - line_y) <= config.threshold:
-                return shape
-    return None
-
-
-def on_press(event):
-    if event.button == 1:  # Left mouse button
-        x, y = event.xdata, event.ydata
-        config.selected_shape = shape_clicked(x, y)
-        if config.selected_shape is not None:
-            config.start_drag_x, config.start_drag_y = x, y
-
-
-def on_release(event):
-    if not config.selected_shape:
-        config.selected_shape = None
-        config.start_drag_x, config.start_drag_y = None, None
-
-
-def on_motion(event):
-    if config.selected_shape is not None and event.xdata is not None and event.ydata is not None:
-        x, y = event.xdata, event.ydata
-        dx = x - config.start_drag_x
-        dy = y - config.start_drag_y
-        start_drag_x, start_drag_y = x, y
-
-        if isinstance(config.selected_shape, Point):
-            config.selected_shape.coords[0][0][0] += dx
-            config.selected_shape.coords[0][0][1] += dy
-
-        elif isinstance(config.selected_shape, Circle):
-            config.selected_shape.coords[0][0] += dx
-            config.selected_shape.coords[0][1] += dy
-
-        elif isinstance(config.selected_shape, Line):  # Check if the selected_shape is a Line
-            config.selected_shape.b += dy  # Update the y-intercept of the line
-            xdata, ydata = config.selected_shape.line_obj.get_data()
-            ydata = config.selected_shape.m * xdata + config.selected_shape.b
-            config.selected_shape.line_obj.set_data(xdata, ydata)
-
-        update_display()
-        update_label()
-        plt.draw()
 
 
 
