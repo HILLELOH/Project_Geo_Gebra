@@ -8,6 +8,7 @@ from functions import *
 
 config.root = tk.Tk()
 config.fig, config.ax = plt.subplots()
+config.buttons_panel = tk.Frame(root)
 init_program()
 
 config.canvas = FigureCanvasTkAgg(config.fig, master=root)

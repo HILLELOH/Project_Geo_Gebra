@@ -1,5 +1,5 @@
 root, fig, ax, canvas, toolbar, shapes, label_widgets, side_panel, cid, circle_cid, selected_shape, start_drag_x,\
-    start_drag_y, press_cid, release_cid, motion_cid = [None] * 16
+    start_drag_y, press_cid, release_cid, motion_cid, buttons_panel = [None] * 17
 
 x1, y1 = [None]*2
 

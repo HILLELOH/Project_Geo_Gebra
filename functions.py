@@ -35,33 +35,37 @@ def init_program():
     config.ax.grid(True)
 
     # Set the number of ticks and their intervals
-    config.ax.set_xticks(np.arange(-20, 21, 5))
-    config.ax.set_yticks(np.arange(-20, 21, 5))
+    config.ax.set_xticks(np.arange(-20, 21, 1))
+    config.ax.set_yticks(np.arange(-20, 21, 1))
     # center_spines()
     # Add horizontal and vertical lines to show the origin
     config.ax.axhline(0, color='black', linewidth=0.5)
     config.ax.axvline(0, color='black', linewidth=0.5)
+    config.buttons_panel.pack(side=tk.TOP, fill=tk.X)
+
 
 
 def create_buttons():
-    point_button = tk.Button(config.root, text="Draw Point", command=draw_point)
-    line_button = tk.Button(config.root, text="Draw Line", command=draw_line)
-    circle_button = tk.Button(config.root, text="Draw Circle", command=draw_circle)
-    reset_button = tk.Button(config.root, text="Reset", command=reset)
-    save_button = tk.Button(config.root, text="Save state", command=save)
-    load_button = tk.Button(config.root, text="Load file", command=load)
+    point_button = tk.Button(config.buttons_panel, text="Draw Point", command=draw_point)
+    line_button = tk.Button(config.buttons_panel, text="Draw Line", command=draw_line)
+    circle_button = tk.Button(config.buttons_panel, text="Draw Circle", command=draw_circle)
+    reset_button = tk.Button(config.buttons_panel, text="Reset", command=reset)
+    save_button = tk.Button(config.buttons_panel, text="Save state", command=save)
+    load_button = tk.Button(config.buttons_panel, text="Load file", command=load)
+    delete_button = tk.Button(config.buttons_panel, text="Delete shape", command=delete_shape)
 
     buttons = [point_button,
                line_button,
                circle_button,
                reset_button,
                save_button,
-               load_button]
+               load_button,
+               delete_button]
 
-    padding = 5
+    padding = 2
     for i in range(len(buttons)):
-        buttons[i].pack(padx=padding)
-        padding += buttons[i].winfo_width()
+        # buttons[i].pack(side=tk.RIGHT, padx=padding)
+        buttons[i].pack(side=tk.LEFT, padx=padding)
 
 
 def shape_clicked(x, y):
@@ -125,6 +129,18 @@ def on_motion(event):
         plt.draw()
 
 
+def delete_shape():
+    if not config.cid:
+        config.ax.figure.canvas.mpl_disconnect(config.cid)
+
+    if not config.circle_cid:
+        config.ax.figure.canvas.mpl_disconnect(config.circle_cid)
+
+    config.cid = config.ax.figure.canvas.mpl_connect('button_press_event', handle_delete_shape)
+    plt.title("Click shape to delete")
+    plt.draw()
+
+
 def draw_point():
     if not config.cid:
         config.ax.figure.canvas.mpl_disconnect(config.cid)
@@ -161,36 +177,6 @@ def draw_circle():
     plt.draw()
 
 
-# def handle_input_circle(event):
-#     if event.button == 1:  # Left mouse button
-#         if event.xdata is not None and event.ydata is not None:
-#             x1, y1 = event.xdata, event.ydata
-#             plt.title("Click left click to set the radius")
-#             plt.draw()
-#             points = plt.ginput(1, timeout=-1, mouse_add=1)  # Wait for left click
-#             if points:
-#                 x2, y2 = points[0]
-#                 radius = np.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
-#                 draw_circle_shape(x1, y1, radius)
-#                 # Disconnect the circle event listener so it doesn't interfere with other shapes
-#                 config.ax.figure.canvas.mpl_disconnect(config.circle_cid)
-#                 config.circle_cid = None  # Reset the circle event listener variable to None
-
-# def handle_input_circle(event):
-#     if event.button == 1:  # Left mouse button
-#         if not event.xdata and not event.ydata:
-#             x1, y1 = event.xdata, event.ydata
-#             plt.title("Click left click to set the radius")
-#             plt.draw()
-#             points = plt.ginput(1, timeout=-1)
-#             if points:
-#                 x2, y2 = points[0]
-#                 radius = np.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
-#                 draw_circle_shape(x1, y1, radius)
-#                 # Disconnect the circle event listener so it doesn't interfere with other shapes
-#                 config.ax.figure.canvas.mpl_disconnect(config.circle_cid)
-#                 config.circle_cid = None  # Reset the circle event listener variable to None
-
 def handle_input_circle(event):
     if event.button == 1:  # Left mouse button
         if not config.circle_x and not config.circle_x:  # first click
@@ -216,23 +202,6 @@ def handle_input_point(event):
         config.ax.figure.canvas.mpl_disconnect(config.cid)
 
 
-# def handle_input_line(event):
-#     if event.button == 1:  # Left mouse button
-#         if not hasattr('start_point'):
-#             # First click sets the start point
-#             config.start_point = (event.xdata, event.ydata)
-#             plt.title("Click left click to draw the end point")
-#             plt.draw()
-#         else:
-#             # Second click sets the end point
-#             end_point = (event.xdata, event.ydata)
-#             m, b = m_b(config.start_point[0], config.start_point[1], end_point[0], end_point[1])
-#             draw_line_shape(m, b)
-#             # Remove start_point attribute so user can draw another line
-#             delattr('start_point')
-#             plt.title("")
-#             plt.draw()
-
 def handle_input_line(event):
     if event.button == 1:  # Left mouse button
         if not config.line_x and not config.line_y:
@@ -251,6 +220,15 @@ def handle_input_line(event):
             config.line_x, config.line_y = [None]*2
             plt.title("")
             plt.draw()
+
+
+def handle_delete_shape(event):
+    if event.button == 1:
+        shape = shape_clicked(event.xdata, event.ydata)
+        if shape is not None:
+            config.shapes.remove(shape)
+            update_display()
+            update_label()
 
 
 def draw_point_shape(x, y):
@@ -313,15 +291,15 @@ def update_label():
 
     for shape in config.shapes:
         if isinstance(shape, Point):
-            label_text = f'Point: ({shape.coords[0][0][0]:.1f}, {shape.coords[0][0][1]:.1f})'
+            label_text = f'Point: ({shape.coords[0][0][0]:.3f}, {shape.coords[0][0][1]:.3f})'
 
         elif isinstance(shape, Circle):
             x, y = shape.coords[0]
             r = shape.radius
-            label_text = f'Circle: (x-{x:.1f})^2 + (y-{y:.1f})^2 = {r**2:.1f}'
+            label_text = f'Circle: (x-{x:.3f})^2 + (y-{y:.3f})^2 = {r**2:.3f}'
 
         elif isinstance(shape, Line):
-            label_text = f'Line: y = {shape.m:.1f}x + {shape.b:.1f}'
+            label_text = f'Line: y = {shape.m:.3f}x + {shape.b:.3f}'
 
         label_widget = tk.Label(config.side_panel.text, text=label_text, bg='white')
         label_widget.pack(anchor='w')
