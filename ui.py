@@ -36,34 +36,30 @@ class MainWindow:
 
         # Create the squared XY plane
         fig, ax = plt.subplots()
-
-        # Set the figure size to (8, 8) to create a square canvas
         fig.set_size_inches(8, 8)
-
-        # Set the x-axis limits symmetrically around the origin
         ax.set_xlim(-10, 10)
-
-        # Set the y-axis limits symmetrically around the origin
         ax.set_ylim(-10, 10)
-
-        # Set the aspect ratio to 'equal' to create equal length boxes
         ax.set_aspect('equal')
-
-        # Set the grid lines to be visible
         ax.grid(True)
 
         # Set the number of ticks and their intervals
-        ax.set_xticks(np.arange(-20, 21, 5))
-        ax.set_yticks(np.arange(-20, 21, 5))
+        # ax.set_xticks(np.arange(-20, 21, 5))
+        # ax.set_yticks(np.arange(-20, 21, 5))
+
+        ax.set_xticks(np.arange(-10, 11, 1))
+        ax.set_yticks(np.arange(-10, 11, 1))
+
+        # Add horizontal and vertical lines to show the origin
+        ax.axhline(0, color='black', linewidth=0.5)
+        ax.axvline(0, color='black', linewidth=0.5)
         self.ax = ax
         self.canvas = FigureCanvasTkAgg(fig, master=self.root)
 
-
         #self.canvas.draw()
         self.canvas.get_tk_widget().pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
-
         self.toolbar = NavigationToolbar2Tk(self.canvas, self.root)
         self.toolbar.update()
+
         # Empty list of shapes
         self.shapes = []
         self.label_widgets = []
@@ -115,51 +111,78 @@ class MainWindow:
         self.ax.set_ylim(-10, 10)
         self.ax.set_aspect('equal')
         self.ax.grid(True)
-        self.ax.set_xticks(np.arange(-20, 21, 5))
-        self.ax.set_yticks(np.arange(-20, 21, 5))
+        # self.ax.set_xticks(np.arange(-20, 21, 5))
+        # self.ax.set_yticks(np.arange(-20, 21, 5))
+        self.ax.set_xticks(np.arange(-10, 11, 1))
+        self.ax.set_yticks(np.arange(-10, 11, 1))
 
         plt.draw()
 
     def save(self):
+        global shape_data
         filepath = filedialog.asksaveasfilename(defaultextension=".json", filetypes=[("JSON Files", "*.json")])
         if not filepath:
             return
-        with open(filepath, "w") as f:
-            json.dump([s.__dict__ for s in self.shapes], f)
-        print(f"Shapes saved to {filepath}")
+        shapes_data = []
+        for shape in self.shapes:
+            shape_type = type(shape).__name__
+            if isinstance(shape, Line):
+                shape_data = {
+                    "type": shape_type,
+                }
+                shape_data["m"] = shape.m
+                shape_data["b"] = shape.b
+
+            elif isinstance(shape, Circle):
+                shape_coords = shape.coords.tolist()
+                shape_data = {
+                    "type": shape_type,
+                    "coords": shape_coords[0],
+                }
+                shape_data["radius"] = shape.radius
+
+            elif isinstance(shape, Point):
+                shape_coords = shape.coords.tolist()
+                shape_data = {
+                    "type": shape_type,
+                    "coords": shape_coords[0][0],
+                }
+
+            shapes_data.append(shape_data)
+
+        print(shapes_data)
+        with open(filepath, 'w') as f:
+            json.dump(shapes_data, f)
 
     def load(self):
-        dirpath = filedialog.askdirectory()
-        if not dirpath:
+        global shape
+        filename = filedialog.askopenfilename()
+        # print(filename)
+        if not filename or not filename.endswith(".json"):
             return
+        with open(filename, 'r') as f:
+            print(filename)
+            shapes_data = json.load(f)
         self.reset()
-        for filename in os.listdir(dirpath):
-            if not filename.endswith(".json"):
-                continue
-            filepath = os.path.join(dirpath, filename)
-            with open(filepath, "r") as f:
-                shapes = json.load(f)
-            label_text = ""
-            for shape in shapes:
-                if isinstance(shape, Point):
-                    label_text = f'. Point: ({shape.coords[0][0][0]:.1f}, {shape.coords[0][0][1]:.1f})'
-                    self.draw_point_shape(shape.coords[0][0][0], shape.coords[0][0][1])
 
-                elif isinstance(shape, Circle):
-                    x, y = shape.coords[0]
-                    r = shape.radius
-                    label_text = f'Circle: (x-{x:.1f})^2 + (y-{x:.1f})^2 = {r ** 2:.1f}'
-                    self.draw_circle_shape(x, y, r)
+        print(shapes_data)
+        for shape_data in shapes_data:
+            shape_type = shape_data["type"]
 
-                elif isinstance(shape, Line):
-                    label_text = f'Line: y = {shape.m:.1f}x + {shape.b:.1f}'
-                    self.draw_line_shape(shape.m, shape.b)
+            if shape_type == "Point":
+                coords = shape_data["coords"]
+                print(len(coords))
+                self.draw_point_shape(coords[0], coords[1])
 
-            label_widget = tk.Label(self.side_panel.text, text=label_text, bg='white')
-            label_widget.pack(anchor='w')
-            self.label_widgets.append(label_widget)
+            elif shape_type == "Line":
+                m = shape_data["m"]
+                b = shape_data["b"]
+                self.draw_line_shape(m, b)
 
-
+            elif shape_type == "Circle":
+                coords = shape_data["coords"]
+                radius = shape_data["radius"]
+                self.draw_circle_shape(coords[0], coords[1], radius)
 
     def shape_clicked(self, x, y):
         threshold = 0.5
@@ -220,10 +243,10 @@ class MainWindow:
 
 
     def draw_point(self):
-        if self.cid is not None:
+        if not self.cid:
             self.ax.figure.canvas.mpl_disconnect(self.cid)
 
-        if self.circle_cid is not None:
+        if not self.circle_cid:
             self.ax.figure.canvas.mpl_disconnect(self.circle_cid)
 
         self.cid = self.ax.figure.canvas.mpl_connect('button_press_event', self.handle_input_point)
@@ -252,22 +275,37 @@ class MainWindow:
         plt.title("Click left mouse button to set center")
         plt.draw()
 
+    # def handle_input_circle(self, event):
+    #     if event.button == 1:  # Left mouse button
+    #         if not event.xdata and not event.ydata:
+    #             if not hasattr(self, 'x1') or not hasattr(self, 'y1'):  # first click
+    #                 self.x1, self.y1 = event.xdata, event.ydata
+    #                 plt.title("Click left click again to set the radius")
+    #                 plt.draw()
+    #             else:  # second click
+    #                 x2, y2 = event.xdata, event.ydata
+    #                 radius = np.sqrt((x2 - self.x1) ** 2 + (y2 - self.y1) ** 2)
+    #                 self.draw_circle_shape(self.x1, self.y1, radius)
+    #                 # Disconnect the circle event listener so it doesn't interfere with other shapes
+    #                 self.ax.figure.canvas.mpl_disconnect(self.circle_cid)
+    #                 self.circle_cid = None  # Reset the circle event listener variable to None
+    #                 # Reset x1 and y1 for the next circle
+    #                 self.x1, self.y1 = None, None
+
     def handle_input_circle(self, event):
         if event.button == 1:  # Left mouse button
             if event.xdata is not None and event.ydata is not None:
-                if not hasattr(self, 'x1') or not hasattr(self, 'y1'):  # first click
-                    self.x1, self.y1 = event.xdata, event.ydata
-                    plt.title("Click left click again to set the radius")
-                    plt.draw()
-                else:  # second click
-                    x2, y2 = event.xdata, event.ydata
-                    radius = np.sqrt((x2 - self.x1) ** 2 + (y2 - self.y1) ** 2)
-                    self.draw_circle_shape(self.x1, self.y1, radius)
+                x1, y1 = event.xdata, event.ydata
+                plt.title("Click left click to set the radius")
+                plt.draw()
+                points = plt.ginput(1, timeout=-1, mouse_add=1)  # Wait for left click
+                if points:
+                    x2, y2 = points[0]
+                    radius = np.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
+                    self.draw_circle_shape(x1, y1, radius)
                     # Disconnect the circle event listener so it doesn't interfere with other shapes
                     self.ax.figure.canvas.mpl_disconnect(self.circle_cid)
                     self.circle_cid = None  # Reset the circle event listener variable to None
-                    # Reset x1 and y1 for the next circle
-                    self.x1, self.y1 = None, None
 
     def handle_input_point(self, event):
         if event.button == 1:  # Left mouse button
