@@ -14,7 +14,6 @@ import matplotlib.cm as cm
 from Shapes.Circle import *
 from Shapes.Point import *
 from Shapes.Line import *
-from AdvancedShapes.circle_point import *
 
 
 class SidePanel(tk.Frame):
@@ -43,12 +42,9 @@ class MainWindow:
         ax.grid(True)
 
         # Set the number of ticks and their intervals
-        # ax.set_xticks(np.arange(-20, 21, 5))
-        # ax.set_yticks(np.arange(-20, 21, 5))
-
-        ax.set_xticks(np.arange(-10, 11, 1))
-        ax.set_yticks(np.arange(-10, 11, 1))
-
+        ax.set_xticks(np.arange(-20, 21, 5))
+        ax.set_yticks(np.arange(-20, 21, 5))
+        # center_spines()
         # Add horizontal and vertical lines to show the origin
         ax.axhline(0, color='black', linewidth=0.5)
         ax.axvline(0, color='black', linewidth=0.5)
@@ -111,10 +107,8 @@ class MainWindow:
         self.ax.set_ylim(-10, 10)
         self.ax.set_aspect('equal')
         self.ax.grid(True)
-        # self.ax.set_xticks(np.arange(-20, 21, 5))
-        # self.ax.set_yticks(np.arange(-20, 21, 5))
-        self.ax.set_xticks(np.arange(-10, 11, 1))
-        self.ax.set_yticks(np.arange(-10, 11, 1))
+        self.ax.set_xticks(np.arange(-20, 21, 5))
+        self.ax.set_yticks(np.arange(-20, 21, 5))
 
         plt.draw()
 
