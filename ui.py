@@ -16,6 +16,7 @@ from Shapes.Point import *
 from Shapes.Line import *
 
 
+
 class SidePanel(tk.Frame):
     def __init__(self, parent):
         tk.Frame.__init__(self, parent)
@@ -287,12 +288,12 @@ class MainWindow:
     #                 self.x1, self.y1 = None, None
 
     def handle_input_circle(self, event):
-        if event.button == 1:  # Left mouse button
+        if event.button == 2:  # Left mouse button
             if event.xdata is not None and event.ydata is not None:
                 x1, y1 = event.xdata, event.ydata
                 plt.title("Click left click to set the radius")
                 plt.draw()
-                points = plt.ginput(1, timeout=-1, mouse_add=1)  # Wait for left click
+                points = plt.ginput(1, timeout=-1)
                 if points:
                     x2, y2 = points[0]
                     radius = np.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
@@ -347,7 +348,7 @@ class MainWindow:
         self.shapes.append(line)
         self.update_display()
         self.update_label()
-    
+
     def draw_circle_shape(self, x, y, radius):
         circle = Circle([(x, y)], radius)
         circle.draw(self.ax)
