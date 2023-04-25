@@ -16,7 +16,6 @@ from Shapes.Point import *
 from Shapes.Line import *
 
 
-
 class SidePanel(tk.Frame):
     def __init__(self, parent):
         tk.Frame.__init__(self, parent)

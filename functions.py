@@ -35,8 +35,8 @@ def init_program():
     config.ax.grid(True)
 
     # Set the number of ticks and their intervals
-    config.ax.set_xticks(np.arange(-20, 21, 1))
-    config.ax.set_yticks(np.arange(-20, 21, 1))
+    config.ax.set_xticks(np.arange(-20, 21, 5))
+    config.ax.set_yticks(np.arange(-20, 21, 5))
     # center_spines()
     # Add horizontal and vertical lines to show the origin
     config.ax.axhline(0, color='black', linewidth=0.5)
@@ -44,28 +44,55 @@ def init_program():
     config.buttons_panel.pack(side=tk.TOP, fill=tk.X)
 
 
+global button_list, file_button
+
+
+# def make_file_button_frame(buttons_list):
+#     global file_button
+#     for button in buttons_list:
+#         button.pack()
+#     for button in buttons_list:
+#         button.pack_forget()
+#     file_button.bind("<Enter>", on_over)
+#     file_button.bind("<Leave>", on_leave)
+#     config.buttons_panel.bind("<Leave>", on_leave)
+
 
 def create_buttons():
+    global button_list, file_button
     point_button = tk.Button(config.buttons_panel, text="Draw Point", command=draw_point)
     line_button = tk.Button(config.buttons_panel, text="Draw Line", command=draw_line)
     circle_button = tk.Button(config.buttons_panel, text="Draw Circle", command=draw_circle)
     reset_button = tk.Button(config.buttons_panel, text="Reset", command=reset)
-    save_button = tk.Button(config.buttons_panel, text="Save state", command=save)
+    save_button = tk.Button(config.buttons_panel, text="Save", command=save)
     load_button = tk.Button(config.buttons_panel, text="Load file", command=load)
     delete_button = tk.Button(config.buttons_panel, text="Delete shape", command=delete_shape)
+    undo_button = tk.Button(config.buttons_panel, text="undo", command=undo)
+    redu_button = tk.Button(config.buttons_panel, text="redu", command=redu)
+    # file_button = tk.Button(config.buttons_panel, text="File")
 
-    buttons = [point_button,
-               line_button,
-               circle_button,
-               reset_button,
+    buttons = [reset_button,
                save_button,
                load_button,
-               delete_button]
+               delete_button,
+
+               point_button,
+               line_button,
+               circle_button,
+
+               # file_button,
+               undo_button,
+               redu_button
+               ]
 
     padding = 2
     for i in range(len(buttons)):
         # buttons[i].pack(side=tk.RIGHT, padx=padding)
         buttons[i].pack(side=tk.LEFT, padx=padding)
+    config.file_frame = [save_button,
+                         load_button]
+
+    # make_file_button_frame(config.file_frame)
 
 
 def shape_clicked(x, y):
@@ -188,16 +215,18 @@ def handle_input_circle(event):
             x, y = event.xdata, event.ydata
             radius = np.sqrt((x - config.circle_x) ** 2 + (y - config.circle_y) ** 2)
             draw_circle_shape(config.circle_x, config.circle_y, radius)
+
             # Disconnect the circle event listener so it doesn't interfere with other shapes
             config.ax.figure.canvas.mpl_disconnect(config.circle_cid)
             config.circle_cid = None
-            config.circle_x, config.circle_y = [None]*2
+            config.circle_x, config.circle_y = [None] * 2
 
 
 def handle_input_point(event):
     if event.button == 1:  # Left mouse button
         x, y = event.xdata, event.ydata
         draw_point_shape(x, y)
+
         # Disconnect the event listener so points can't be drawn anymore
         config.ax.figure.canvas.mpl_disconnect(config.cid)
 
@@ -215,9 +244,10 @@ def handle_input_line(event):
             end_point = (event.xdata, event.ydata)
             m, b = m_b(config.line_x, config.line_y, end_point[0], end_point[1])
             draw_line_shape(m, b)
+
             config.ax.figure.canvas.mpl_disconnect(config.cid)
             # Remove start_point attribute so user can draw another line
-            config.line_x, config.line_y = [None]*2
+            config.line_x, config.line_y = [None] * 2
             plt.title("")
             plt.draw()
 
@@ -226,7 +256,10 @@ def handle_delete_shape(event):
     if event.button == 1:
         shape = shape_clicked(event.xdata, event.ydata)
         if shape is not None:
+            command = {"type": 'delete', "shape": shape}
+            config.undo_stack.insert(len(config.undo_stack), command)
             config.shapes.remove(shape)
+
             update_display()
             update_label()
 
@@ -235,6 +268,10 @@ def draw_point_shape(x, y):
     point = Point([(x, y)])
     point.draw(config.ax)
     config.shapes.append(point)
+
+    command = {"type": 'draw', "shape": config.shapes[-1], "coords": (config.circle_x, config.circle_y)}
+    config.undo_stack.insert(len(config.undo_stack), command)
+
     update_display()
     update_label()
 
@@ -251,8 +288,11 @@ def draw_line_shape(m, b):
     line = Line(m, b)
 
     line.draw(config.ax)
-
     config.shapes.append(line)
+
+    command = {"type": 'draw', "shape": config.shapes[-1], "m": m, "b": b}
+    config.undo_stack.insert(len(config.undo_stack), command)
+
     update_display()
     update_label()
 
@@ -261,6 +301,11 @@ def draw_circle_shape(x, y, radius):
     circle = Circle([(x, y)], radius)
     circle.draw(config.ax)
     config.shapes.append(circle)
+
+    command = {"type": 'draw', "shape": config.shapes[-1], "coords": (config.circle_x, config.circle_y),
+               "radius": radius}
+    config.undo_stack.insert(len(config.undo_stack), command)
+
     update_display()
     update_label()
 
@@ -276,7 +321,8 @@ def update_display():
     config.ax.set_ylim(-10, 10)
     config.ax.set_aspect('equal')  # Set the aspect ratio to 'equal'
     config.ax.grid(True)
-
+    config.ax.set_xticks(np.arange(-20, 21, 5))
+    config.ax.set_yticks(np.arange(-20, 21, 5))
     for shape in config.shapes:
         shape.draw(config.ax)
 
@@ -296,7 +342,7 @@ def update_label():
         elif isinstance(shape, Circle):
             x, y = shape.coords[0]
             r = shape.radius
-            label_text = f'Circle: (x-{x:.3f})^2 + (y-{y:.3f})^2 = {r**2:.3f}'
+            label_text = f'Circle: (x-{x:.3f})^2 + (y-{y:.3f})^2 = {r ** 2:.3f}'
 
         elif isinstance(shape, Line):
             label_text = f'Line: y = {shape.m:.3f}x + {shape.b:.3f}'
@@ -312,6 +358,8 @@ def reset():
     for widget in config.label_widgets:
         widget.destroy()
     config.label_widgets = []
+    config.undo_stack = []
+    config.redu_stack = []
 
     # Reset the axes and grid
     config.ax.set_xlim(-10, 10)
@@ -331,6 +379,7 @@ def save():
         return
     shapes_data = []
     for shape in config.shapes:
+
         shape_type = type(shape).__name__
         if isinstance(shape, Line):
             shape_data = {"type": shape_type, "m": shape.m, "b": shape.b}
@@ -383,14 +432,66 @@ def load():
             draw_circle_shape(coords[0], coords[1], radius)
 
 
+def do_same_command(command):
+    if command["type"] == 'delete':
+        shape = command["shape"]
+        config.shapes.remove(shape)
+
+        update_display()
+        update_label()
+
+    elif command["type"] == 'draw':
+        shape = command["shape"]
+
+        if isinstance(shape, Line):
+            draw_line_shape(shape.m, shape.b)
+
+        elif isinstance(shape, Point):
+            coords = shape.coords.tolist()[0][0]
+            draw_point_shape(coords[0], coords[1])
+
+        elif isinstance(shape, Circle):
+            coords = shape.coords.tolist()[0]
+            draw_circle_shape(coords[0], coords[1], shape.radius)
+
+    # elif command["type"] is 'move':
 
 
+def do_opposite_command(command):
+    if command["type"] == 'draw':
+        shape = command["shape"]
+        config.shapes.remove(shape)
+        update_display()
+        update_label()
+
+    elif command["type"] == 'delete':
+        shape = command["shape"]
+
+        if isinstance(shape, Line):
+            draw_line_shape(shape.m, shape.b)
+
+        elif isinstance(shape, Point):
+            coords = shape.coords.tolist()[0][0]
+            #print(coords)
+            draw_point_shape(coords[0], coords[1])
+
+        elif isinstance(shape, Circle):
+            coords = shape.coords.tolist()[0]
+            print(coords)
+            draw_circle_shape(coords[0], coords[1], shape.radius)
 
 
+def redu():  # forward
+    if config.redu_stack is not None:
+        command = config.redu_stack.pop()
+        do_same_command(command)
+        config.undo_stack.insert(len(config.redu_stack), command)
 
 
-
-
-
+def undo():  # back
+    if config.undo_stack is not None:
+        command = config.undo_stack.pop()
+        do_opposite_command(command)
+        config.redu_stack.insert(len(config.redu_stack), command)
 
 
