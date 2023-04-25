@@ -1,7 +1,5 @@
-import matplotlib.pyplot as plt
 from matplotlib.backends._backend_tk import NavigationToolbar2Tk
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-import matplotlib.cm as cm
 from config import *
 
 # refactor
@@ -25,17 +23,12 @@ config.shapes = []
 config.label_widgets = []
 create_buttons()
 
-# config.edit_frame = tk.Frame(root)
-# config.edit_frame.pack_forget()
-
 config.side_panel = SidePanel(config.root)
 config.side_panel.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
 config.press_cid = config.ax.figure.canvas.mpl_connect('button_press_event', on_press)
 config.release_cid = config.ax.figure.canvas.mpl_connect('button_release_event', on_release)
 config.motion_cid = config.ax.figure.canvas.mpl_connect('motion_notify_event', on_motion)
-# config.over_cid = config.ax.figure.canvas.mpl_connect('figure_enter_event', on_over)
-# config.leave_cid = config.ax.figure.canvas.mpl_connect('figure_leave_event', on_leave)
 
 
 update_display()

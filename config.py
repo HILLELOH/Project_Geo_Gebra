@@ -10,4 +10,7 @@ edit_frame, file_frame = [None]*2
 over_cid, leave_cid = [None]*2
 
 undo_stack = []
-redu_stack = []
+redo_stack = []
+
+polygon_vertices = []
+

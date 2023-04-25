@@ -9,7 +9,7 @@ class Point(Shape):
         ax.plot(*self.coords.T, 'ro')
 
     def __str__(self):
-        return f"({list(self.coords)[0][0][0]:0.2f} , {list(self.coords)[0][0][1]:0.2f})"
+        return f"({list(self.coords)[0][0][0]:0.3f} , {list(self.coords)[0][0][1]:0.3f})"
 
     def getShape(self):
         return f'{Point}'

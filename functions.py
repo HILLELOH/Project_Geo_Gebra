@@ -3,6 +3,8 @@ from tkinter import ttk, filedialog
 
 import numpy as np
 import tkinter as tk
+
+from PIL import ImageTk
 from matplotlib import pyplot as plt
 
 from Shapes.Circle import *
@@ -47,50 +49,42 @@ def init_program():
 global button_list, file_button
 
 
-# def make_file_button_frame(buttons_list):
-#     global file_button
-#     for button in buttons_list:
-#         button.pack()
-#     for button in buttons_list:
-#         button.pack_forget()
-#     file_button.bind("<Enter>", on_over)
-#     file_button.bind("<Leave>", on_leave)
-#     config.buttons_panel.bind("<Leave>", on_leave)
-
-
 def create_buttons():
     global button_list, file_button
     point_button = tk.Button(config.buttons_panel, text="Draw Point", command=draw_point)
     line_button = tk.Button(config.buttons_panel, text="Draw Line", command=draw_line)
     circle_button = tk.Button(config.buttons_panel, text="Draw Circle", command=draw_circle)
+    # polygon_button = tk.Button(config.buttons_panel, text="polygon", command=draw_polygon)
     reset_button = tk.Button(config.buttons_panel, text="Reset", command=reset)
     save_button = tk.Button(config.buttons_panel, text="Save", command=save)
     load_button = tk.Button(config.buttons_panel, text="Load file", command=load)
     delete_button = tk.Button(config.buttons_panel, text="Delete shape", command=delete_shape)
     undo_button = tk.Button(config.buttons_panel, text="undo", command=undo)
-    redu_button = tk.Button(config.buttons_panel, text="redu", command=redu)
-    # file_button = tk.Button(config.buttons_panel, text="File")
+    redo_button = tk.Button(config.buttons_panel, text="redo", command=redo)
 
-    buttons = [reset_button,
-               save_button,
+    buttons = [save_button,
                load_button,
                delete_button,
+               reset_button,
 
                point_button,
                line_button,
                circle_button,
+               # polygon_button,
 
                # file_button,
-               undo_button,
-               redu_button
-               ]
+               redo_button,
+               undo_button]
 
     padding = 2
+    right = [undo_button,
+             redo_button]
     for i in range(len(buttons)):
+        if buttons[i] in right:
+            buttons[i].pack(side=tk.RIGHT, padx=padding)
         # buttons[i].pack(side=tk.RIGHT, padx=padding)
-        buttons[i].pack(side=tk.LEFT, padx=padding)
-    config.file_frame = [save_button,
-                         load_button]
+        else:
+            buttons[i].pack(side=tk.LEFT, padx=padding)
 
     # make_file_button_frame(config.file_frame)
 
@@ -99,18 +93,25 @@ def shape_clicked(x, y):
     threshold = 0.5
     for shape in config.shapes:
         if isinstance(shape, Point):
-            point_x, point_y = shape.coords[0][0]
-            if np.abs(x - point_x) <= threshold and np.abs(y - point_y) <= threshold:
-                return shape
+            try:
+                l = shape.coords.tolist()[0][0]
+                point_x = l[0]
+                point_y = l[1]
+                if np.abs(x - point_x) <= threshold and np.abs(y - point_y) <= threshold:
+                    return shape
+            except TypeError:
+                print("")
 
         elif isinstance(shape, Circle):
-            circle_x, circle_y = shape.coords[0]
+            circle_x = shape.coords[0][0]
+            circle_y = shape.coords[0][0]
             distance = np.sqrt((x - circle_x) ** 2 + (y - circle_y) ** 2)
             if np.abs(distance - shape.radius) <= threshold:
                 return shape
 
-        elif isinstance(shape, Line):  # Add this block to handle lines
-            line_y = shape.m * x + shape.b
+        elif isinstance(shape, Line):
+            m, b = shape.m_b()
+            line_y = m * x + b
             if np.abs(y - line_y) <= threshold:
                 return shape
     return None
@@ -118,10 +119,9 @@ def shape_clicked(x, y):
 
 def on_press(event):
     if event.button == 1:  # Left mouse button
-        x, y = event.xdata, event.ydata
-        config.selected_shape = shape_clicked(x, y)
+        config.selected_shape = shape_clicked(event.xdata, event.ydata)
         if config.selected_shape is not None:
-            config.start_drag_x, config.start_drag_y = x, y
+            config.start_drag_x, config.start_drag_y = event.xdata, event.ydata
 
 
 def on_release(event):
@@ -137,19 +137,20 @@ def on_motion(event):
         dy = y - config.start_drag_y
         config.start_drag_x, config.start_drag_y = x, y
 
-        if isinstance(config.selected_shape, Point):
+        if isinstance(config.selected_shape, Line):  # Check if the selected_shape is a Line
+            m, b = config.selected_shape.m_b()
+            b += dy  # Update the y-intercept of the line
+            xdata, ydata = config.selected_shape.line_obj.get_data()
+            ydata = m * xdata + b
+            config.selected_shape.line_obj.set_data(xdata, ydata)
+
+        elif isinstance(config.selected_shape, Point):
             config.selected_shape.coords[0][0][0] += dx
             config.selected_shape.coords[0][0][1] += dy
 
         elif isinstance(config.selected_shape, Circle):
             config.selected_shape.coords[0][0] += dx
             config.selected_shape.coords[0][1] += dy
-
-        elif isinstance(config.selected_shape, Line):  # Check if the selected_shape is a Line
-            config.selected_shape.b += dy  # Update the y-intercept of the line
-            xdata, ydata = config.selected_shape.line_obj.get_data()
-            ydata = config.selected_shape.m * xdata + config.selected_shape.b
-            config.selected_shape.line_obj.set_data(xdata, ydata)
 
         update_display()
         update_label()
@@ -204,6 +205,18 @@ def draw_circle():
     plt.draw()
 
 
+# def draw_polygon():
+#     if config.cid is not None:
+#         config.ax.figure.canvas.mpl_disconnect(config.cid)
+#
+#     if config.circle_cid is not None:
+#         config.ax.figure.canvas.mpl_disconnect(config.circle_cid)
+#
+#     config.circle_cid = config.ax.figure.canvas.mpl_connect('button_press_event', handle_input_polygon)
+#     plt.title("Click left mouse button to set points")
+#     plt.draw()
+
+
 def handle_input_circle(event):
     if event.button == 1:  # Left mouse button
         if not config.circle_x and not config.circle_x:  # first click
@@ -241,9 +254,12 @@ def handle_input_line(event):
 
         else:
             # Second click sets the end point
-            end_point = (event.xdata, event.ydata)
-            m, b = m_b(config.line_x, config.line_y, end_point[0], end_point[1])
-            draw_line_shape(m, b)
+            p1 = Point((config.line_x, config.line_y))
+            p2 = Point((event.xdata, event.ydata))
+            draw_point_shape(config.line_x, config.line_y)
+            draw_point_shape(event.xdata, event.ydata)
+            line = Line(p1, p2)
+            draw_line_shape(line)
 
             config.ax.figure.canvas.mpl_disconnect(config.cid)
             # Remove start_point attribute so user can draw another line
@@ -251,14 +267,54 @@ def handle_input_line(event):
             plt.title("")
             plt.draw()
 
+#
+# def handle_input_polygon(event):
+#     if event.button == 1:  # Left mouse button
+#         if len(config.polygon_vertices) == 0:
+#             draw_point_shape(event.xdata, event.ydata)
+#             config.polygon_vertices.append((event.xdata, event.ydata))
+#         else:
+#             if (event.xdata, event.ydata) == (config.polygon_vertices[0]):
+#                 draw_point_shape(event.xdata, event.ydata)
+#                 last_point = config.polygon_vertices[-1]
+#                 line = Line((event.xdata, event.ydata), (last_point[0], last_point[1]))
+#                 draw_line_shape(line)
+#                 config.polygon_vertices.append((event.xdata, event.ydata))
+#
+#                 config.ax.figure.canvas.mpl_disconnect(config.cid)
+#                 # Remove start_point attribute so user can draw another line
+#                 config.polygon_vertices = []
+#                 plt.title("")
+#                 plt.draw()
+#
+#             else:
+#                 draw_point_shape(event.xdata, event.ydata)
+#                 last_point = config.polygon_vertices[-1]
+#                 p1 = Point((event.xdata, event.ydata))
+#                 p2 = Point((last_point[0], last_point[1]))
+#                 line = Line(p1, p2)
+#                 draw_line_shape(line)
+#                 config.polygon_vertices.append((event.xdata, event.ydata))
+#
+#                 config.circle_cid = config.ax.figure.canvas.mpl_connect('button_press_event', handle_input_polygon)
+
 
 def handle_delete_shape(event):
     if event.button == 1:
         shape = shape_clicked(event.xdata, event.ydata)
         if shape is not None:
-            command = {"type": 'delete', "shape": shape}
-            config.undo_stack.insert(len(config.undo_stack), command)
-            config.shapes.remove(shape)
+            if isinstance(shape, Line):
+                command = {"type": 'delete', "shape": shape}
+                config.undo_stack.insert(len(config.undo_stack), command)
+
+                config.shapes.remove((shape.x1, shape.y1))
+                config.shapes.remove((shape.x2, shape.y2))
+                config.shapes.remove(shape)
+
+            else:
+                command = {"type": 'delete', "shape": shape}
+                config.undo_stack.insert(len(config.undo_stack), command)
+                config.shapes.remove(shape)
 
             update_display()
             update_label()
@@ -276,17 +332,8 @@ def draw_point_shape(x, y):
     update_label()
 
 
-def m_b(x1, y1, x2, y2):
-    m = (y2 - y1) / (x2 - x1)
-    b = y1 - m * x1
-    return m, b
-
-
-def draw_line_shape(m, b):
-    x = np.linspace(-10, 10, 100)
-    y = m * x + b
-    line = Line(m, b)
-
+def draw_line_shape(line):
+    m, b = line.m_b()
     line.draw(config.ax)
     config.shapes.append(line)
 
@@ -330,22 +377,29 @@ def update_display():
 
 
 def update_label():
-    global label_text
+    global label_text, coords
     for widget in config.label_widgets:
         widget.destroy()
     config.label_widgets = []
 
     for shape in config.shapes:
-        if isinstance(shape, Point):
-            label_text = f'Point: ({shape.coords[0][0][0]:.3f}, {shape.coords[0][0][1]:.3f})'
+
+        if isinstance(shape, Line):
+            m, b = shape.m_b()
+            label_text = f'Line: y = {m:.3f}x + {b:.3f}'
+
+        elif isinstance(shape, Point):
+            try:
+                coords = shape.coords.tolist()[0][0]
+                label_text = f'Point: ({float(coords[0]):.3f}, {float(coords[1]):.3f})'
+
+            except TypeError:
+                print(f'coords: {coords}')
 
         elif isinstance(shape, Circle):
             x, y = shape.coords[0]
             r = shape.radius
             label_text = f'Circle: (x-{x:.3f})^2 + (y-{y:.3f})^2 = {r ** 2:.3f}'
-
-        elif isinstance(shape, Line):
-            label_text = f'Line: y = {shape.m:.3f}x + {shape.b:.3f}'
 
         label_widget = tk.Label(config.side_panel.text, text=label_text, bg='white')
         label_widget.pack(anchor='w')
@@ -353,13 +407,16 @@ def update_label():
 
 
 def reset():
+    if config.shapes is None:
+        config.undo_stack = []
+        config.redo_stack = []
+
     config.ax.clear()
     config.shapes = []
     for widget in config.label_widgets:
         widget.destroy()
     config.label_widgets = []
-    config.undo_stack = []
-    config.redu_stack = []
+
 
     # Reset the axes and grid
     config.ax.set_xlim(-10, 10)
@@ -382,7 +439,7 @@ def save():
 
         shape_type = type(shape).__name__
         if isinstance(shape, Line):
-            shape_data = {"type": shape_type, "m": shape.m, "b": shape.b}
+            shape_data = {"type": shape_type, "p1": (shape.x1, shape.y1), "p2": (shape.x2, shape.y2)}
 
         elif isinstance(shape, Circle):
             shape_coords = shape.coords.tolist()
@@ -422,9 +479,10 @@ def load():
             draw_point_shape(coords[0], coords[1])
 
         elif shape_type == "Line":
-            m = shape_data["m"]
-            b = shape_data["b"]
-            draw_line_shape(m, b)
+            p1 = shape_data["p1"]
+            p2 = shape_data["p2"]
+            line = Line(p1, p2)
+            draw_line_shape(line)
 
         elif shape_type == "Circle":
             coords = shape_data["coords"]
@@ -444,7 +502,10 @@ def do_same_command(command):
         shape = command["shape"]
 
         if isinstance(shape, Line):
-            draw_line_shape(shape.m, shape.b)
+            p1 = shape_data["p1"]
+            p2 = shape_data["p2"]
+            line = Line(p1, p2)
+            draw_line_shape(line)
 
         elif isinstance(shape, Point):
             coords = shape.coords.tolist()[0][0]
@@ -468,30 +529,36 @@ def do_opposite_command(command):
         shape = command["shape"]
 
         if isinstance(shape, Line):
-            draw_line_shape(shape.m, shape.b)
+            p1 = shape_data["p1"]
+            p2 = shape_data["p2"]
+            line = Line(p1, p2)
+            draw_line_shape(line)
 
         elif isinstance(shape, Point):
             coords = shape.coords.tolist()[0][0]
-            #print(coords)
+            # print(coords)
             draw_point_shape(coords[0], coords[1])
 
         elif isinstance(shape, Circle):
             coords = shape.coords.tolist()[0]
-            print(coords)
             draw_circle_shape(coords[0], coords[1], shape.radius)
 
 
-def redu():  # forward
-    if config.redu_stack is not None:
-        command = config.redu_stack.pop()
-        do_same_command(command)
-        config.undo_stack.insert(len(config.redu_stack), command)
+def redo():
+    try:
+        if config.redo_stack is not None:
+            command = config.redo_stack.pop()
+            do_same_command(command)
+            config.undo_stack.insert(len(config.redo_stack), command)
+    except IndexError:
+        print("")
 
 
-def undo():  # back
-    if config.undo_stack is not None:
-        command = config.undo_stack.pop()
-        do_opposite_command(command)
-        config.redu_stack.insert(len(config.redu_stack), command)
-
-
+def undo():
+    try:
+        if config.undo_stack is not None:
+            command = config.undo_stack.pop()
+            do_opposite_command(command)
+            config.redo_stack.insert(len(config.redo_stack), command)
+    except IndexError:
+        print("")
