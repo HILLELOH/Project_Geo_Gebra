@@ -517,17 +517,20 @@ def save():
     for shape in config.shapes:
 
         if isinstance(shape, Line):
-            shape_data = {"shape": shape, "start": shape.get_start(), "end": shape.get_end()}
+            start = shape.get_start()
+            end = shape.get_end()
+            shape_data = {"shape": "Line", "start": (start.get_x(), start.get_y()), "end": (end.get_x(), end.get_y())}
 
         elif isinstance(shape, Circle):
             shape_coords = shape.coords.tolist()
             # print(f'her: {shape_coords}')
-            shape_data = {"shape": shape, "coords": shape_coords[0], "radius": shape.radius}
+            shape_data = {"shape": "Circle", "coords": shape_coords[0], "radius": shape.radius}
 
         elif isinstance(shape, Point):
-            shape_coords = shape.coords.tolist()
             shape_data = {
-                "coords": shape_coords[0][0],
+                "shape": "Point",
+                "x_coord": shape.get_x(),
+                "y_coord": shape.get_y()
             }
 
         shapes_data.append(shape_data)
@@ -553,8 +556,8 @@ def load():
             p2 = shape_data["end"]
             line = shapes_data["shape"]
             draw_line_shape(line)
-            draw_point_shape(p1.get_x, p1.get_y)
-            draw_point_shape(p2.get_x, p2.get_y)
+            draw_point_shape(p1.get_x(), p1.get_y())
+            draw_point_shape(p2.get_x(), p2.get_y())
 
         elif isinstance(shape, Circle):
             coords = shape_data["coords"]
