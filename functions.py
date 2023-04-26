@@ -170,8 +170,8 @@ def on_motion(event):
                         print(config.selected_shape)
                         config.selected_shape.coords[0][0] += dx
                         config.selected_shape.coords[0][1] += dy
-                        config.selected_shape.set_x(dx)
-                        config.selected_shape.set_y(dy)
+                        # config.selected_shape.set_x(dx)
+                        # config.selected_shape.set_y(dy)
 
                         shape.set_start_point(dx, dy)
                         flag = True
@@ -181,8 +181,8 @@ def on_motion(event):
                         print("end")
                         config.selected_shape.coords[0][0] += dx
                         config.selected_shape.coords[0][1] += dy
-                        config.selected_shape.set_x(dx)
-                        config.selected_shape.set_y(dy)
+                        # config.selected_shape.set_x(dx)
+                        # config.selected_shape.set_y(dy)
                         shape.set_end_point(dx, dy)
                         flag = True
                         break
