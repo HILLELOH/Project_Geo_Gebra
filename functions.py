@@ -1,6 +1,6 @@
 import json
 from pprint import pprint
-from tkinter import ttk, filedialog
+from tkinter import ttk, filedialog, messagebox
 
 import numpy as np
 import tkinter as tk
@@ -437,7 +437,13 @@ def draw_circle_shape(x, y, radius):
 
 
 def run():
-    plt.show()
+    config.root.mainloop()
+
+
+def on_closing():
+    # if messagebox.askokcancel("Quit", "Do you want to quit?"):
+    config.root.quit()
+    config.root.destroy()
 
 
 def update_display():
@@ -448,7 +454,7 @@ def update_display():
     config.ax.grid(True)
     config.ax.set_xticks(np.arange(-20, 21, 5))
     config.ax.set_yticks(np.arange(-20, 21, 5))
-
+    # config.canvas.update_idletasks()
     for shape in config.shapes:
         shape.draw(config.ax)
 
@@ -510,14 +516,13 @@ def save():
     shapes_data = []
     for shape in config.shapes:
 
-        shape_type = type(shape).__name__
         if isinstance(shape, Line):
-            shape_data = {"p1": [shape.x1, shape.y1], "p2": [shape.x2, shape.y2]}
+            shape_data = {"shape": shape, "start": shape.get_start(), "end": shape.get_end()}
 
         elif isinstance(shape, Circle):
             shape_coords = shape.coords.tolist()
-            print(f'her: {shape_coords}')
-            shape_data = {"coords": shape_coords[0], "radius": shape.radius}
+            # print(f'her: {shape_coords}')
+            shape_data = {"shape": shape, "coords": shape_coords[0], "radius": shape.radius}
 
         elif isinstance(shape, Point):
             shape_coords = shape.coords.tolist()
@@ -544,12 +549,12 @@ def load():
 
     for shape in shapes_data:
         if isinstance(shape, Line):
-            p1 = shape_data["p1"]
-            p2 = shape_data["p2"]
-            line = Line(p1, p2)
+            p1 = shape_data["start"]
+            p2 = shape_data["end"]
+            line = shapes_data["shape"]
             draw_line_shape(line)
-            draw_point_shape(p1[0], p1[1])
-            draw_point_shape(p2[0], p2[1])
+            draw_point_shape(p1.get_x, p1.get_y)
+            draw_point_shape(p2.get_x, p2.get_y)
 
         elif isinstance(shape, Circle):
             coords = shape_data["coords"]
@@ -557,40 +562,17 @@ def load():
             draw_circle_shape(coords[0], coords[1], radius)
 
         elif isinstance(shape, Point):
-            coords = shape_data["coords"]
-            print(coords)
-            draw_point_shape(coords[0], coords[1])
-
-
-# def load():
-#     filename = filedialog.askopenfilename()
-#     # print(filename)
-#     if not filename or not filename.endswith(".json"):
-#         return
-#     with open(filename, 'r') as f:
-#         print(filename)
-#         shapes_data = json.load(f)
-#     reset()
-#
-#     print(shapes_data)
-#     for shape_data in shapes_data:
-#         shape_type = shape_data["type"]
-#
-#         if shape_type == "Point":
-#             coords = shape_data["coords"]
-#             print(len(coords))
-#             draw_point_shape(coords[0], coords[1])
-#
-#         elif shape_type == "Line":
-#             p1 = shape_data["p1"]
-#             p2 = shape_data["p2"]
-#             line = Line(p1, p2)
-#             draw_line_shape(line)
-#
-#         elif shape_type == "Circle":
-#             coords = shape_data["coords"]
-#             radius = shape_data["radius"]
-#             draw_circle_shape(coords[0], coords[1], radius)
+            flag = False
+            for s in config.shapes:
+                if isinstance(s, Line):
+                    if s.is_line_edge(shape)[0]:
+                        flag = True
+            if not flag:
+                x = shape_data["x_coord"]
+                y = shape_data["y_coord"]
+                draw_point_shape(x, y)
+            else:
+                pass
 
 
 def do_same_command(command):
