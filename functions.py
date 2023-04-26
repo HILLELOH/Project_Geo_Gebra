@@ -1,4 +1,5 @@
 import json
+from pprint import pprint
 from tkinter import ttk, filedialog
 
 import numpy as np
@@ -61,6 +62,7 @@ def create_buttons():
     delete_button = tk.Button(config.buttons_panel, text="Delete shape", command=delete_shape)
     undo_button = tk.Button(config.buttons_panel, text="undo", command=undo)
     redo_button = tk.Button(config.buttons_panel, text="redo", command=redo)
+    clear_history_button = tk.Button(config.buttons_panel, text="clear history", command=clear_history)
 
     buttons = [save_button,
                load_button,
@@ -73,12 +75,14 @@ def create_buttons():
                # polygon_button,
 
                # file_button,
+               clear_history_button,
                redo_button,
                undo_button]
 
     padding = 2
-    right = [undo_button,
-             redo_button]
+    right = [clear_history_button,
+             undo_button,
+             redo_button, ]
     for i in range(len(buttons)):
         if buttons[i] in right:
             buttons[i].pack(side=tk.RIGHT, padx=padding)
@@ -89,15 +93,28 @@ def create_buttons():
     # make_file_button_frame(config.file_frame)
 
 
+def is_start_end(p, line):
+    threshold = 0.05
+
+    if abs(p.get_x() - line.get_start_point()[0]) < threshold and abs(
+            p.get_y() - line.get_start_point()[1]) < threshold:
+        return "start"
+
+    elif abs(p.get_x() - line.get_end_point()[0]) < threshold and abs(p.get_y() - line.get_end_point()[1]) < threshold:
+        return "end"
+
+    else:
+        # return f'{abs(coords[0] - line.get_start_point()[0])}, {abs(coords[1] - line.get_start_point()[1])}\n' \
+        #        f'{abs(coords[0] - line.get_end_point()[0])}, {abs(coords[1] - line.get_end_point()[1])}'
+        return None
+
+
 def shape_clicked(x, y):
     threshold = 0.5
     for shape in config.shapes:
         if isinstance(shape, Point):
             try:
-                l = shape.coords.tolist()[0][0]
-                point_x = l[0]
-                point_y = l[1]
-                if np.abs(x - point_x) <= threshold and np.abs(y - point_y) <= threshold:
+                if np.abs(x - shape.get_x()) <= threshold and np.abs(y - shape.get_y()) <= threshold:
                     return shape
             except TypeError:
                 print("")
@@ -109,11 +126,11 @@ def shape_clicked(x, y):
             if np.abs(distance - shape.radius) <= threshold:
                 return shape
 
-        elif isinstance(shape, Line):
-            m, b = shape.m_b()
-            line_y = m * x + b
-            if np.abs(y - line_y) <= threshold:
-                return shape
+        # elif isinstance(shape, Line):
+        #     m, b = shape.m_b()
+        #     line_y = m * x + b
+        #     if np.abs(y - line_y) <= threshold:
+        #         return shape
     return None
 
 
@@ -137,16 +154,45 @@ def on_motion(event):
         dy = y - config.start_drag_y
         config.start_drag_x, config.start_drag_y = x, y
 
-        if isinstance(config.selected_shape, Line):  # Check if the selected_shape is a Line
-            m, b = config.selected_shape.m_b()
-            b += dy  # Update the y-intercept of the line
-            xdata, ydata = config.selected_shape.line_obj.get_data()
-            ydata = m * xdata + b
-            config.selected_shape.line_obj.set_data(xdata, ydata)
+        # if isinstance(config.selected_shape, Line):  # Check if the selected_shape is a Line
+        #     m, b = config.selected_shape.m_b()
+        #     b += dy  # Update the y-intercept of the line
+        #     xdata, ydata = config.selected_shape.line_obj.get_data()
+        #     ydata = m * xdata + b
+        #     config.selected_shape.line_obj.set_data(xdata, ydata)
 
-        elif isinstance(config.selected_shape, Point):
-            config.selected_shape.coords[0][0][0] += dx
-            config.selected_shape.coords[0][0][1] += dy
+        if isinstance(config.selected_shape, Point):
+            flag = False
+            for shape in config.shapes:
+                if isinstance(shape, Line):
+                    if shape.is_line_edge(config.selected_shape)[1] == "start":
+                        print("start")
+                        print(config.selected_shape)
+                        config.selected_shape.coords[0][0] += dx
+                        config.selected_shape.coords[0][1] += dy
+                        config.selected_shape.set_x(dx)
+                        config.selected_shape.set_y(dy)
+
+                        shape.set_start_point(dx, dy)
+                        flag = True
+                        break
+
+                    elif shape.is_line_edge(config.selected_shape)[1] == "end":
+                        print("end")
+                        config.selected_shape.coords[0][0] += dx
+                        config.selected_shape.coords[0][1] += dy
+                        config.selected_shape.set_x(dx)
+                        config.selected_shape.set_y(dy)
+                        shape.set_end_point(dx, dy)
+                        flag = True
+                        break
+
+            if not flag:
+                config.selected_shape.coords[0][0] += dx
+                config.selected_shape.coords[0][1] += dy
+                config.selected_shape.set_x(dx)
+                config.selected_shape.set_y(dy)
+
 
         elif isinstance(config.selected_shape, Circle):
             config.selected_shape.coords[0][0] += dx
@@ -231,8 +277,7 @@ def handle_input_circle(event):
 
             # Disconnect the circle event listener so it doesn't interfere with other shapes
             config.ax.figure.canvas.mpl_disconnect(config.circle_cid)
-            config.circle_cid = None
-            config.circle_x, config.circle_y = [None] * 2
+            config.circle_cid, config.circle_x, config.circle_y = [None] * 3
 
 
 def handle_input_point(event):
@@ -256,8 +301,6 @@ def handle_input_line(event):
             # Second click sets the end point
             p1 = Point((config.line_x, config.line_y))
             p2 = Point((event.xdata, event.ydata))
-            draw_point_shape(config.line_x, config.line_y)
-            draw_point_shape(event.xdata, event.ydata)
             line = Line(p1, p2)
             draw_line_shape(line)
 
@@ -266,6 +309,7 @@ def handle_input_line(event):
             config.line_x, config.line_y = [None] * 2
             plt.title("")
             plt.draw()
+
 
 #
 # def handle_input_polygon(event):
@@ -303,13 +347,40 @@ def handle_delete_shape(event):
     if event.button == 1:
         shape = shape_clicked(event.xdata, event.ydata)
         if shape is not None:
-            if isinstance(shape, Line):
-                command = {"type": 'delete', "shape": shape}
-                config.undo_stack.insert(len(config.undo_stack), command)
+            # if isinstance(shape, Line):
+            #     start = Point((shape.x1, shape.y1))
+            #     end = Point((shape.x2, shape.y2))
+            #     command = {"type": 'delete', "shape": shape, "start": start, "end": end}
+            #     config.undo_stack.insert(len(config.undo_stack), command)
+            #
+            #     config.shapes.remove(start)
+            #     config.shapes.remove(end)
+            #     config.shapes.remove(shape)
 
-                config.shapes.remove((shape.x1, shape.y1))
-                config.shapes.remove((shape.x2, shape.y2))
-                config.shapes.remove(shape)
+            if isinstance(shape, Point):
+                flag = False
+                for s in config.shapes:
+                    if isinstance(s, Line):
+                        print(s.is_line_edge(shape)[0])
+                        if s.is_line_edge(shape)[0] is True:
+                            command = {"type": 'delete', "shape": s, "start": s.get_start(), "end": s.get_end()}
+                            config.undo_stack.insert(len(config.undo_stack), command)
+
+                            print(s.get_start_point())
+                            # for s in config.shapes:
+                            #     if isinstance(s, Line):
+                            #         print(type(s.get_start_point()))
+                            config.shapes.remove(s.get_start())
+                            config.shapes.remove(s.get_end())
+                            config.shapes.remove(s)
+                            flag = True
+                            break
+
+                if not flag:
+                    print("askdpasd")
+                    command = {"type": 'delete', "shape": shape}
+                    config.undo_stack.insert(len(config.undo_stack), command)
+                    config.shapes.remove(shape)
 
             else:
                 command = {"type": 'delete', "shape": shape}
@@ -321,7 +392,7 @@ def handle_delete_shape(event):
 
 
 def draw_point_shape(x, y):
-    point = Point([(x, y)])
+    point = Point((x, y))
     point.draw(config.ax)
     config.shapes.append(point)
 
@@ -333,11 +404,19 @@ def draw_point_shape(x, y):
 
 
 def draw_line_shape(line):
-    m, b = line.m_b()
+    start = line.get_start()
+    end = line.get_end()
+
+    start.draw(config.ax)
+    end.draw(config.ax)
+
+    config.shapes.append(start)
+    config.shapes.append(end)
+
     line.draw(config.ax)
     config.shapes.append(line)
 
-    command = {"type": 'draw', "shape": config.shapes[-1], "m": m, "b": b}
+    command = {"type": 'draw', "shape": config.shapes[-1], "start": start, "end": end}
     config.undo_stack.insert(len(config.undo_stack), command)
 
     update_display()
@@ -363,13 +442,13 @@ def run():
 
 def update_display():
     config.ax.cla()
-
     config.ax.set_xlim(-10, 10)
     config.ax.set_ylim(-10, 10)
     config.ax.set_aspect('equal')  # Set the aspect ratio to 'equal'
     config.ax.grid(True)
     config.ax.set_xticks(np.arange(-20, 21, 5))
     config.ax.set_yticks(np.arange(-20, 21, 5))
+
     for shape in config.shapes:
         shape.draw(config.ax)
 
@@ -390,8 +469,7 @@ def update_label():
 
         elif isinstance(shape, Point):
             try:
-                coords = shape.coords.tolist()[0][0]
-                label_text = f'Point: ({float(coords[0]):.3f}, {float(coords[1]):.3f})'
+                label_text = f'Point: ({shape.get_x():.3f}, {shape.get_y():.3f})'
 
             except TypeError:
                 print(f'coords: {coords}')
@@ -407,16 +485,11 @@ def update_label():
 
 
 def reset():
-    if config.shapes is None:
-        config.undo_stack = []
-        config.redo_stack = []
-
     config.ax.clear()
     config.shapes = []
     for widget in config.label_widgets:
         widget.destroy()
     config.label_widgets = []
-
 
     # Reset the axes and grid
     config.ax.set_xlim(-10, 10)
@@ -439,16 +512,16 @@ def save():
 
         shape_type = type(shape).__name__
         if isinstance(shape, Line):
-            shape_data = {"type": shape_type, "p1": (shape.x1, shape.y1), "p2": (shape.x2, shape.y2)}
+            shape_data = {"p1": [shape.x1, shape.y1], "p2": [shape.x2, shape.y2]}
 
         elif isinstance(shape, Circle):
             shape_coords = shape.coords.tolist()
-            shape_data = {"type": shape_type, "coords": shape_coords[0], "radius": shape.radius}
+            print(f'her: {shape_coords}')
+            shape_data = {"coords": shape_coords[0], "radius": shape.radius}
 
         elif isinstance(shape, Point):
             shape_coords = shape.coords.tolist()
             shape_data = {
-                "type": shape_type,
                 "coords": shape_coords[0][0],
             }
 
@@ -469,31 +542,71 @@ def load():
         shapes_data = json.load(f)
     reset()
 
-    print(shapes_data)
-    for shape_data in shapes_data:
-        shape_type = shape_data["type"]
-
-        if shape_type == "Point":
-            coords = shape_data["coords"]
-            print(len(coords))
-            draw_point_shape(coords[0], coords[1])
-
-        elif shape_type == "Line":
+    for shape in shapes_data:
+        if isinstance(shape, Line):
             p1 = shape_data["p1"]
             p2 = shape_data["p2"]
             line = Line(p1, p2)
             draw_line_shape(line)
+            draw_point_shape(p1[0], p1[1])
+            draw_point_shape(p2[0], p2[1])
 
-        elif shape_type == "Circle":
+        elif isinstance(shape, Circle):
             coords = shape_data["coords"]
             radius = shape_data["radius"]
             draw_circle_shape(coords[0], coords[1], radius)
 
+        elif isinstance(shape, Point):
+            coords = shape_data["coords"]
+            print(coords)
+            draw_point_shape(coords[0], coords[1])
+
+
+# def load():
+#     filename = filedialog.askopenfilename()
+#     # print(filename)
+#     if not filename or not filename.endswith(".json"):
+#         return
+#     with open(filename, 'r') as f:
+#         print(filename)
+#         shapes_data = json.load(f)
+#     reset()
+#
+#     print(shapes_data)
+#     for shape_data in shapes_data:
+#         shape_type = shape_data["type"]
+#
+#         if shape_type == "Point":
+#             coords = shape_data["coords"]
+#             print(len(coords))
+#             draw_point_shape(coords[0], coords[1])
+#
+#         elif shape_type == "Line":
+#             p1 = shape_data["p1"]
+#             p2 = shape_data["p2"]
+#             line = Line(p1, p2)
+#             draw_line_shape(line)
+#
+#         elif shape_type == "Circle":
+#             coords = shape_data["coords"]
+#             radius = shape_data["radius"]
+#             draw_circle_shape(coords[0], coords[1], radius)
+
 
 def do_same_command(command):
+    config.last_command = command
     if command["type"] == 'delete':
         shape = command["shape"]
-        config.shapes.remove(shape)
+        if isinstance(shape, Point):
+            config.shapes.remove(shape)
+
+        if isinstance(shape, Line):
+            # pprint(config.shapes)
+
+            config.shapes.remove(command["start"])
+            config.shapes.remove(command["end"])
+            config.shapes.remove(shape)
+            # pprint(config.shapes)
 
         update_display()
         update_label()
@@ -502,8 +615,8 @@ def do_same_command(command):
         shape = command["shape"]
 
         if isinstance(shape, Line):
-            p1 = shape_data["p1"]
-            p2 = shape_data["p2"]
+            p1 = shape.get_start()
+            p2 = shape.get_end()
             line = Line(p1, p2)
             draw_line_shape(line)
 
@@ -519,8 +632,17 @@ def do_same_command(command):
 
 
 def do_opposite_command(command):
+    config.last_command = command
     if command["type"] == 'draw':
         shape = command["shape"]
+        if isinstance(shape, Line):
+            to_del = []
+            for s in config.shapes:
+                if isinstance(s, Point):
+                    if is_start_end(s, shape) is not None:
+                        to_del.append(s)
+            [config.shapes.remove(s) for s in to_del]
+
         config.shapes.remove(shape)
         update_display()
         update_label()
@@ -529,14 +651,13 @@ def do_opposite_command(command):
         shape = command["shape"]
 
         if isinstance(shape, Line):
-            p1 = shape_data["p1"]
-            p2 = shape_data["p2"]
+            p1 = shape.get_start()
+            p2 = shape.get_end()
             line = Line(p1, p2)
             draw_line_shape(line)
 
         elif isinstance(shape, Point):
             coords = shape.coords.tolist()[0][0]
-            # print(coords)
             draw_point_shape(coords[0], coords[1])
 
         elif isinstance(shape, Circle):
@@ -558,7 +679,14 @@ def undo():
     try:
         if config.undo_stack is not None:
             command = config.undo_stack.pop()
+            pprint(config.shapes)
             do_opposite_command(command)
+            pprint(config.shapes)
             config.redo_stack.insert(len(config.redo_stack), command)
     except IndexError:
         print("")
+
+
+def clear_history():
+    config.undo_stack = []
+    config.redo_stack = []
