@@ -801,6 +801,6 @@ r.setLevel(logging.DEBUG)
 # def redo():
 #
 
-def clear_history():
+def clear_history():#
     config.undo_stack = []
     config.redo_stack = []
