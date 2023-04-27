@@ -396,7 +396,7 @@ def draw_point_shape(x, y):
     point.draw(config.ax)
     config.shapes.append(point)
 
-    command = {"type": 'draw', "shape": config.shapes[-1], "coords": (config.circle_x, config.circle_y)}
+    command = {"type": 'draw', "shape": config.shapes[-1], "x_coords": x, "y_coords": y}
     config.undo_stack.insert(len(config.undo_stack), command)
 
     update_display()
@@ -540,42 +540,80 @@ def save():
         json.dump(shapes_data, f)
 
 
+# def load():
+#     filename = filedialog.askopenfilename()
+#     # print(filename)
+#     if not filename or not filename.endswith(".json"):
+#         return
+#     with open(filename, 'r') as f:
+#         print(filename)
+#         shapes_data = json.load(f)
+#     reset()
+#
+#     for shape in shapes_data:
+#         if isinstance(shape, Line):
+#             start_coords = shape_data["start"]
+#             end_coords = shape_data["end"]
+#             start = Point(start_coords)
+#             end = Point(end_coords)
+#             line = Line(start, end)
+#             draw_line_shape(line)
+#             # draw_point_shape(p1[0], p1[1])
+#             # draw_point_shape(p2[0], p2[1])
+#
+#         # elif isinstance(shape, Circle):
+#         #     coords = shape_data["coords"]
+#         #     radius = shape_data["radius"]
+#         #     draw_circle_shape(coords[0], coords[1], radius)
+#         #
+#         elif isinstance(shape, Point):
+#             flag = False
+#             # for s in config.shapes:
+#             #     if isinstance(s, Line):
+#             #         if s.is_line_edge(shape)[0]:
+#             #             flag = True
+#             if not flag:
+#                 x = shape_data["x_coord"]
+#                 y = shape_data["y_coord"]
+#                 draw_point_shape(x, y)
+#             else:
+#                 pass
+
 def load():
-    filename = filedialog.askopenfilename()
-    # print(filename)
-    if not filename or not filename.endswith(".json"):
+    global config
+
+    filepath = filedialog.askopenfilename(filetypes=[("JSON Files", "*.json")])
+    if not filepath:
         return
-    with open(filename, 'r') as f:
-        print(filename)
+
+    with open(filepath, 'r') as f:
         shapes_data = json.load(f)
-    reset()
-
-    for shape in shapes_data:
-        if isinstance(shape, Line):
-            p1 = shape_data["start"]
-            p2 = shape_data["end"]
-            line = shapes_data["shape"]
+    print(shapes_data)
+    shapes = []
+    for shape_data in shapes_data:
+        shape_type = shape_data["shape"]
+        print(shape_type)
+        if shape_type == "Line":
+            start = Point(shape_data["start"])
+            end = Point(shape_data["end"])
+            line = Line(start, end)
+            shapes.append(line)
             draw_line_shape(line)
-            draw_point_shape(p1.get_x(), p1.get_y())
-            draw_point_shape(p2.get_x(), p2.get_y())
 
-        elif isinstance(shape, Circle):
-            coords = shape_data["coords"]
-            radius = shape_data["radius"]
-            draw_circle_shape(coords[0], coords[1], radius)
+        # elif shape_type == "Circle":
+        #     center = Point(*shape_data["coords"])
+        #     radius = shape_data["radius"]
+        #     circle = Circle(center, radius)
+        #     shapes.append(circle)
 
-        elif isinstance(shape, Point):
-            flag = False
-            for s in config.shapes:
-                if isinstance(s, Line):
-                    if s.is_line_edge(shape)[0]:
-                        flag = True
-            if not flag:
-                x = shape_data["x_coord"]
-                y = shape_data["y_coord"]
-                draw_point_shape(x, y)
-            else:
-                pass
+        elif shape_type == "Point":
+            print("p_command")
+            x_coord = shape_data["x_coord"]
+            y_coord = shape_data["y_coord"]
+            point = Point((x_coord, y_coord))
+            shapes.append(point)
+            draw_point_shape(x_coord, y_coord)
+    config.shapes = shapes
 
 
 def do_same_command(command):
@@ -606,8 +644,9 @@ def do_same_command(command):
             draw_line_shape(line)
 
         elif isinstance(shape, Point):
-            coords = shape.coords.tolist()[0][0]
-            draw_point_shape(coords[0], coords[1])
+            x = command["x_coord"]
+            y = command["y_coord"]
+            draw_point_shape(x, y)
 
         elif isinstance(shape, Circle):
             coords = shape.coords.tolist()[0]
@@ -642,8 +681,9 @@ def do_opposite_command(command):
             draw_line_shape(line)
 
         elif isinstance(shape, Point):
-            coords = shape.coords.tolist()[0][0]
-            draw_point_shape(coords[0], coords[1])
+            x = command["x_coord"]
+            y = command["y_coord"]
+            draw_point_shape(x, y)
 
         elif isinstance(shape, Circle):
             coords = shape.coords.tolist()[0]
