@@ -17,7 +17,6 @@ from Shapes.Line import *
 import config
 
 
-
 class SidePanel(tk.Frame):
     def __init__(self, parent):
         tk.Frame.__init__(self, parent)
@@ -399,7 +398,7 @@ def draw_point_shape(x, y):
     point.draw(config.ax)
     config.shapes.append(point)
 
-    command = {"type": 'draw', "shape": config.shapes[-1], "x_coords": x, "y_coords": y}
+    command = {"type": 'draw', "shape": config.shapes[-1], "x_coord": x, "y_coord": y}
     config.undo_stack.insert(len(config.undo_stack), command)
 
     update_display()
@@ -622,7 +621,6 @@ def load():
 
 
 def do_same_command(command):
-
     if command["type"] == 'delete':
         shape = command["shape"]
         if isinstance(shape, Point):
@@ -661,7 +659,6 @@ def do_same_command(command):
 
 
 def do_opposite_command(command):
-
     if command["type"] == 'draw':
         shape = command["shape"]
         if isinstance(shape, Line):
@@ -756,51 +753,58 @@ def do_opposite_command(command):
 r = logging.getLogger()
 r.setLevel(logging.DEBUG)
 
-# def redo():
-#     try:
-#         if len(config.redo_stack):
-#
-#             print(config.undo_stack)
-#             command = config.undo_stack[-1]
-#             if command == config.last_command:
-#                 print("Cannot redo the same command twice in a row.")
-#             else:
-#                 config.redo_stack.pop()
-#                 config.last_command = command
-#                 do_same_command(command)
-#                 config.undo_stack.append(command)
-#
-#     except IndexError:
-#         print("Nothing to redo.")
-#
-#     debug(f'redo: {config.redo_stack}')
-#     debug(f'undo: {config.undo_stack}')
-#
-#
-# def undo():
-#     try:
-#         if len(config.undo_stack):
-#
-#             command = config.redo_stack[-1]
-#             if command == config.last_command:
-#                 print("Cannot undo the same command twice in a row.")
-#             else:
-#                 config.undo_stack.pop()
-#                 config.last_command = command
-#                 do_opposite_command(command)
-#                 config.redo_stack.append(command)
-#
-#     except IndexError:
-#         print("Nothing to undo.")
-#
-#     debug(f'redo: {config.redo_stack}')
-#     debug(f'undo: {config.undo_stack}')
 
-# def undo():
-#
-# def redo():
-#
+def redo():
+    try:
+        if len(config.redo_stack) == 0:
+            "nothing to redo"
 
-def clear_history():#
+        elif len(config.redo_stack) > 0:
+
+            # print(config.undo_stack)
+            command = config.redo_stack[-1]
+            if command == config.last_command_redo:
+                print("Cannot redo the same command twice in a row.")
+            else:
+                command = config.redo_stack.pop()
+                config.last_command_redo = command
+                config.last_command_undo = None
+                print(config.last_command_redo)
+                do_same_command(command)
+                # config.undo_stack.append(command)
+
+    except IndexError:
+        print("Nothing to redo.")
+
+    debug(f'redo: {config.redo_stack}')
+    debug(f'undo: {config.undo_stack}')
+
+
+def undo():
+    try:
+        if len(config.undo_stack) == 0:
+            "nothing to undo"
+        elif len(config.undo_stack) > 0:
+
+            command = config.undo_stack[-1]
+            if command == config.last_command_undo:
+                print("Cannot undo the same command twice in a row.")
+            else:
+                command = config.undo_stack.pop()
+                config.last_command_undo = command
+                config.last_command_redo = None
+                print(config.last_command_undo)
+                do_opposite_command(command)
+                config.redo_stack.append(command)
+
+    except IndexError:
+        print("Nothing to undo.")
+
+    debug(f'redo: {config.redo_stack}')
+    debug(f'undo: {config.undo_stack}')
+
+
+
+def clear_history():  #
     config.undo_stack = []
     config.redo_stack = []

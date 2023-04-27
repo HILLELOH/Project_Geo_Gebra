@@ -14,5 +14,6 @@ redo_stack = []
 
 polygon_vertices = []
 
-last_command = None
+last_command_undo = None
+last_command_redo = None
 
