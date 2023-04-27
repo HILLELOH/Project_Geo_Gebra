@@ -1,3 +1,5 @@
+
+
 root, fig, ax, canvas, toolbar, shapes, label_widgets, side_panel, cid, circle_cid, selected_shape, start_drag_x,\
     start_drag_y, press_cid, release_cid, motion_cid, buttons_panel = [None] * 17
 
@@ -17,3 +19,6 @@ polygon_vertices = []
 last_command_undo = None
 last_command_redo = None
 
+
+label_objects = None
+deleted_labels = []

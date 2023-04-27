@@ -1,19 +1,16 @@
 import json
 import logging
 from logging import debug
-from pprint import pprint
 from tkinter import ttk, filedialog, messagebox
 
-import numpy as np
-import tkinter as tk
+from label_conf import generate_alphanumeric_sequence
 
-from PIL import ImageTk
-from matplotlib import pyplot as plt
+label_generator = generate_alphanumeric_sequence()
+import tkinter as tk
 
 from Shapes.Circle import *
 from Shapes.Point import *
 from Shapes.Line import *
-# from config import root, fig, ax
 import config
 
 
@@ -283,7 +280,7 @@ def handle_input_circle(event):
 
 
 def handle_input_point(event):
-    config.line_x, config.line_y = [None]*2
+    config.line_x, config.line_y = [None] * 2
     if event.button == 1:  # Left mouse button
         x, y = event.xdata, event.ydata
         draw_point_shape(x, y)
@@ -302,11 +299,11 @@ def handle_input_line(event):
 
         else:
             # Second click sets the end point
-            p1 = Point((config.line_x, config.line_y))
-            p2 = Point((event.xdata, event.ydata))
-            line = Line(p1, p2)
-            draw_line_shape(line.get_start(), line.get_end())
+            p1 = Point((config.line_x, config.line_y), next(label_generator))
+            p2 = Point((event.xdata, event.ydata), next(label_generator))
+            line = Line(p1, p2, next(label_generator))
 
+            draw_line_shape(line.get_start(), line.get_end())
             config.ax.figure.canvas.mpl_disconnect(config.cid)
             # Remove start_point attribute so user can draw another line
             config.line_x, config.line_y = [None] * 2
@@ -366,12 +363,10 @@ def handle_delete_shape(event):
                     if isinstance(s, Line):
                         print(s.is_line_edge(shape)[0])
                         if s.is_line_edge(shape)[0] is True:
-                            command = {"type": 'draw', "shape": s, "start": s.get_start(), "end": s.get_end()}
+                            command = {"type": 'delete', "shape": s, "start": s.get_start(), "end": s.get_end()}
                             # if command in config.undo_stack:
                             #     config.undo_stack.remove(command)
-                            command["type"] = 'delete'
                             config.undo_stack.insert(len(config.undo_stack), command)
-
                             print(s.get_start_point())
                             # for s in config.shapes:
                             #     if isinstance(s, Line):
@@ -386,21 +381,19 @@ def handle_delete_shape(event):
                             break
 
                 if not flag:
-                    print("askdpasd")
-                    command = {"type": 'draw', "shape": config.shapes[-1], "x_coord": shape.get_x(), "y_coord": shape.get_y()}
+                    command = {"type": 'delete', "shape": config.shapes[-1], "x_coord": shape.get_x(),
+                               "y_coord": shape.get_y()}
                     # if command in config.undo_stack:
                     #     config.undo_stack.remove(command)
-                    command["type"] = 'delete'
                     config.undo_stack.insert(len(config.undo_stack), command)
                     config.shapes.remove(shape)
 
                     debug(f'redo: {config.redo_stack}')
                     debug(f'undo: {config.undo_stack}')
             else:
-                command = {"type": 'draw', "shape": shape}
+                command = {"type": 'delete', "shape": shape}
                 # if command in config.undo_stack:
                 #     config.undo_stack.remove(command)
-                command["type"] = 'delete'
                 config.undo_stack.insert(len(config.undo_stack), command)
                 config.shapes.remove(shape)
 
@@ -409,7 +402,7 @@ def handle_delete_shape(event):
 
 
 def draw_point_shape(x, y):
-    point = Point((x, y))
+    point = Point((x, y), next(label_generator))
     point.draw(config.ax)
     config.shapes.append(point)
 
@@ -421,7 +414,7 @@ def draw_point_shape(x, y):
 
 
 def draw_line_shape(start, end):
-    line = Line(start, end)
+    line = Line(start, end, next(label_generator))
 
     start.draw(config.ax)
     end.draw(config.ax)
@@ -440,7 +433,7 @@ def draw_line_shape(start, end):
 
 
 def draw_circle_shape(x, y, radius):
-    circle = Circle([(x, y)], radius)
+    circle = Circle([(x, y)], radius, next(label_generator))
     circle.draw(config.ax)
     config.shapes.append(circle)
 
@@ -472,7 +465,26 @@ def update_display():
     config.ax.set_yticks(np.arange(-20, 21, 5))
     # config.canvas.update_idletasks()
     for shape in config.shapes:
-        shape.draw(config.ax)
+        if isinstance(shape, Point):
+            flag = False
+            for s in config.shapes:
+                if isinstance(s, Line):
+                    if s.is_line_edge(shape)[0]:
+                        flag = True
+
+            if not flag:
+                shape.draw(config.ax)
+
+            else:
+                pass
+
+        elif isinstance(shape, Circle):
+            shape.draw(config.ax)
+
+        elif isinstance(shape, Line):
+            shape.draw(config.ax)
+            shape.get_start().draw(config.ax)
+            shape.get_end().draw(config.ax)
 
     plt.draw()
 
@@ -484,7 +496,6 @@ def update_label():
     config.label_widgets = []
 
     for shape in config.shapes:
-
         if isinstance(shape, Line):
             m, b = shape.m_b()
             label_text = f'Line: y = {m:.3f}x + {b:.3f}'
@@ -558,8 +569,8 @@ def save():
 
 
 def load():
-    global config
-
+    global config, label_generator
+    label_generator = generate_alphanumeric_sequence()
     filepath = filedialog.askopenfilename(filetypes=[("JSON Files", "*.json")])
     if not filepath:
         return
@@ -572,17 +583,18 @@ def load():
         shape_type = shape_data["shape"]
         print(shape_type)
         if shape_type == "Line":
-            start = Point(shape_data["start"])
-            end = Point(shape_data["end"])
-            line = Line(start, end)
+            start = Point(shape_data["start"], next(label_generator))
+            end = Point(shape_data["end"], next(label_generator))
+            line = Line(start, end, next(label_generator))
             shapes.append(line)
 
             draw_line_shape(line.get_start(), line.get_end())
 
         elif shape_type == "Circle":
-            center = Point(shape_data["center"])
+            center = Point(shape_data["center"], next(label_generator))
             radius = shape_data["radius"]
-            circle = Circle(center, radius)
+            circle = Circle(center, radius, next(label_generator))
+
             draw_circle_shape(center.get_x(), center.get_y(), radius)
             shapes.append(circle)
 
@@ -590,10 +602,12 @@ def load():
             print("p_command")
             x_coord = shape_data["x_coord"]
             y_coord = shape_data["y_coord"]
-            point = Point((x_coord, y_coord))
+            point = Point((x_coord, y_coord), next(label_generator))
             shapes.append(point)
             draw_point_shape(x_coord, y_coord)
+
     config.shapes = shapes
+    print(config.shapes)
 
 
 def do_same_command(command):
@@ -620,7 +634,7 @@ def do_same_command(command):
         if isinstance(shape, Line):
             p1 = shape.get_start()
             p2 = shape.get_end()
-            line = Line(p1, p2)
+            line = Line(p1, p2, next(label_generator))
             draw_line_shape(line.get_start(), line.get_end())
 
         elif isinstance(shape, Point):
@@ -646,7 +660,7 @@ def do_opposite_command(command):
                         to_del.append(s)
             [config.shapes.remove(s) for s in to_del]
 
-        config.shapes.remove(Line(shape))
+        config.shapes.remove(shape)
         update_display()
         update_label()
 
@@ -656,7 +670,7 @@ def do_opposite_command(command):
         if isinstance(shape, Line):
             p1 = shape.get_start()
             p2 = shape.get_end()
-            line = Line(p1, p2)
+            line = Line(p1, p2, next(label_generator))
             draw_line_shape(line.get_start(), line.get_end())
             config.undo_stack.pop()
 
@@ -677,7 +691,6 @@ r.setLevel(logging.DEBUG)
 
 
 def redo():
-
     if len(config.redo_stack) == 0:
         "nothing to redo"
 
@@ -705,13 +718,11 @@ def redo():
                 print("Nothing to redo.")
             config.undo_stack.append(command)
 
-
     debug(f'redo: {config.redo_stack}')
     debug(f'undo: {config.undo_stack}')
 
 
 def undo():
-
     if len(config.undo_stack) == 0:
         "nothing to undo"
     elif len(config.undo_stack) > 0:
@@ -730,10 +741,8 @@ def undo():
                 print("Nothing to undo.")
             config.redo_stack.append(command)
 
-
     debug(f'redo: {config.redo_stack}')
     debug(f'undo: {config.undo_stack}')
-
 
 
 def clear_history():  #

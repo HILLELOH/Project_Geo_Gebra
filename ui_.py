@@ -1,8 +1,8 @@
 from tkinter import Toplevel
 
+import matplotlib
 from matplotlib.backends._backend_tk import NavigationToolbar2Tk
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-
 import config
 from config import *
 

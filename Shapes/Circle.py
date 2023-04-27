@@ -4,10 +4,12 @@ from Shapes.shapes import Shape
 from matplotlib.axes import Axes
 from matplotlib import pyplot as plt
 
+
 class Circle(Shape):
-    def __init__(self, coords, radius):
+    def __init__(self, coords, radius, label):
         super().__init__(coords)
         self.radius = radius
+        self.label = label
 
     def draw(self, ax: Axes):
         x, y = self.coords[0]
@@ -16,3 +18,6 @@ class Circle(Shape):
 
     def getShape(self):
         return f'{Circle}'
+
+    def get_label(self):
+        return self.label

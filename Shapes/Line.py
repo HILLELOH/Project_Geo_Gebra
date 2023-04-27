@@ -9,7 +9,7 @@ import config
 
 
 class Line(Shape):
-    def __init__(self, p1, p2):
+    def __init__(self, p1, p2, label):
         self.p1 = p1
         self.x1 = p1.coords[0][0]
         self.y1 = p1.coords[0][1]
@@ -19,6 +19,8 @@ class Line(Shape):
         self.y2 = p2.coords[0][1]
         self.line_obj = None
         self.dashes_obj = None
+
+        self.label = label
         # self.update_line_and_dashes()
 
     def m_b(self):
@@ -39,7 +41,7 @@ class Line(Shape):
 
         # Draw the dashed lines on either side of the solid line
 
-        self.dashes_obj, = ax.plot(x_range, m * x_range + b, linestyle='--', linewidth=1, color='black')
+        self.dashes_obj, = ax.plot(x_range, m * x_range + b, linestyle='-', linewidth=1, color='black')
         #self.update_line_and_dashes()
 
     # def update_line_and_dashes(self):
@@ -99,3 +101,6 @@ class Line(Shape):
 
     # def __repr__(self):
     #     return "Line"
+
+    def get_label(self):
+        return self.label
