@@ -522,9 +522,10 @@ def save():
             shape_data = {"shape": "Line", "start": (start.get_x(), start.get_y()), "end": (end.get_x(), end.get_y())}
 
         elif isinstance(shape, Circle):
-            shape_coords = shape.coords.tolist()
+            shape_coords = shape.coords.tolist()[0]
+            print(shape_coords)
             # print(f'her: {shape_coords}')
-            shape_data = {"shape": "Circle", "coords": shape_coords[0], "radius": shape.radius}
+            shape_data = {"shape": "Circle", "center": (shape_coords[0], shape_coords[1]), "radius": shape.radius}
 
         elif isinstance(shape, Point):
             shape_data = {
@@ -600,11 +601,12 @@ def load():
             shapes.append(line)
             draw_line_shape(line)
 
-        # elif shape_type == "Circle":
-        #     center = Point(*shape_data["coords"])
-        #     radius = shape_data["radius"]
-        #     circle = Circle(center, radius)
-        #     shapes.append(circle)
+        elif shape_type == "Circle":
+            center = Point(shape_data["center"])
+            radius = shape_data["radius"]
+            circle = Circle(center, radius)
+            draw_circle_shape(center.get_x(), center.get_y(), radius)
+            shapes.append(circle)
 
         elif shape_type == "Point":
             print("p_command")
