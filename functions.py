@@ -283,6 +283,7 @@ def handle_input_circle(event):
 
 
 def handle_input_point(event):
+    config.line_x, config.line_y = [None]*2
     if event.button == 1:  # Left mouse button
         x, y = event.xdata, event.ydata
         draw_point_shape(x, y)
@@ -304,7 +305,7 @@ def handle_input_line(event):
             p1 = Point((config.line_x, config.line_y))
             p2 = Point((event.xdata, event.ydata))
             line = Line(p1, p2)
-            draw_line_shape(line)
+            draw_line_shape(line.get_start(), line.get_end())
 
             config.ax.figure.canvas.mpl_disconnect(config.cid)
             # Remove start_point attribute so user can draw another line
@@ -365,7 +366,10 @@ def handle_delete_shape(event):
                     if isinstance(s, Line):
                         print(s.is_line_edge(shape)[0])
                         if s.is_line_edge(shape)[0] is True:
-                            command = {"type": 'delete', "shape": s, "start": s.get_start(), "end": s.get_end()}
+                            command = {"type": 'draw', "shape": s, "start": s.get_start(), "end": s.get_end()}
+                            # if command in config.undo_stack:
+                            #     config.undo_stack.remove(command)
+                            command["type"] = 'delete'
                             config.undo_stack.insert(len(config.undo_stack), command)
 
                             print(s.get_start_point())
@@ -376,16 +380,27 @@ def handle_delete_shape(event):
                             config.shapes.remove(s.get_end())
                             config.shapes.remove(s)
                             flag = True
+
+                            debug(f'redo: {config.redo_stack}')
+                            debug(f'undo: {config.undo_stack}')
                             break
 
                 if not flag:
                     print("askdpasd")
-                    command = {"type": 'delete', "shape": shape}
+                    command = {"type": 'draw', "shape": config.shapes[-1], "x_coord": shape.get_x(), "y_coord": shape.get_y()}
+                    # if command in config.undo_stack:
+                    #     config.undo_stack.remove(command)
+                    command["type"] = 'delete'
                     config.undo_stack.insert(len(config.undo_stack), command)
                     config.shapes.remove(shape)
 
+                    debug(f'redo: {config.redo_stack}')
+                    debug(f'undo: {config.undo_stack}')
             else:
-                command = {"type": 'delete', "shape": shape}
+                command = {"type": 'draw', "shape": shape}
+                # if command in config.undo_stack:
+                #     config.undo_stack.remove(command)
+                command["type"] = 'delete'
                 config.undo_stack.insert(len(config.undo_stack), command)
                 config.shapes.remove(shape)
 
@@ -405,9 +420,8 @@ def draw_point_shape(x, y):
     update_label()
 
 
-def draw_line_shape(line):
-    start = line.get_start()
-    end = line.get_end()
+def draw_line_shape(start, end):
+    line = Line(start, end)
 
     start.draw(config.ax)
     end.draw(config.ax)
@@ -480,7 +494,7 @@ def update_label():
                 label_text = f'Point: ({shape.get_x():.3f}, {shape.get_y():.3f})'
 
             except TypeError:
-                print(f'coords: {coords}')
+                print(f'coords:')
 
         elif isinstance(shape, Circle):
             x, y = shape.coords[0]
@@ -543,45 +557,6 @@ def save():
         json.dump(shapes_data, f)
 
 
-# def load():
-#     filename = filedialog.askopenfilename()
-#     # print(filename)
-#     if not filename or not filename.endswith(".json"):
-#         return
-#     with open(filename, 'r') as f:
-#         print(filename)
-#         shapes_data = json.load(f)
-#     reset()
-#
-#     for shape in shapes_data:
-#         if isinstance(shape, Line):
-#             start_coords = shape_data["start"]
-#             end_coords = shape_data["end"]
-#             start = Point(start_coords)
-#             end = Point(end_coords)
-#             line = Line(start, end)
-#             draw_line_shape(line)
-#             # draw_point_shape(p1[0], p1[1])
-#             # draw_point_shape(p2[0], p2[1])
-#
-#         # elif isinstance(shape, Circle):
-#         #     coords = shape_data["coords"]
-#         #     radius = shape_data["radius"]
-#         #     draw_circle_shape(coords[0], coords[1], radius)
-#         #
-#         elif isinstance(shape, Point):
-#             flag = False
-#             # for s in config.shapes:
-#             #     if isinstance(s, Line):
-#             #         if s.is_line_edge(shape)[0]:
-#             #             flag = True
-#             if not flag:
-#                 x = shape_data["x_coord"]
-#                 y = shape_data["y_coord"]
-#                 draw_point_shape(x, y)
-#             else:
-#                 pass
-
 def load():
     global config
 
@@ -601,7 +576,8 @@ def load():
             end = Point(shape_data["end"])
             line = Line(start, end)
             shapes.append(line)
-            draw_line_shape(line)
+
+            draw_line_shape(line.get_start(), line.get_end())
 
         elif shape_type == "Circle":
             center = Point(shape_data["center"])
@@ -632,6 +608,7 @@ def do_same_command(command):
             config.shapes.remove(command["start"])
             config.shapes.remove(command["end"])
             config.shapes.remove(shape)
+
             # pprint(config.shapes)
 
         update_display()
@@ -644,7 +621,7 @@ def do_same_command(command):
             p1 = shape.get_start()
             p2 = shape.get_end()
             line = Line(p1, p2)
-            draw_line_shape(line)
+            draw_line_shape(line.get_start(), line.get_end())
 
         elif isinstance(shape, Point):
             x = command["x_coord"]
@@ -669,7 +646,7 @@ def do_opposite_command(command):
                         to_del.append(s)
             [config.shapes.remove(s) for s in to_del]
 
-        config.shapes.remove(shape)
+        config.shapes.remove(Line(shape))
         update_display()
         update_label()
 
@@ -680,125 +657,79 @@ def do_opposite_command(command):
             p1 = shape.get_start()
             p2 = shape.get_end()
             line = Line(p1, p2)
-            draw_line_shape(line)
+            draw_line_shape(line.get_start(), line.get_end())
+            config.undo_stack.pop()
 
         elif isinstance(shape, Point):
             x = command["x_coord"]
             y = command["y_coord"]
             draw_point_shape(x, y)
+            config.undo_stack.pop()
 
         elif isinstance(shape, Circle):
             coords = shape.coords.tolist()[0]
             draw_circle_shape(coords[0], coords[1], shape.radius)
+            config.undo_stack.pop()
 
 
-# def redo():
-#
-#     try:
-#         if config.redo_stack is not None:
-#             if config.last_command == config.redo_stack[-1]:
-#                 print("error")
-#             else:
-#                 command = config.redo_stack.pop()
-#                 config.last_command = command
-#                 do_same_command(command)
-#                 config.undo_stack.insert(len(config.redo_stack), command)
-#     except IndexError:
-#         print("")
-#
-#
-# def undo():
-#     try:
-#         if config.undo_stack is not None:
-#             if config.last_command == config.undo_stack[-1]:
-#                 print("error")
-#             else:
-#                 command = config.undo_stack.pop()
-#                 config.last_command = command
-#                 pprint(config.shapes)
-#                 do_opposite_command(command)
-#                 pprint(config.shapes)
-#                 config.redo_stack.insert(len(config.redo_stack), command)
-#     except IndexError:
-#         print("")
-
-# def redo():
-#     try:
-#         if config.redo_stack:
-#             command = config.redo_stack.pop()
-#             if command == config.last_command:
-#                 print("error")
-#             else:
-#                 config.last_command = command
-#                 do_same_command(command)
-#                 print(command)
-#                 config.undo_stack.append(command)
-#     except IndexError:
-#         print("")
-#
-#
-# def undo():
-#     try:
-#         if config.undo_stack:
-#             command = config.undo_stack.pop()
-#             if command == config.last_command:
-#                 print("error")
-#             else:
-#                 config.last_command = command
-#                 do_opposite_command(command)
-#                 print(command)
-#                 config.redo_stack.append(command)
-#     except IndexError:
-#         print("")
 r = logging.getLogger()
 r.setLevel(logging.DEBUG)
 
 
 def redo():
-    try:
-        if len(config.redo_stack) == 0:
-            "nothing to redo"
 
-        elif len(config.redo_stack) > 0:
+    if len(config.redo_stack) == 0:
+        "nothing to redo"
 
-            # print(config.undo_stack)
-            command = config.redo_stack[-1]
-            if command == config.last_command_redo:
-                print("Cannot redo the same command twice in a row.")
-            else:
-                command = config.redo_stack.pop()
-                config.last_command_redo = command
-                config.last_command_undo = None
-                print(config.last_command_redo)
+    elif len(config.redo_stack) > 0:
+
+        # print(config.undo_stack)
+        command = config.redo_stack[-1]
+        if command == config.last_command_redo:
+            print("Cannot redo the same command twice in a row.")
+        else:
+            # if command["type"] == 'delete':
+            #     print("not have")
+            # else:
+            #     command = config.redo_stack.pop()
+            #     config.last_command_redo = command
+            #     print(config.last_command_redo)
+            #     do_same_command(command)
+            #     # config.undo_stack.append(command)
+            command = config.redo_stack.pop()
+            config.last_command_redo = command
+            print(config.last_command_redo)
+            try:
                 do_same_command(command)
-                # config.undo_stack.append(command)
+            except IndexError:
+                print("Nothing to redo.")
+            config.undo_stack.append(command)
 
-    except IndexError:
-        print("Nothing to redo.")
 
     debug(f'redo: {config.redo_stack}')
     debug(f'undo: {config.undo_stack}')
 
 
 def undo():
-    try:
-        if len(config.undo_stack) == 0:
-            "nothing to undo"
-        elif len(config.undo_stack) > 0:
 
-            command = config.undo_stack[-1]
-            if command == config.last_command_undo:
-                print("Cannot undo the same command twice in a row.")
-            else:
-                command = config.undo_stack.pop()
-                config.last_command_undo = command
-                config.last_command_redo = None
-                print(config.last_command_undo)
+    if len(config.undo_stack) == 0:
+        "nothing to undo"
+    elif len(config.undo_stack) > 0:
+
+        command = config.undo_stack[-1]
+        if command == config.last_command_undo:
+            print("Cannot undo the same command twice in a row.")
+        else:
+            command = config.undo_stack.pop()
+            config.last_command_undo = command
+            print(config.last_command_undo)
+            try:
                 do_opposite_command(command)
-                config.redo_stack.append(command)
 
-    except IndexError:
-        print("Nothing to undo.")
+            except IndexError:
+                print("Nothing to undo.")
+            config.redo_stack.append(command)
+
 
     debug(f'redo: {config.redo_stack}')
     debug(f'undo: {config.undo_stack}')
