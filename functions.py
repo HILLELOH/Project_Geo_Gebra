@@ -1,4 +1,6 @@
 import json
+import logging
+from logging import debug
 from pprint import pprint
 from tkinter import ttk, filedialog, messagebox
 
@@ -13,6 +15,7 @@ from Shapes.Point import *
 from Shapes.Line import *
 # from config import root, fig, ax
 import config
+
 
 
 class SidePanel(tk.Frame):
@@ -619,7 +622,7 @@ def load():
 
 
 def do_same_command(command):
-    config.last_command = command
+
     if command["type"] == 'delete':
         shape = command["shape"]
         if isinstance(shape, Point):
@@ -658,7 +661,7 @@ def do_same_command(command):
 
 
 def do_opposite_command(command):
-    config.last_command = command
+
     if command["type"] == 'draw':
         shape = command["shape"]
         if isinstance(shape, Line):
@@ -692,27 +695,111 @@ def do_opposite_command(command):
             draw_circle_shape(coords[0], coords[1], shape.radius)
 
 
-def redo():
-    try:
-        if config.redo_stack is not None:
-            command = config.redo_stack.pop()
-            do_same_command(command)
-            config.undo_stack.insert(len(config.redo_stack), command)
-    except IndexError:
-        print("")
+# def redo():
+#
+#     try:
+#         if config.redo_stack is not None:
+#             if config.last_command == config.redo_stack[-1]:
+#                 print("error")
+#             else:
+#                 command = config.redo_stack.pop()
+#                 config.last_command = command
+#                 do_same_command(command)
+#                 config.undo_stack.insert(len(config.redo_stack), command)
+#     except IndexError:
+#         print("")
+#
+#
+# def undo():
+#     try:
+#         if config.undo_stack is not None:
+#             if config.last_command == config.undo_stack[-1]:
+#                 print("error")
+#             else:
+#                 command = config.undo_stack.pop()
+#                 config.last_command = command
+#                 pprint(config.shapes)
+#                 do_opposite_command(command)
+#                 pprint(config.shapes)
+#                 config.redo_stack.insert(len(config.redo_stack), command)
+#     except IndexError:
+#         print("")
 
+# def redo():
+#     try:
+#         if config.redo_stack:
+#             command = config.redo_stack.pop()
+#             if command == config.last_command:
+#                 print("error")
+#             else:
+#                 config.last_command = command
+#                 do_same_command(command)
+#                 print(command)
+#                 config.undo_stack.append(command)
+#     except IndexError:
+#         print("")
+#
+#
+# def undo():
+#     try:
+#         if config.undo_stack:
+#             command = config.undo_stack.pop()
+#             if command == config.last_command:
+#                 print("error")
+#             else:
+#                 config.last_command = command
+#                 do_opposite_command(command)
+#                 print(command)
+#                 config.redo_stack.append(command)
+#     except IndexError:
+#         print("")
+r = logging.getLogger()
+r.setLevel(logging.DEBUG)
 
-def undo():
-    try:
-        if config.undo_stack is not None:
-            command = config.undo_stack.pop()
-            pprint(config.shapes)
-            do_opposite_command(command)
-            pprint(config.shapes)
-            config.redo_stack.insert(len(config.redo_stack), command)
-    except IndexError:
-        print("")
+# def redo():
+#     try:
+#         if len(config.redo_stack):
+#
+#             print(config.undo_stack)
+#             command = config.undo_stack[-1]
+#             if command == config.last_command:
+#                 print("Cannot redo the same command twice in a row.")
+#             else:
+#                 config.redo_stack.pop()
+#                 config.last_command = command
+#                 do_same_command(command)
+#                 config.undo_stack.append(command)
+#
+#     except IndexError:
+#         print("Nothing to redo.")
+#
+#     debug(f'redo: {config.redo_stack}')
+#     debug(f'undo: {config.undo_stack}')
+#
+#
+# def undo():
+#     try:
+#         if len(config.undo_stack):
+#
+#             command = config.redo_stack[-1]
+#             if command == config.last_command:
+#                 print("Cannot undo the same command twice in a row.")
+#             else:
+#                 config.undo_stack.pop()
+#                 config.last_command = command
+#                 do_opposite_command(command)
+#                 config.redo_stack.append(command)
+#
+#     except IndexError:
+#         print("Nothing to undo.")
+#
+#     debug(f'redo: {config.redo_stack}')
+#     debug(f'undo: {config.undo_stack}')
 
+# def undo():
+#
+# def redo():
+#
 
 def clear_history():
     config.undo_stack = []

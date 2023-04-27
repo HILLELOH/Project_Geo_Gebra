@@ -96,3 +96,6 @@ class Line(Shape):
             return True, "end"
 
         return False, False
+
+    # def __repr__(self):
+    #     return "Line"
