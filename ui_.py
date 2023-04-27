@@ -37,6 +37,7 @@ config.side_panel.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 config.press_cid = config.ax.figure.canvas.mpl_connect('button_press_event', on_press)
 config.release_cid = config.ax.figure.canvas.mpl_connect('button_release_event', on_release)
 config.motion_cid = config.ax.figure.canvas.mpl_connect('motion_notify_event', on_motion)
+config.ax.figure.canvas.mpl_connect('scroll_event', on_scroll)
 config.root.protocol("WM_DELETE_WINDOW", on_closing)
 
 update_display()

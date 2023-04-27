@@ -2,7 +2,7 @@ import math
 
 import numpy as np
 
-from Shapes.Point import Point
+
 from Shapes.shapes import Shape
 from matplotlib.axes import Axes
 import config

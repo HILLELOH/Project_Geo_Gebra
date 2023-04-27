@@ -5,14 +5,14 @@ from tkinter import ttk, filedialog, messagebox
 
 from label_conf import generate_alphanumeric_sequence
 
-label_generator = generate_alphanumeric_sequence()
+
 import tkinter as tk
 
 from Shapes.Circle import *
 from Shapes.Point import *
 from Shapes.Line import *
 import config
-
+config.label_generator = generate_alphanumeric_sequence()
 
 class SidePanel(tk.Frame):
     def __init__(self, parent):
@@ -202,6 +202,24 @@ def on_motion(event):
         plt.draw()
 
 
+def on_scroll(event):
+    ax = config.ax
+    fig = config.fig
+    x, y = event.xdata, event.ydata
+
+    factor = 1.1 if event.step > 0 else 0.9
+    x_lim = ax.get_xlim()
+    y_lim = ax.get_ylim()
+    ax.set_xlim(x - factor * (x - x_lim[0]), x + factor * (x_lim[1] - x))
+    ax.set_ylim(y - factor * (y - y_lim[0]), y + factor * (y_lim[1] - y))
+    ax.xaxis.set_ticks(range(int(ax.get_xlim()[0]), int(ax.get_xlim()[1]) + 1))
+    ax.yaxis.set_ticks(range(int(ax.get_ylim()[0]), int(ax.get_ylim()[1]) + 1))
+    ax.grid(True)
+    fig.canvas.draw_idle()
+
+
+
+
 def delete_shape():
     if not config.cid:
         config.ax.figure.canvas.mpl_disconnect(config.cid)
@@ -299,11 +317,12 @@ def handle_input_line(event):
 
         else:
             # Second click sets the end point
-            p1 = Point((config.line_x, config.line_y), next(label_generator))
-            p2 = Point((event.xdata, event.ydata), next(label_generator))
-            line = Line(p1, p2, next(label_generator))
+            p1 = Point((config.line_x, config.line_y), next(config.label_generator))
+            tmp = next(config.label_generator)
+            p2 = Point((event.xdata, event.ydata), tmp)
+            config.last_label_before_return = tmp[:-1]
 
-            draw_line_shape(line.get_start(), line.get_end())
+            draw_line_shape(p1, p2)
             config.ax.figure.canvas.mpl_disconnect(config.cid)
             # Remove start_point attribute so user can draw another line
             config.line_x, config.line_y = [None] * 2
@@ -374,6 +393,10 @@ def handle_delete_shape(event):
                             config.shapes.remove(s.get_start())
                             config.shapes.remove(s.get_end())
                             config.shapes.remove(s)
+                            config.deleted_labels.append(s.get_start().get_label())
+                            config.deleted_labels.append(s.get_end().get_label())
+                            config.deleted_labels.append(s.get_label())
+
                             flag = True
 
                             debug(f'redo: {config.redo_stack}')
@@ -387,7 +410,7 @@ def handle_delete_shape(event):
                     #     config.undo_stack.remove(command)
                     config.undo_stack.insert(len(config.undo_stack), command)
                     config.shapes.remove(shape)
-
+                    config.deleted_labels.append(shape.get_label())
                     debug(f'redo: {config.redo_stack}')
                     debug(f'undo: {config.undo_stack}')
             else:
@@ -396,13 +419,16 @@ def handle_delete_shape(event):
                 #     config.undo_stack.remove(command)
                 config.undo_stack.insert(len(config.undo_stack), command)
                 config.shapes.remove(shape)
+                config.deleted_labels.append(shape.get_label())
 
             update_display()
             update_label()
 
 
 def draw_point_shape(x, y):
-    point = Point((x, y), next(label_generator))
+    tmp = next(config.label_generator)
+    point = Point((x, y), tmp)
+    config.last_label_before_return = tmp[:-1]
     point.draw(config.ax)
     config.shapes.append(point)
 
@@ -414,7 +440,9 @@ def draw_point_shape(x, y):
 
 
 def draw_line_shape(start, end):
-    line = Line(start, end, next(label_generator))
+    tmp = next(config.label_generator)
+    line = Line(start, end, tmp)
+    config.last_label_before_return = tmp[:-1]
 
     start.draw(config.ax)
     end.draw(config.ax)
@@ -433,7 +461,9 @@ def draw_line_shape(start, end):
 
 
 def draw_circle_shape(x, y, radius):
-    circle = Circle([(x, y)], radius, next(label_generator))
+    tmp = next(config.label_generator)
+    circle = Circle([(x, y)], radius, tmp)
+    config.last_label_before_return = tmp[:-1]
     circle.draw(config.ax)
     config.shapes.append(circle)
 
@@ -498,11 +528,11 @@ def update_label():
     for shape in config.shapes:
         if isinstance(shape, Line):
             m, b = shape.m_b()
-            label_text = f'Line: y = {m:.3f}x + {b:.3f}'
+            label_text = f'({shape.get_label()}) Line: y = {m:.3f}x + {b:.3f}'
 
         elif isinstance(shape, Point):
             try:
-                label_text = f'Point: ({shape.get_x():.3f}, {shape.get_y():.3f})'
+                label_text = f'({shape.get_label()}) Point: ({shape.get_x():.3f}, {shape.get_y():.3f})'
 
             except TypeError:
                 print(f'coords:')
@@ -510,7 +540,7 @@ def update_label():
         elif isinstance(shape, Circle):
             x, y = shape.coords[0]
             r = shape.radius
-            label_text = f'Circle: (x-{x:.3f})^2 + (y-{y:.3f})^2 = {r ** 2:.3f}'
+            label_text = f'({shape.get_label()}) Circle: (x-{x:.3f})^2 + (y-{y:.3f})^2 = {r ** 2:.3f}'
 
         label_widget = tk.Label(config.side_panel.text, text=label_text, bg='white')
         label_widget.pack(anchor='w')
@@ -520,10 +550,11 @@ def update_label():
 def reset():
     config.ax.clear()
     config.shapes = []
+    config.deleted_labels = []
     for widget in config.label_widgets:
         widget.destroy()
     config.label_widgets = []
-
+    config.label_generator = generate_alphanumeric_sequence()
     # Reset the axes and grid
     config.ax.set_xlim(-10, 10)
     config.ax.set_ylim(-10, 10)
@@ -546,19 +577,20 @@ def save():
         if isinstance(shape, Line):
             start = shape.get_start()
             end = shape.get_end()
-            shape_data = {"shape": "Line", "start": (start.get_x(), start.get_y()), "end": (end.get_x(), end.get_y())}
+            shape_data = {"shape": "Line", "start": (start.get_x(), start.get_y()), "end": (end.get_x(), end.get_y()), "label": shape.get_label(), "start_label": start.get_label(), "end_label": end.get_label()}
 
         elif isinstance(shape, Circle):
             shape_coords = shape.coords.tolist()[0]
             print(shape_coords)
             # print(f'her: {shape_coords}')
-            shape_data = {"shape": "Circle", "center": (shape_coords[0], shape_coords[1]), "radius": shape.radius}
+            shape_data = {"shape": "Circle", "center": (shape_coords[0], shape_coords[1]), "radius": shape.radius, "label": shape.get_label()}
 
         elif isinstance(shape, Point):
             shape_data = {
                 "shape": "Point",
                 "x_coord": shape.get_x(),
-                "y_coord": shape.get_y()
+                "y_coord": shape.get_y(),
+                "label": shape.get_label()
             }
 
         shapes_data.append(shape_data)
@@ -569,8 +601,7 @@ def save():
 
 
 def load():
-    global config, label_generator
-    label_generator = generate_alphanumeric_sequence()
+    global config
     filepath = filedialog.askopenfilename(filetypes=[("JSON Files", "*.json")])
     if not filepath:
         return
@@ -583,17 +614,17 @@ def load():
         shape_type = shape_data["shape"]
         print(shape_type)
         if shape_type == "Line":
-            start = Point(shape_data["start"], next(label_generator))
-            end = Point(shape_data["end"], next(label_generator))
-            line = Line(start, end, next(label_generator))
+            start = Point(shape_data["start"], shape_data["start_label"])
+            end = Point(shape_data["end"], shape_data["end_label"])
+            line = Line(start, end, shape_data["label"])
             shapes.append(line)
 
             draw_line_shape(line.get_start(), line.get_end())
 
         elif shape_type == "Circle":
-            center = Point(shape_data["center"], next(label_generator))
+            center = Point(shape_data["center"], shape_data["label"])
             radius = shape_data["radius"]
-            circle = Circle(center, radius, next(label_generator))
+            circle = Circle(center, radius, shape_data["label"])
 
             draw_circle_shape(center.get_x(), center.get_y(), radius)
             shapes.append(circle)
@@ -602,7 +633,7 @@ def load():
             print("p_command")
             x_coord = shape_data["x_coord"]
             y_coord = shape_data["y_coord"]
-            point = Point((x_coord, y_coord), next(label_generator))
+            point = Point((x_coord, y_coord), shape_data["label"])
             shapes.append(point)
             draw_point_shape(x_coord, y_coord)
 
@@ -634,13 +665,13 @@ def do_same_command(command):
         if isinstance(shape, Line):
             p1 = shape.get_start()
             p2 = shape.get_end()
-            line = Line(p1, p2, next(label_generator))
-            draw_line_shape(line.get_start(), line.get_end())
+            draw_line_shape(p1, p2)
 
         elif isinstance(shape, Point):
-            x = command["x_coord"]
-            y = command["y_coord"]
-            draw_point_shape(x, y)
+            if not shape.is_label_part():
+                x = command["x_coord"]
+                y = command["y_coord"]
+                draw_point_shape(x, y)
 
         elif isinstance(shape, Circle):
             coords = shape.coords.tolist()[0]
@@ -670,7 +701,9 @@ def do_opposite_command(command):
         if isinstance(shape, Line):
             p1 = shape.get_start()
             p2 = shape.get_end()
-            line = Line(p1, p2, next(label_generator))
+            tmp = next(config.label_generator)
+            line = Line(p1, p2, tmp)
+            config.last_label_before_return = tmp[:-1]
             draw_line_shape(line.get_start(), line.get_end())
             config.undo_stack.pop()
 

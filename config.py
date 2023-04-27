@@ -19,6 +19,7 @@ polygon_vertices = []
 last_command_undo = None
 last_command_redo = None
 
-
+label_generator = None
 label_objects = None
 deleted_labels = []
+last_label_before_return = None

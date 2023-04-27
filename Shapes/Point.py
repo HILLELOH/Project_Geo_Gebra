@@ -1,5 +1,7 @@
 import matplotlib.pyplot as plt
 
+import config
+from Shapes.Line import Line
 from Shapes.shapes import Shape
 from matplotlib.axes import Axes
 
@@ -35,3 +37,16 @@ class Point(Shape):
 
     def get_label(self):
         return self.label
+
+    def is_line_part(self):
+        flag = False
+        for shape in config.shapes:
+            if isinstance(shape, Line):
+                start = shape.get_start()
+                end = shape.get_end()
+                if round(start.get_x(), 2) == round(self.x, 2) and round(start.get_y(), 2) == round(self.y, 2):
+                    flag = True
+
+                elif round(end.get_x(), 2) == round(self.x, 2) and round(end.get_y(), 2) == round(self.y, 2):
+                    flag = True
+        return flag
