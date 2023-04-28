@@ -2,10 +2,13 @@ import matplotlib.pyplot as plt
 from shapes import *
 import tkinter as tk
 import numpy as np
-from tkinter import ttk
+from tkinter import ttk, filedialog
+import tkinter.filedialog as filedialog
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.cm as cm
-
+import os
+import json
+import datetime
 
 class SidePanel(tk.Frame):
     def __init__(self, parent):
@@ -69,6 +72,14 @@ class MainWindow:
         self.side_panel = SidePanel(self.root)
         self.side_panel.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
        
+        self.save_state_button = tk.Button(self.root, text="Save State", command=self.save_state)
+        self.save_state_button.pack(side="left", padx=10, pady=10)
+
+        self.load_state_button = tk.Button(self.root, text="Load State", command=self.load_state)
+        self.load_state_button.pack(side="left", padx=10, pady=10)
+
+       
+        self.drawing_line = False
         self.cid = None
         self.circle_cid = None
         self.press_cid = self.ax.figure.canvas.mpl_connect('button_press_event', self.on_press)
@@ -122,8 +133,16 @@ class MainWindow:
         if event.button == 1:  # Left mouse button
             x, y = event.xdata, event.ydata
             self.selected_shape = self.shape_clicked(x, y)
+            
+            # Check if the selected shape is the center point of a circle
+            for shape in self.shapes:
+                if isinstance(shape, Circle) and shape.center_point == self.selected_shape:
+                    self.selected_shape = None
+                    return  # Do not select the center point of a circle
+
             if self.selected_shape is not None:
                 self.start_drag_x, self.start_drag_y = x, y
+
 
     def on_release(self, event):
         if self.selected_shape is not None:
@@ -138,16 +157,32 @@ class MainWindow:
             self.start_drag_x, self.start_drag_y = x, y
 
             if isinstance(self.selected_shape, Point):
+                for shape in self.shapes:
+                    if isinstance(shape, Circle) and shape.center_point == self.selected_shape:
+                        return  # Do not move the center point of a circle
                 self.selected_shape.coords[0][0][0] += dx
                 self.selected_shape.coords[0][0][1] += dy
+                
             elif isinstance(self.selected_shape, Circle):
                 self.selected_shape.coords[0][0] += dx
                 self.selected_shape.coords[0][1] += dy
+
+                # Update the positions of the points attached to the circle
+                self.selected_shape.point1.coords[0][0][0] += dx
+                self.selected_shape.point1.coords[0][0][1] += dy
+                self.selected_shape.point2.coords[0][0][0] += dx
+                self.selected_shape.point2.coords[0][0][1] += dy
+
+                
             elif isinstance(self.selected_shape, Line):  # Check if the selected_shape is a Line
                 self.selected_shape.b += dy  # Update the y-intercept of the line
                 xdata, ydata = self.selected_shape.line_obj.get_data()
                 ydata = self.selected_shape.m * xdata + self.selected_shape.b
                 self.selected_shape.line_obj.set_data(xdata, ydata)
+
+                # Update the positions of the points attached to the line
+                self.selected_shape.point1.coords[0][0][1] += dy
+                self.selected_shape.point2.coords[0][0][1] += dy
 
             self.update_display()
             self.update_label()
@@ -192,13 +227,16 @@ class MainWindow:
                 if points:
                     x2, y2 = points[0]
                     radius = np.sqrt((x2 - x1)**2 + (y2 - y1)**2)
-                    self.draw_circle_shape(x1, y1, radius)
+                    self.draw_circle_shape(x1, y1, radius, x2, y2)  # Add x2 and y2 as arguments
                     # Disconnect the circle event listener so it doesn't interfere with other shapes
                     self.ax.figure.canvas.mpl_disconnect(self.circle_cid)
                     self.circle_cid = None  # Reset the circle event listener variable to None
 
 
+
     def handle_input_point(self, event):
+        if self.drawing_line:
+            return  # Do not create points when drawing a line
         if event.button == 1:  # Left mouse button
             x, y = event.xdata, event.ydata
             self.draw_point_shape(x, y)
@@ -206,8 +244,10 @@ class MainWindow:
             self.ax.figure.canvas.mpl_disconnect(self.cid)
 
     def handle_input_line(self, event):
+        self.drawing_line = True
         if event.button == 2:  # Left mouse button
             x1, y1 = event.xdata, event.ydata
+            
             plt.title("Click left click to draw a line")
             plt.draw()
             event2 = plt.ginput(1, timeout=-1)[0]
@@ -227,23 +267,30 @@ class MainWindow:
         m = (y2 - y1) / (x2 - x1)
         b = y1 - m * x1
 
-        x = np.linspace(-10, 10, 100)
-        y = m * x + b
-        line = Line(m, b)
+        point1 = Point([(x1, y1)])
+        point2 = Point([(x2, y2)])
 
+        line = Line(m, b, point1, point2)
+        point2.draw(self.ax)
         line.draw(self.ax)
 
         self.shapes.append(line)
+        self.shapes.append(point1)
+        self.shapes.append(point2)
         self.update_display()
         self.update_label()
 
+
     
-    def draw_circle_shape(self, x, y, radius):
-        circle = Circle([(x, y)], radius)
+    def draw_circle_shape(self, x, y, radius, x2, y2):  # Add x2 and y2 as arguments
+        circle = Circle([(x, y)], radius, (x2, y2), (x, y))  # Pass x2 and y2 as arguments
         circle.draw(self.ax)
         self.shapes.append(circle)
+        self.shapes.append(circle.point1)  # Add point1 to the shapes list
+        self.shapes.append(circle.point2)  # Add point2 to the shapes list
         self.update_display()
         self.update_label()
+
 
     def run(self):
         plt.show()
@@ -282,9 +329,42 @@ class MainWindow:
             self.label_widgets.append(label_widget)
 
 
+    def save_state(self):
+        save_dir = 'saved_states'
+        if not os.path.exists(save_dir):
+            os.makedirs(save_dir)
+
+        timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+        save_file = os.path.join(save_dir, f'state_{timestamp}.json')
+
+        state = []
+        for shape in self.shapes:
+            state.append(shape.serialize())
+
+        with open(save_file, 'w') as f:
+            json.dump(state, f)
+
+    def load_state(self):
+        file_path = filedialog.askopenfilename(initialdir='saved_states', title="Select saved state",
+                                               filetypes=(("JSON files", "*.json"), ("All files", "*.*")))
+
+        if not file_path:
+            return
+
+        with open(file_path, 'r') as f:
+            state = json.load(f)
+
+        self.reset()
+
+        for shape_data in state:
+            shape = Shape.deserialize(shape_data)
+            shape.draw(self.ax)
+            self.shapes.append(shape)
+
+        self.update_display()
+        self.update_label()
 
 
 
 window = MainWindow()
-#cid = window.ax.figure.canvas.mpl_connect('button_press_event', window.handle_input)
 window.run()
