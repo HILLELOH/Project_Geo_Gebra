@@ -165,8 +165,8 @@ def on_motion(event):
             for shape in config.shapes:
                 if isinstance(shape, Line):
                     if shape.is_line_edge(config.selected_shape)[1] == "start":
-                        print("start")
-                        print(config.selected_shape)
+                        # print("start")
+                        # print(config.selected_shape)
                         config.selected_shape.coords[0][0] += dx
                         config.selected_shape.coords[0][1] += dy
                         # config.selected_shape.set_x(dx)
@@ -177,7 +177,7 @@ def on_motion(event):
                         break
 
                     elif shape.is_line_edge(config.selected_shape)[1] == "end":
-                        print("end")
+                        # print("end")
                         config.selected_shape.coords[0][0] += dx
                         config.selected_shape.coords[0][1] += dy
                         # config.selected_shape.set_x(dx)
@@ -216,8 +216,6 @@ def on_scroll(event):
     ax.yaxis.set_ticks(range(int(ax.get_ylim()[0]), int(ax.get_ylim()[1]) + 1))
     ax.grid(True)
     fig.canvas.draw_idle()
-
-
 
 
 def delete_shape():
@@ -317,11 +315,13 @@ def handle_input_line(event):
 
         else:
             # Second click sets the end point
-            p1 = Point((config.line_x, config.line_y), next(config.label_generator))
-            tmp = next(config.label_generator)
-            p2 = Point((event.xdata, event.ydata), tmp)
-            config.last_label_before_return = tmp[:-1]
-
+            label_start = next(config.label_generator)
+            p1 = Point((config.line_x, config.line_y), label_start)
+            label_end = next(config.label_generator)
+            p2 = Point((event.xdata, event.ydata), label_end)
+            config.last_label_before_return = label_end[:-1]
+            draw_point_shape(config.line_x, config.line_y, label_start)
+            draw_point_shape(event.xdata, event.ydata, label_end)
             draw_line_shape(p1, p2)
             config.ax.figure.canvas.mpl_disconnect(config.cid)
             # Remove start_point attribute so user can draw another line
@@ -425,10 +425,12 @@ def handle_delete_shape(event):
             update_label()
 
 
-def draw_point_shape(x, y):
-    tmp = next(config.label_generator)
-    point = Point((x, y), tmp)
-    config.last_label_before_return = tmp[:-1]
+def draw_point_shape(x, y, label=None):
+    if not label:
+        label = next(config.label_generator)
+
+    point = Point((x, y), label)
+    config.last_label_before_return = label[:-1]
     point.draw(config.ax)
     config.shapes.append(point)
 
@@ -444,11 +446,11 @@ def draw_line_shape(start, end):
     line = Line(start, end, tmp)
     config.last_label_before_return = tmp[:-1]
 
-    start.draw(config.ax)
-    end.draw(config.ax)
+    # start.draw(config.ax)
+    # end.draw(config.ax)
 
-    config.shapes.append(start)
-    config.shapes.append(end)
+    # config.shapes.append(start)
+    # config.shapes.append(end)
 
     line.draw(config.ax)
     config.shapes.append(line)
@@ -512,9 +514,9 @@ def update_display():
             shape.draw(config.ax)
 
         elif isinstance(shape, Line):
-            shape.draw(config.ax)
             shape.get_start().draw(config.ax)
             shape.get_end().draw(config.ax)
+            shape.draw(config.ax)
 
     plt.draw()
 
@@ -577,13 +579,21 @@ def save():
         if isinstance(shape, Line):
             start = shape.get_start()
             end = shape.get_end()
-            shape_data = {"shape": "Line", "start": (start.get_x(), start.get_y()), "end": (end.get_x(), end.get_y()), "label": shape.get_label(), "start_label": start.get_label(), "end_label": end.get_label()}
+            shape_data = {"shape": "Line",
+                          "start": (start.get_x(), start.get_y()),
+                          "end": (end.get_x(), end.get_y()),
+                          "label": shape.get_label(),
+                          "start_label": start.get_label(),
+                          "end_label": end.get_label()}
 
         elif isinstance(shape, Circle):
             shape_coords = shape.coords.tolist()[0]
             print(shape_coords)
             # print(f'her: {shape_coords}')
-            shape_data = {"shape": "Circle", "center": (shape_coords[0], shape_coords[1]), "radius": shape.radius, "label": shape.get_label()}
+            shape_data = {"shape": "Circle",
+                          "center": (shape_coords[0], shape_coords[1]),
+                          "radius": shape.radius,
+                          "label": shape.get_label()}
 
         elif isinstance(shape, Point):
             shape_data = {
@@ -605,7 +615,9 @@ def load():
     filepath = filedialog.askopenfilename(filetypes=[("JSON Files", "*.json")])
     if not filepath:
         return
-
+    config.shapes = []
+    update_label()
+    update_display()
     with open(filepath, 'r') as f:
         shapes_data = json.load(f)
     print(shapes_data)
@@ -622,18 +634,22 @@ def load():
             draw_line_shape(line.get_start(), line.get_end())
 
         elif shape_type == "Circle":
-            center = Point(shape_data["center"], shape_data["label"])
+            label = shape_data["label"]
+            mid = shape_data["center"]
             radius = shape_data["radius"]
-            circle = Circle(center, radius, shape_data["label"])
+
+            center = Point(mid, label)
+            circle = Circle(center, radius, label)
 
             draw_circle_shape(center.get_x(), center.get_y(), radius)
             shapes.append(circle)
 
         elif shape_type == "Point":
-            print("p_command")
+            # print("p_command")
             x_coord = shape_data["x_coord"]
             y_coord = shape_data["y_coord"]
-            point = Point((x_coord, y_coord), shape_data["label"])
+            label = shape_data["label"]
+            point = Point((x_coord, y_coord), label)
             shapes.append(point)
             draw_point_shape(x_coord, y_coord)
 
