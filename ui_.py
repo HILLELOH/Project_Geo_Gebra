@@ -15,8 +15,6 @@ config.fig, config.ax = plt.subplots()
 # plt.gcf().set_visible(False)
 # config.fig.withdraw()
 
-
-
 config.buttons_panel = tk.Frame(root)
 init_program()
 

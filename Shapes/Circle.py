@@ -6,8 +6,9 @@ from matplotlib import pyplot as plt
 
 
 class Circle(Shape):
-    def __init__(self, coords, radius, label):
-        super().__init__(coords)
+    def __init__(self, center, radius, label):
+        super().__init__((center.get_x(), center.get_y()))
+        self.center = center
         self.radius = radius
         self.label = label
 

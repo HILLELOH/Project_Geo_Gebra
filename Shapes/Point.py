@@ -38,15 +38,14 @@ class Point(Shape):
     def get_label(self):
         return self.label
 
-    def is_line_part(self):
+    def is_line_part(self, shapes=None):
+        if shapes is None:
+            shapes = config.shapes
         flag = False
-        for shape in config.shapes:
+        for shape in shapes:
             if isinstance(shape, Line):
-                start = shape.get_start()
-                end = shape.get_end()
-                if round(start.get_x(), 2) == round(self.x, 2) and round(start.get_y(), 2) == round(self.y, 2):
-                    flag = True
-
-                elif round(end.get_x(), 2) == round(self.x, 2) and round(end.get_y(), 2) == round(self.y, 2):
-                    flag = True
+                if shape.get_start() == self or shape.get_end() == self:
+                    flag = shape
         return flag
+
+

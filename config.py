@@ -24,3 +24,5 @@ label_objects = None
 deleted_labels = []
 last_label_before_return = None
 
+last_reset = []
+
