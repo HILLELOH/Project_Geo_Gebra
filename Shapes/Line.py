@@ -19,6 +19,7 @@ class Line(Shape):
         self.y2 = p2.coords[0][1]
         self.line_obj = None
         self.dashes_obj = None
+        self.hidden = False
 
         self.label = label
         # self.update_line_and_dashes()
@@ -104,3 +105,9 @@ class Line(Shape):
 
     def get_label(self):
         return self.label
+
+    def is_hidden(self):
+        return self.hidden
+
+    def set_hidden(self, b):
+        self.hidden = b

@@ -38,5 +38,6 @@ config.motion_cid = config.ax.figure.canvas.mpl_connect('motion_notify_event', o
 config.ax.figure.canvas.mpl_connect('scroll_event', on_scroll)
 config.root.protocol("WM_DELETE_WINDOW", on_closing)
 
+
 update_display()
 run()

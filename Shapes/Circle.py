@@ -14,6 +14,7 @@ class Circle(Shape):
         self.radius = radius
         self.label = label
         self.circle_object = None
+        self.hidden = False
 
     # def draw(self, ax: Axes):
     #     x = self.center.get_x()
@@ -54,4 +55,10 @@ class Circle(Shape):
 
     def get_radius(self):
         return self.radius
+
+    def is_hidden(self):
+        return self.hidden
+
+    def set_hidden(self, b):
+        self.hidden = b
 

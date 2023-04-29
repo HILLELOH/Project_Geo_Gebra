@@ -13,6 +13,7 @@ class Point(Shape):
         self.y = coords[1]
         super().__init__([coords])
         self.label = label
+        self.hidden = False
 
     def draw(self, ax: Axes):
         ax.plot(*self.coords.T, 'ro')
@@ -58,5 +59,11 @@ class Point(Shape):
                 if shape.get_center() == self:
                     flag = shape
         return flag
+
+    def is_hidden(self):
+        return self.hidden
+
+    def set_hidden(self, b):
+        self.hidden = b
 
 

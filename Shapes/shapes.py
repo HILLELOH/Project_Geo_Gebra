@@ -6,6 +6,6 @@ class Shape:
     def __init__(self,coords):
         self.coords= np.array(coords)
 
-    # def __repr__(self):
-    #     return str(self.__class__).split(".")[-1][:-1]
+    def __repr__(self):
+        return str(self.__class__).split(".")[-1][:-2]
 

@@ -10,6 +10,7 @@ from Shapes.Circle import *
 from Shapes.Point import *
 from Shapes.Line import *
 from label_conf import generate_alphanumeric_sequence
+import re
 
 config.label_generator = generate_alphanumeric_sequence()
 
@@ -124,11 +125,11 @@ def shape_clicked(x, y):
             if np.abs(distance - shape.radius) <= threshold:
                 return shape
 
-        # elif isinstance(shape, Line):
-        #     m, b = shape.m_b()
-        #     line_y = m * x + b
-        #     if np.abs(y - line_y) <= threshold:
-        #         return shape
+        elif isinstance(shape, Line):
+            m, b = shape.m_b()
+            line_y = m * x + b
+            if np.abs(y - line_y) <= threshold:
+                return shape
     return None
 
 
@@ -152,16 +153,6 @@ def on_motion(event):
         dy = y - config.start_drag_y
         config.start_drag_x, config.start_drag_y = x, y
 
-        # if isinstance(config.selected_shape, Line):  # Check if the selected_shape is a Line
-        #     m, b = config.selected_shape.m_b()
-        #     b += dy  # Update the y-intercept of the line
-        #     xdata, ydata = config.selected_shape.line_obj.get_data()
-        #     ydata = m * xdata + b
-        #     config.selected_shape.line_obj.set_data(xdata, ydata)
-        #
-        #     config.selected_shape.set_start_point(dx, dy)
-        #     config.selected_shape.set_end_point(dx, dy)
-
         if isinstance(config.selected_shape, Point):
             flag = False
             for shape in config.shapes:
@@ -181,6 +172,14 @@ def on_motion(event):
                         flag = True
                         break
 
+            circle = config.selected_shape.is_circle_part()
+            if circle is not False:
+                config.selected_shape.coords[0][0] += dx
+                config.selected_shape.coords[0][1] += dy
+
+                circle.set_center(dx, dy)
+                flag = True
+
             if not flag:
                 config.selected_shape.coords[0][0] += dx
                 config.selected_shape.coords[0][1] += dy
@@ -188,10 +187,22 @@ def on_motion(event):
                 config.selected_shape.set_y(dy)
 
         elif isinstance(config.selected_shape, Circle):
-            shape = config.selected_shape
-            # config.selected_shape.coords[0][0] += dx
-            # config.selected_shape.coords[0][1] += dy
-            shape.set_center(dx, dy)
+            config.selected_shape.get_center().coords[0][0] += dx
+            config.selected_shape.get_center().coords[0][1] += dy
+
+            config.selected_shape.set_center(dx, dy)
+
+        elif isinstance(config.selected_shape, Line):  # Check if the selected_shape is a Line
+            start = config.selected_shape.get_start()
+            end = config.selected_shape.get_end()
+
+            start.coords[0][0] += dx
+            start.coords[0][1] += dy
+            config.selected_shape.set_start_point(dx, dy)
+
+            end.coords[0][0] += dx
+            end.coords[0][1] += dy
+            config.selected_shape.set_end_point(dx, dy)
 
         update_display()
         update_label()
@@ -212,6 +223,66 @@ def on_scroll(event):
     ax.yaxis.set_ticks(range(int(ax.get_ylim()[0]), int(ax.get_ylim()[1]) + 1))
     ax.grid(True)
     fig.canvas.draw_idle()
+
+
+def hide(event):
+    clicked_label = event.widget
+    equality = clicked_label.cget("text")
+    label = re.match("\((\\w+)\)", equality).groups()[0]
+    shape = get_shape_by_label(label)
+    print(label)
+
+    if isinstance(shape, Point):
+        circle = shape.is_circle_part()
+        line = shape.is_line_part()
+        if circle:
+            if shape.is_hidden():
+                circle.set_hidden(False)
+                shape.set_hidden(False)
+
+            else:
+                circle.set_hidden(True)
+                shape.set_hidden(True)
+
+        if line:
+            if shape.is_hidden():
+                line.get_start().set_hidden(False)
+                line.get_end().set_hidden(False)
+                line.set_hidden(False)
+
+            else:
+                line.get_start().set_hidden(True)
+                line.get_end().set_hidden(True)
+                line.set_hidden(True)
+
+        elif not line and not circle:
+            if shape.is_hidden():
+                shape.set_hidden(False)
+            else:
+                shape.set_hidden(True)
+
+    if isinstance(shape, Line):
+        if shape.is_hidden():
+            shape.get_start().set_hidden(False)
+            shape.get_end().set_hidden(False)
+            shape.set_hidden(False)
+
+        else:
+            shape.get_start().set_hidden(True)
+            shape.get_end().set_hidden(True)
+            shape.set_hidden(True)
+
+    if isinstance(shape, Circle):
+        if shape.is_hidden():
+            shape.get_center().set_hidden(False)
+            shape.set_hidden(False)
+
+        else:
+            shape.get_center().set_hidden(True)
+            shape.set_hidden(True)
+
+    update_display()
+    update_label()
 
 
 def delete_shape():
@@ -363,72 +434,91 @@ def handle_input_circle(event):
 #
 #                 config.circle_cid = config.ax.figure.canvas.mpl_connect('button_press_event', handle_input_polygon)
 
-def delete_by_label(label):
+#
+# def hide_by_label(label):
+#     for shape in config.shapes:
+#         if shape.get_label() == label:
+
+def get_shape_by_label(label):
     for shape in config.shapes:
         if shape.get_label() == label:
-            if isinstance(shape, Point):
-                line = shape.is_line_part()
-                if line is not False:
-                    start = line.get_start()
-                    end = line.get_end()
+            return shape
 
-                    config.shapes.remove(start)
-                    config.shapes.remove(end)
-                    config.shapes.remove(line)
+    return None
 
-                    config.deleted_labels.append(start.get_label())
-                    config.deleted_labels.append(end.get_label())
-                    config.deleted_labels.append(line.get_label())
 
-                    command = {"type": 'delete', "shape": line}
-                    config.undo_stack.insert(len(config.undo_stack), command)
+def delete_by_label(label):
+    shape = get_shape_by_label(label)
+    if shape is not None:
+        if isinstance(shape, Point):
+            line = shape.is_line_part()
+            circle = shape.is_circle_part()
 
-                circle = shape.is_circle_part()
-                if circle is not False:
-                    center = circle.get_center()
-                    config.shapes.remove(center)
-                    config.deleted_labels.append(center.get_label())
+            if line is not False:
+                debug("line_part")
 
-                    command = {"type": 'delete', "shape": circle}
-                    config.undo_stack.insert(len(config.undo_stack), command)
-
-                else:
-                    config.shapes.remove(shape)
-                    config.deleted_labels.append(shape.get_label())
-
-                    command = {"type": 'delete', "shape": shape}
-                    config.undo_stack.insert(len(config.undo_stack), command)
-
-            elif isinstance(shape, Line):
-                start = shape.get_start()
-                end = shape.get_end()
+                start = line.get_start()
+                end = line.get_end()
 
                 config.shapes.remove(start)
                 config.shapes.remove(end)
-                config.shapes.remove(shape)
+                config.shapes.remove(line)
 
                 config.deleted_labels.append(start.get_label())
                 config.deleted_labels.append(end.get_label())
+                config.deleted_labels.append(line.get_label())
+
+                command = {"type": 'delete', "shape": line}
+                config.undo_stack.insert(len(config.undo_stack), command)
+
+            elif circle is not False:
+                debug("circle_part")
+                center = circle.get_center()
+                config.shapes.remove(center)
+                config.shapes.remove(circle)
+                config.deleted_labels.append(circle.get_label())
+                config.deleted_labels.append(center.get_label())
+
+                command = {"type": 'delete', "shape": circle}
+                config.undo_stack.insert(len(config.undo_stack), command)
+
+            elif not line and not circle:
+                config.shapes.remove(shape)
                 config.deleted_labels.append(shape.get_label())
 
                 command = {"type": 'delete', "shape": shape}
                 config.undo_stack.insert(len(config.undo_stack), command)
 
-            elif isinstance(shape, Circle):
-                center = shape.get_center()
-                label = shape.get_label()
+        elif isinstance(shape, Line):
+            start = shape.get_start()
+            end = shape.get_end()
 
-                config.shapes.remove(center)
-                config.deleted_labels.append(center.get_label())
+            config.shapes.remove(start)
+            config.shapes.remove(end)
+            config.shapes.remove(shape)
 
-                config.shapes.remove(shape)
-                config.deleted_labels.append(label.get_label())
+            config.deleted_labels.append(start.get_label())
+            config.deleted_labels.append(end.get_label())
+            config.deleted_labels.append(shape.get_label())
 
-                command = {"type": 'delete', "shape": shape}
-                config.undo_stack.insert(len(config.undo_stack), command)
+            command = {"type": 'delete', "shape": shape}
+            config.undo_stack.insert(len(config.undo_stack), command)
 
-    update_display()
-    update_label()
+        elif isinstance(shape, Circle):
+            center = shape.get_center()
+            label = shape.get_label()
+
+            config.shapes.remove(center)
+            config.deleted_labels.append(center.get_label())
+
+            config.shapes.remove(shape)
+            config.deleted_labels.append(label)
+
+            command = {"type": 'delete', "shape": shape}
+            config.undo_stack.insert(len(config.undo_stack), command)
+
+        update_display()
+        update_label()
 
 
 def handle_delete_shape(event):
@@ -469,26 +559,27 @@ def update_display():
     config.ax.set_yticks(np.arange(-20, 21, 5))
     # config.canvas.update_idletasks()
     for shape in config.shapes:
-        if isinstance(shape, Point):
-            flag = False
-            for s in config.shapes:
-                if isinstance(s, Line):
-                    if s.is_line_edge(shape)[0]:
-                        flag = True
+        if not shape.is_hidden():
+            if isinstance(shape, Point):
+                flag = False
+                for s in config.shapes:
+                    if isinstance(s, Line):
+                        if s.is_line_edge(shape)[0]:
+                            flag = True
 
-            if not flag:
+                if not flag:
+                    shape.draw(config.ax)
+
+                else:
+                    pass
+
+            elif isinstance(shape, Circle):
                 shape.draw(config.ax)
 
-            else:
-                pass
-
-        elif isinstance(shape, Circle):
-            shape.draw(config.ax)
-
-        elif isinstance(shape, Line):
-            shape.get_start().draw(config.ax)
-            shape.get_end().draw(config.ax)
-            shape.draw(config.ax)
+            elif isinstance(shape, Line):
+                shape.get_start().draw(config.ax)
+                shape.get_end().draw(config.ax)
+                shape.draw(config.ax)
 
     plt.draw()
 
@@ -500,13 +591,16 @@ def update_label():
     config.label_widgets = []
 
     for shape in config.shapes:
+        hidden_str = ''
+        if shape.is_hidden():
+            hidden_str = '[hidden]'
         if isinstance(shape, Line):
             m, b = shape.m_b()
-            label_text = f'({shape.get_label()}) Line: y = {m:.3f}x + {b:.3f}'
+            label_text = f'({shape.get_label()}) Line: y = {m:.3f}x + {b:.3f} {hidden_str} '
 
         elif isinstance(shape, Point):
             try:
-                label_text = f'({shape.get_label()}) Point: ({shape.get_x():.3f}, {shape.get_y():.3f})'
+                label_text = f'({shape.get_label()}) Point: ({shape.get_x():.3f}, {shape.get_y():.3f}) {hidden_str} '
 
             except TypeError:
                 print(f'coords:')
@@ -516,11 +610,12 @@ def update_label():
             y = shape.get_center().get_y()
             r = shape.get_radius()
 
-            label_text = f'({shape.get_label()}) Circle: (x-{x:.3f})^2 + (y-{y:.3f})^2 = {r ** 2:.3f}'
+            label_text = f'({shape.get_label()}) Circle: (x-{x:.3f})^2 + (y-{y:.3f})^2 = {r ** 2:.3f} {hidden_str} '
 
-        label_widget = tk.Label(config.side_panel.text, text=label_text, bg='white')
-        label_widget.pack(anchor='w')
-        config.label_widgets.append(label_widget)
+        config.label_widget = tk.Label(config.side_panel.text, text=label_text, bg='white')
+        config.label_widget.pack(anchor='w')
+        config.label_widgets.append(config.label_widget)
+        config.label_widget.bind("<Button-1>", hide)
 
 
 def reset():
@@ -581,7 +676,6 @@ def load():
             config.undo_stack.pop()
             config.undo_stack.pop()
 
-
         elif isinstance(shape, Circle):
             center = shape.get_center()
             draw_shape(center)
@@ -595,8 +689,6 @@ def load():
             if not shape.is_line_part(l) and not shape.is_circle_part(l):
                 draw_shape(shape)
                 config.undo_stack.pop()
-
-
 
     debug(config.shapes)
 
@@ -636,6 +728,7 @@ def do_same_command(command):
             draw_shape(start)
             draw_shape(end)
             draw_shape(shape)
+
             config.undo_stack.pop()
             config.undo_stack.pop()
             config.undo_stack.pop()
@@ -645,6 +738,7 @@ def do_same_command(command):
 
             draw_shape(center)
             draw_shape(shape)
+
             config.undo_stack.pop()
             config.undo_stack.pop()
 
@@ -689,16 +783,20 @@ def do_opposite_command(command):
 
             draw_shape(start)
             draw_shape(end)
-            config.undo_stack.pop()
-            config.undo_stack.pop()
             draw_shape(shape)
+
+            config.undo_stack.pop()
+            config.undo_stack.pop()
+            config.undo_stack.pop()
 
         if isinstance(shape, Circle):
             center = shape.get_center()
 
+            draw_shape(center)
             draw_shape(shape)
+
             config.undo_stack.pop()
-            draw_shape(shape)
+            config.undo_stack.pop()
 
     elif command["type"] == 'reset':
         config.shapes = command["list"]
@@ -722,8 +820,8 @@ def redo():
         do_same_command(command)
         config.undo_stack.append(command)
 
-    debug(f'redo: {config.redo_stack}')
-    debug(f'undo: {config.undo_stack}')
+    # debug(f'redo: {config.redo_stack}')
+    # debug(f'undo: {config.undo_stack}')
 
 
 def undo():
@@ -736,8 +834,8 @@ def undo():
         do_opposite_command(command)
         config.redo_stack.append(command)
 
-    debug(f'redo: {config.redo_stack}')
-    debug(f'undo: {config.undo_stack}')
+    # debug(f'redo: {config.redo_stack}')
+    # debug(f'undo: {config.undo_stack}')
 
 
 def clear_history():

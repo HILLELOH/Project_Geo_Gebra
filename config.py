@@ -1,7 +1,10 @@
 
 
-root, fig, ax, canvas, toolbar, shapes, label_widgets, side_panel, cid, circle_cid, selected_shape, start_drag_x,\
-    start_drag_y, press_cid, release_cid, motion_cid, buttons_panel = [None] * 17
+root, fig, ax, canvas, toolbar, shapes, side_panel, cid, circle_cid, selected_shape, start_drag_x,\
+    start_drag_y, press_cid, release_cid, motion_cid, buttons_panel = [None] * 16
+
+label_widgets = None
+label_widget = None
 
 x1, y1 = [None]*2
 
