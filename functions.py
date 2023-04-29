@@ -9,7 +9,7 @@ from tkinter import ttk, filedialog, messagebox
 from Shapes.Circle import *
 from Shapes.Point import *
 from Shapes.Line import *
-from label_conf import generate_alphanumeric_sequence
+from label_conf import generate_alphanumeric_sequence, get_label_parts
 import re
 
 config.label_generator = generate_alphanumeric_sequence()
@@ -591,6 +591,11 @@ def handle_delete_shape(event):
 
 
 def draw_shape(shape):
+    label = shape.get_label()
+    chars, numbers = get_label_parts(label)
+    config.last_label_before_return = chars
+    config.last_turn_before_return = numbers
+
     shape.draw(config.ax)
     config.shapes.append(shape)
 

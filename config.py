@@ -26,6 +26,6 @@ label_generator = None
 label_objects = None
 deleted_labels = []
 last_label_before_return = None
-
+last_turn_before_return = None
 last_reset = []
 
