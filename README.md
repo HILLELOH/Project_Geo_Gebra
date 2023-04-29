@@ -14,19 +14,19 @@ Each shape have those following features: <br />
 
 
 ### Undo / Redo
-In our program, all kind of operaiton are saved.
-The Undo and Redo works in this way:
+In our program, all kind of operaiton are saved.<br />
+The Undo and Redo works in this way:<br />
 Undo take an operation that has occurred and do the opposite one to undo it, 
-and the Redo simply take an operation and do it as is.
+and the Redo simply take an operation and do it as is.<br />
 
 
 ### Reset / delete history
-Reset is the abilit to reset the figure from shape (and it's included as operation that we can Undo or Redo)
-Delete history simply delete all the operations from the history s.t you can't restore anymore and it is initialize (but save the shapes already drawn)
+Reset is the abilit to reset the figure from shape (and it's included as operation that we can Undo or Redo)<br />
+Delete history simply delete all the operations from the history s.t you can't restore anymore and it is initialize (but save the shapes already drawn)<br />
 
 ### Save / Load
-Save the current poisition of the figure with all the shaped on it.
-Load from file a position and continue from there.
+Save the current poisition of the figure with all the shaped on it.<br />
+Load from file a position and continue from there.<br />
 
 
 
