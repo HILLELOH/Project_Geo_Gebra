@@ -4,9 +4,7 @@
 ### Draw / Delete
 Our GUI is able to handle inputs of data, Draw it and Delete. <br />
 Current shapes availables: <br />
-Point <br />
-Line <br />
-Circle <br />
+Point, Line, Circle and others. <br />
 Each shape have those following features: <br />
    Label - Represent the shape in the text and also on the figure. <br />
    Drag - Each shape can be drag from it place, the label will change as follow. <br />
