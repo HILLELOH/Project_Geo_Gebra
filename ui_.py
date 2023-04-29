@@ -31,6 +31,8 @@ create_buttons()
 
 config.side_panel = SidePanel(config.root)
 config.side_panel.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+config.label_widget = tk.Label(config.side_panel.text, text="Algebra ", bg="white", font='Helvetica 18 bold underline')
+config.label_widget.pack(anchor='w')
 
 config.press_cid = config.ax.figure.canvas.mpl_connect('button_press_event', on_press)
 config.release_cid = config.ax.figure.canvas.mpl_connect('button_release_event', on_release)

@@ -130,7 +130,7 @@ def shape_clicked(x, y):
             line_y = m * x + b
             if np.abs(y - line_y) <= threshold:
                 return shape
-    return None
+    return
 
 
 def on_press(event):
@@ -285,61 +285,44 @@ def hide(event):
     update_label()
 
 
-def delete_shape():
+def reset_cids():
     if not config.cid:
         config.ax.figure.canvas.mpl_disconnect(config.cid)
 
     if not config.circle_cid:
         config.ax.figure.canvas.mpl_disconnect(config.circle_cid)
 
+
+def delete_shape():
+    reset_cids()
     config.cid = config.ax.figure.canvas.mpl_connect('button_press_event', handle_delete_shape)
     plt.title("Click shape to delete")
     plt.draw()
 
 
 def draw_point():
-    if not config.cid:
-        config.ax.figure.canvas.mpl_disconnect(config.cid)
-
-    if not config.circle_cid:
-        config.ax.figure.canvas.mpl_disconnect(config.circle_cid)
-
+    reset_cids()
     config.cid = config.ax.figure.canvas.mpl_connect('button_press_event', handle_input_point)
     plt.title("Click left mouse button to create point")
     plt.draw()
 
 
 def draw_line():
-    if config.cid is not None:
-        config.ax.figure.canvas.mpl_disconnect(config.cid)
-
-    if config.circle_cid is not None:
-        config.ax.figure.canvas.mpl_disconnect(config.circle_cid)
-
+    reset_cids()
     config.cid = config.ax.figure.canvas.mpl_connect('button_press_event', handle_input_line)
     plt.title("Click left mouse button to start line")
     plt.draw()
 
 
 def draw_circle():
-    if config.cid is not None:
-        config.ax.figure.canvas.mpl_disconnect(config.cid)
-
-    if config.circle_cid is not None:
-        config.ax.figure.canvas.mpl_disconnect(config.circle_cid)
-
+    reset_cids()
     config.circle_cid = config.ax.figure.canvas.mpl_connect('button_press_event', handle_input_circle)
     plt.title("Click left mouse button to set center")
     plt.draw()
 
 
 # def draw_polygon():
-#     if config.cid is not None:
-#         config.ax.figure.canvas.mpl_disconnect(config.cid)
-#
-#     if config.circle_cid is not None:
-#         config.ax.figure.canvas.mpl_disconnect(config.circle_cid)
-#
+#     reset_cids()
 #     config.circle_cid = config.ax.figure.canvas.mpl_connect('button_press_event', handle_input_polygon)
 #     plt.title("Click left mouse button to set points")
 #     plt.draw()
@@ -517,6 +500,7 @@ def delete_by_label(label):
             command = {"type": 'delete', "shape": shape}
             config.undo_stack.insert(len(config.undo_stack), command)
 
+
         update_display()
         update_label()
 
@@ -526,6 +510,7 @@ def handle_delete_shape(event):
         shape = shape_clicked(event.xdata, event.ydata)
         if shape is not None:
             delete_by_label(shape.get_label())
+    config.ax.figure.canvas.mpl_disconnect(config.cid)
 
 
 def draw_shape(shape):
