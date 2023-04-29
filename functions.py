@@ -160,7 +160,6 @@ def on_motion(event):
                     if shape.is_line_edge(config.selected_shape)[1] == "start":
                         config.selected_shape.coords[0][0] += dx
                         config.selected_shape.coords[0][1] += dy
-
                         shape.set_start_point(dx, dy)
                         flag = True
                         break
@@ -174,23 +173,33 @@ def on_motion(event):
 
             circle = config.selected_shape.is_circle_part()
             if circle is not False:
+                last_x = config.selected_shape.coords[0][0]
+                last_y = config.selected_shape.coords[0][1]
                 config.selected_shape.coords[0][0] += dx
                 config.selected_shape.coords[0][1] += dy
-
                 circle.set_center(dx, dy)
+                command = {"type": "move", "shape": circle, "last_x": last_x, "last_y": last_y}
+                # config.undo_stack.insert(len(config.undo_stack), command)
                 flag = True
 
             if not flag:
+                last_x = config.selected_shape.coords[0][0]
+                last_y = config.selected_shape.coords[0][1]
                 config.selected_shape.coords[0][0] += dx
                 config.selected_shape.coords[0][1] += dy
                 config.selected_shape.set_x(dx)
                 config.selected_shape.set_y(dy)
+                command = {"type": "move", "shape": config.selected_shape, "last_x": last_x, "last_y": last_y}
+                # config.undo_stack.insert(len(config.undo_stack), command)
 
         elif isinstance(config.selected_shape, Circle):
+            last_x = config.selected_shape.get_center().coords[0][0]
+            last_y = config.selected_shape.get_center().coords[0][1]
             config.selected_shape.get_center().coords[0][0] += dx
             config.selected_shape.get_center().coords[0][1] += dy
-
             config.selected_shape.set_center(dx, dy)
+            command = {"type": "move", "shape": config.selected_shape, "last_x": last_x, "last_y": last_y}
+            # config.undo_stack.insert(len(config.undo_stack), command)
 
         elif isinstance(config.selected_shape, Line):  # Check if the selected_shape is a Line
             start = config.selected_shape.get_start()
@@ -209,19 +218,87 @@ def on_motion(event):
         plt.draw()
 
 
+def shape_set_coordinate(shape, x_coord, y_coord):
+    dx = x_coord
+    dy = y_coord
+    if isinstance(shape, Point):
+        shape.coords[0][0] += dx
+        shape.coords[0][1] += dy
+        shape.set_x(dx)
+        shape.set_y(dy)
+
+    elif isinstance(shape, Circle):
+        shape.get_center().coords[0][0] += dx
+        shape.get_center().coords[0][1] += dy
+
+        shape.set_center(dx, dy)
+
+    elif isinstance(shape, Line):
+        start = shape.get_start()
+        end = shape.get_end()
+
+        start.coords[0][0] += dx
+        start.coords[0][1] += dy
+        shape.set_start_point(dx, dy)
+
+        end.coords[0][0] += dx
+        end.coords[0][1] += dy
+        shape.set_end_point(dx, dy)
+
+
+    update_display()
+    update_label()
+    plt.draw()
+
+
+
 def on_scroll(event):
     ax = config.ax
     fig = config.fig
     x, y = event.xdata, event.ydata
 
-    factor = 1.1 if event.step > 0 else 0.9
+    if event.button == 'up':  # Zoom in
+        factor = 0.95
+        if ax.get_xlim()[1] - ax.get_xlim()[0] < 10:  # Check if x range is too small
+            return
+        if ax.get_ylim()[1] - ax.get_ylim()[0] < 10:  # Check if y range is too small
+            return
+    elif event.button == 'down':  # Zoom out
+        factor = 1.05
+        # Check if x range or y range is too large
+        x_range = ax.get_xlim()[1] - ax.get_xlim()[0]
+        y_range = ax.get_ylim()[1] - ax.get_ylim()[0]
+        if x_range > 100 or y_range > 100:
+            return
+        # Check if x range or y range is too small
+        if x_range < 1 or y_range < 1:
+            return
+    elif event.button == 'pan':  # Drag
+        # Calculate the distance moved
+        dx = event.x - event.lastx
+        dy = event.y - event.lasty
+        # Update the plot limits based on the distance moved
+        x_lim = ax.get_xlim()
+        y_lim = ax.get_ylim()
+        ax.set_xlim(x_lim[0] - dx, x_lim[1] - dx)
+        ax.set_ylim(y_lim[0] - dy, y_lim[1] - dy)
+        # Redraw the plot
+        fig.canvas.draw_idle()
+        return
+
     x_lim = ax.get_xlim()
     y_lim = ax.get_ylim()
     ax.set_xlim(x - factor * (x - x_lim[0]), x + factor * (x_lim[1] - x))
     ax.set_ylim(y - factor * (y - y_lim[0]), y + factor * (y_lim[1] - y))
-    ax.xaxis.set_ticks(range(int(ax.get_xlim()[0]), int(ax.get_xlim()[1]) + 1))
-    ax.yaxis.set_ticks(range(int(ax.get_ylim()[0]), int(ax.get_ylim()[1]) + 1))
-    ax.grid(True)
+
+    x_ticks_major = range(int(ax.get_xlim()[0]), int(ax.get_xlim()[1]) + 1, 1)
+    y_ticks_major = range(int(ax.get_ylim()[0]), int(ax.get_ylim()[1]) + 1, 1)
+    ax.xaxis.set_ticks(x_ticks_major, minor=False)
+    ax.yaxis.set_ticks(y_ticks_major, minor=False)
+    # Set grid lines
+    ax.grid(True, which='major', linewidth=1)
+    ax.grid(True, which='minor', linewidth=0.5)
+
     fig.canvas.draw_idle()
 
 
@@ -679,6 +756,7 @@ def load():
 
 
 def do_same_command(command):
+    global curr_x, curr_y
     if command["type"] == 'delete':
         shape = command["shape"]
         if isinstance(shape, Point):
@@ -726,6 +804,30 @@ def do_same_command(command):
 
             config.undo_stack.pop()
             config.undo_stack.pop()
+
+    elif command["type"] == 'move':
+        shape = command["shape"]
+        x = command["last_x"]
+        y = command["last_y"]
+
+        if isinstance(shape, Point):
+            curr_x = -1 * shape.get_x() + x
+            curr_y = -1 * shape.get_y() + y
+
+        if isinstance(shape, Line):
+            pass
+
+        if isinstance(shape, Circle):
+            center = shape.get_center()
+            curr_x = -1 * center.get_x() + x
+            curr_y = -1 * center.get_y() + y
+
+        dx = curr_x
+        dy = curr_y
+
+        shape_set_coordinate(shape, dx, dy)
+
+
 
     elif command["type"] == 'reset':
         reset()
@@ -783,8 +885,32 @@ def do_opposite_command(command):
             config.undo_stack.pop()
             config.undo_stack.pop()
 
+    elif command["type"] == 'move':
+        shape = command["shape"]
+        x = command["last_x"]
+        y = command["last_y"]
+        curr_x = -999999
+        curr_y = -999999
+        if isinstance(shape, Point):
+            curr_x = shape.get_x()
+            curr_y = shape.get_y()
+
+        if isinstance(shape, Line):
+            pass
+
+        if isinstance(shape, Circle):
+            center = shape.get_center()
+            curr_x = center.get_x()
+            curr_y = center.get_y()
+
+        dx = x - curr_x
+        dy = y - curr_y
+        shape_set_coordinate(shape, dx, dy)
+
+
     elif command["type"] == 'reset':
         config.shapes = command["list"]
+
 
     update_display()
     update_label()
