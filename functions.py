@@ -118,9 +118,9 @@ def shape_clicked(x, y):
                 print("")
 
         elif isinstance(shape, Circle):
-            circle_x = shape.coords[0][0]
-            circle_y = shape.coords[0][0]
-            distance = np.sqrt((x - circle_x) ** 2 + (y - circle_y) ** 2)
+            center = shape.get_center()
+
+            distance = np.sqrt((x - center.get_x()) ** 2 + (y - center.get_y()) ** 2)
             if np.abs(distance - shape.radius) <= threshold:
                 return shape
 
@@ -188,8 +188,10 @@ def on_motion(event):
                 config.selected_shape.set_y(dy)
 
         elif isinstance(config.selected_shape, Circle):
-            config.selected_shape.coords[0][0] += dx
-            config.selected_shape.coords[0][1] += dy
+            shape = config.selected_shape
+            # config.selected_shape.coords[0][0] += dx
+            # config.selected_shape.coords[0][1] += dy
+            shape.set_center(dx, dy)
 
         update_display()
         update_label()
@@ -319,7 +321,10 @@ def handle_input_circle(event):
         else:  # second click
             x, y = event.xdata, event.ydata
             radius = np.sqrt((x - config.circle_x) ** 2 + (y - config.circle_y) ** 2)
-            circle = Circle((config.circle_x, config.circle_y), radius, next(config.label_generator))
+            center = Point((config.circle_x, config.circle_y), next(config.label_generator))
+            draw_shape(center)
+            config.undo_stack.pop()
+            circle = Circle(center, radius, next(config.label_generator))
             draw_shape(circle)
 
             # Disconnect the circle event listener so it doesn't interfere with other shapes
@@ -378,6 +383,15 @@ def delete_by_label(label):
                     command = {"type": 'delete', "shape": line}
                     config.undo_stack.insert(len(config.undo_stack), command)
 
+                circle = shape.is_circle_part()
+                if circle is not False:
+                    center = circle.get_center()
+                    config.shapes.remove(center)
+                    config.deleted_labels.append(center.get_label())
+
+                    command = {"type": 'delete', "shape": circle}
+                    config.undo_stack.insert(len(config.undo_stack), command)
+
                 else:
                     config.shapes.remove(shape)
                     config.deleted_labels.append(shape.get_label())
@@ -401,8 +415,14 @@ def delete_by_label(label):
                 config.undo_stack.insert(len(config.undo_stack), command)
 
             elif isinstance(shape, Circle):
+                center = shape.get_center()
+                label = shape.get_label()
+
+                config.shapes.remove(center)
+                config.deleted_labels.append(center.get_label())
+
                 config.shapes.remove(shape)
-                config.deleted_labels.append(shape.get_label())
+                config.deleted_labels.append(label.get_label())
 
                 command = {"type": 'delete', "shape": shape}
                 config.undo_stack.insert(len(config.undo_stack), command)
@@ -492,8 +512,10 @@ def update_label():
                 print(f'coords:')
 
         elif isinstance(shape, Circle):
-            x, y = shape.coords[0]
-            r = shape.radius
+            x = shape.get_center().get_x()
+            y = shape.get_center().get_y()
+            r = shape.get_radius()
+
             label_text = f'({shape.get_label()}) Circle: (x-{x:.3f})^2 + (y-{y:.3f})^2 = {r ** 2:.3f}'
 
         label_widget = tk.Label(config.side_panel.text, text=label_text, bg='white')
@@ -561,14 +583,20 @@ def load():
 
 
         elif isinstance(shape, Circle):
+            center = shape.get_center()
+            draw_shape(center)
             draw_shape(shape)
+
+            config.undo_stack.pop()
             config.undo_stack.pop()
 
         elif isinstance(shape, Point):
-            if not shape.is_line_part([x["shape"] for x in shapes_data]):
-                print("true")
+            l = [x["shape"] for x in shapes_data]
+            if not shape.is_line_part(l) and not shape.is_circle_part(l):
                 draw_shape(shape)
                 config.undo_stack.pop()
+
+
 
     debug(config.shapes)
 
@@ -588,13 +616,16 @@ def do_same_command(command):
             config.shapes.remove(shape)
 
         if isinstance(shape, Circle):
+            center = shape.get_center()
+
+            config.shapes.remove(center)
             config.shapes.remove(shape)
 
     elif command["type"] == 'draw':
         shape = command["shape"]
 
         if isinstance(shape, Point):
-            if not shape.is_line_part():
+            if not shape.is_line_part() and not shape.is_circle_part():
                 draw_shape(shape)
                 config.undo_stack.pop()
 
@@ -610,7 +641,11 @@ def do_same_command(command):
             config.undo_stack.pop()
 
         if isinstance(shape, Circle):
+            center = shape.get_center()
+
+            draw_shape(center)
             draw_shape(shape)
+            config.undo_stack.pop()
             config.undo_stack.pop()
 
     elif command["type"] == 'reset':
@@ -636,12 +671,15 @@ def do_opposite_command(command):
             config.shapes.remove(shape)
 
         if isinstance(shape, Circle):
+            center = shape.get_center()
+
+            config.shapes.remove(center)
             config.shapes.remove(shape)
 
     elif command["type"] == 'delete':
         shape = command["shape"]
         if isinstance(shape, Point):
-            if not shape.is_line_part():
+            if not shape.is_line_part() and not shape.is_circle_part():
                 draw_shape(shape)
                 config.undo_stack.pop()
 
@@ -656,12 +694,14 @@ def do_opposite_command(command):
             draw_shape(shape)
 
         if isinstance(shape, Circle):
+            center = shape.get_center()
+
+            draw_shape(shape)
+            config.undo_stack.pop()
             draw_shape(shape)
 
     elif command["type"] == 'reset':
         config.shapes = command["list"]
-
-
 
     update_display()
     update_label()

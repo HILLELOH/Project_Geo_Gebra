@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 
 import config
+from Shapes.Circle import Circle
 from Shapes.Line import Line
 from Shapes.shapes import Shape
 from matplotlib.axes import Axes
@@ -45,6 +46,16 @@ class Point(Shape):
         for shape in shapes:
             if isinstance(shape, Line):
                 if shape.get_start() == self or shape.get_end() == self:
+                    flag = shape
+        return flag
+
+    def is_circle_part(self, shapes=None):
+        if shapes is None:
+            shapes = config.shapes
+        flag = False
+        for shape in shapes:
+            if isinstance(shape, Circle):
+                if shape.get_center() == self:
                     flag = shape
         return flag
 
