@@ -2,15 +2,15 @@
 
 ## features
 ### Draw / Delete
-Our GUI is able to handle inputs of data, Draw it and Delete.
-Current shapes availables:
-Point
-Line
-Circle
-Each shape have those following features:
-   Label - Represent the shape in the text and also on the figure.
-   Drag - Each shape can be drag from it place, the label will change as follow.
-   Hide - hide the object from the figure but not from the list of shapes (not as delete).
+Our GUI is able to handle inputs of data, Draw it and Delete. <br />
+Current shapes availables: <br />
+Point <br />
+Line <br />
+Circle <br />
+Each shape have those following features: <br />
+   Label - Represent the shape in the text and also on the figure. <br />
+   Drag - Each shape can be drag from it place, the label will change as follow. <br />
+   Hide - hide the object from the figure but not from the list of shapes (not as delete). <br />
 
 
 ### Undo / Redo
