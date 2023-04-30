@@ -316,6 +316,8 @@ def hide(event):
             if shape.is_hidden():
                 circle.set_hidden(False)
                 shape.set_hidden(False)
+                # command = {"type": "hide", "shape": shape}
+                # config.undo_stack.append(command)
 
             else:
                 circle.set_hidden(True)
@@ -552,7 +554,6 @@ def delete_by_label(label):
         elif isinstance(shape, Line):
             start = shape.get_start()
             end = shape.get_end()
-
             config.shapes.remove(start)
             config.shapes.remove(end)
             config.shapes.remove(shape)

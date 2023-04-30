@@ -107,30 +107,31 @@ def generate_alphanumeric_sequence():
     config.last_turn_before_return = 0
     while True:
         if len(config.deleted_labels) > 0:
-            # Use any previously deleted labels before generating new ones
             tmp = config.deleted_labels.pop(0)
             chars, numbers = get_label_parts(tmp)
-            if not chars == config.last_label_before_return:
-                current_char = chars
-                num_iteration = int(numbers)
-            label = current_char + str(num_iteration)
-            while label in config.deleted_labels:
-                config.deleted_labels.remove(label)
-                num_iteration += 1
-                label = current_char + str(num_iteration)
-            yield label
+            if chars != config.last_label_before_return:
+                yield chars + str(numbers)
+
+            else:
+                if chars == 'Z':
+                    yield chars + str(numbers)
+                    current_char = 'A'
+                    num_iteration = numbers + 1
+
+
+                else:
+                    yield current_char + str(num_iteration)
+                    current_char = chr(ord(config.last_label_before_return) + 1)
+                    num_iteration = numbers
+
+
         else:
-            if current_char < config.last_label_before_return:
-                current_char = chr(ord(config.last_label_before_return) + 1)
-                num_iteration = config.last_turn_before_return
-            label = current_char + str(num_iteration)
-            while label in config.deleted_labels:
-                config.deleted_labels.remove(label)
-                num_iteration += 1
-                label = current_char + str(num_iteration)
-            yield label
             if current_char == 'Z':
+                yield current_char + str(num_iteration)
                 current_char = 'A'
                 num_iteration += 1
+
             else:
+                yield current_char + str(num_iteration)
                 current_char = chr(ord(current_char) + 1)
+
