@@ -29,3 +29,9 @@ last_label_before_return = None
 last_turn_before_return = None
 last_reset = []
 
+polygon_x = None
+polygon_y = None
+last_point_polygon = None
+curr_polygon = None
+
+
