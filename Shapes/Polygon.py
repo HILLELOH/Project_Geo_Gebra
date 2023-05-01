@@ -1,6 +1,8 @@
+from typing import List, Tuple
+
 import numpy as np
 from matplotlib.axes import Axes
-from scipy.spatial import ConvexHull
+from scipy.spatial import ConvexHull, Delaunay
 
 import config
 from Shapes.Line import Line
@@ -91,3 +93,41 @@ class Polygon(Shape):
             x2, y2 = points[end]
             hull_lines.append(Line(Point(x1, y1), Point(x2, y2)))
         return Polygon(hull_lines, self.label)
+
+    def is_convex(self) -> bool:
+        '''
+        The 'is_convex' function determines whether the polygon is convex or not. A polygon is convex if all its interior
+        angles are less than 180 degrees. We iterate over all the vertices of the polygon and calculate the cross product
+        of the vectors formed by adjacent edges. If the sign of the cross product changes for any adjacent edge, then the
+        polygon is not convex. If the sign of the cross product remains the same for all adjacent edges, then the polygon
+        is convex.
+        :return: True if the polygon is convex, False otherwise.
+        '''
+        num_vertices = len(self.lines_list)
+        if num_vertices < 3:
+            return False
+        sign = None
+        for i in range(num_vertices):
+            p1 = self.lines_list[i].get_start()
+            p2 = self.lines_list[(i + 1) % num_vertices].get_start()
+            p3 = self.lines_list[(i + 2) % num_vertices].get_start()
+            cross_product = (p2.get_x() - p1.get_x()) * (p3.get_y() - p2.get_y()) - (p2.get_y() - p1.get_y()) * (
+                        p3.get_x() - p2.get_x())
+            if sign is None:
+                sign = np.sign(cross_product)
+            elif np.sign(cross_product) != sign:
+                return False
+        return True
+
+    def triangulate(self) -> List[Tuple[int, int, int]]:
+        """
+        Triangulate the polygon into a list of triangles using the Delaunay triangulation method.
+        :return: A list of tuples, where each tuple contains the indices of the vertices of a triangle.
+        """
+        vertices = np.array([line.get_start().to_array() for line in self.lines_list]) # Get the polygon vertices as a numpy array
+        tri = Delaunay(vertices) # Compute the Delaunay triangulation of the vertices
+        triangles = [] # Create a list of tuples representing the triangles in the triangulation
+        for indices in tri.simplices:
+            triangles.append(tuple(indices))
+
+        return triangles
