@@ -6,6 +6,7 @@ import numpy as np
 from Shapes.shapes import Shape
 from matplotlib.axes import Axes
 import config
+import math
 
 
 class Line(Shape):
@@ -115,3 +116,12 @@ class Line(Shape):
     def set_line_obj(self, dash):
         line_obj = dash
 
+    def area(self) -> float:
+        return 0
+
+    def perimeter(self) -> float:
+        distance = math.sqrt((self.x2 - self.x1) ** 2 + (self.y2 - self.y2) ** 2)
+        return distance
+
+    def convex_hull(self):
+        return self

@@ -62,3 +62,13 @@ class Circle(Shape):
     def set_hidden(self, b):
         self.hidden = b
 
+    def area(self) -> float:
+        a = math.pi * (self.radius ** 2)
+        return a
+
+    def perimeter(self) -> float:
+        p = 2 * math.pi * self.radius
+        return p
+
+    def convex_hull(self):
+        return self

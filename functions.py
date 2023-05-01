@@ -7,7 +7,7 @@ import config
 from logging import debug
 from tkinter import ttk, filedialog, messagebox
 from Shapes.Circle import *
-from Shapes.Ploygon import Polygon
+from Shapes.Polygon import Polygon
 from Shapes.Point import *
 from Shapes.Line import *
 from label_conf import generate_alphanumeric_sequence, get_label_parts

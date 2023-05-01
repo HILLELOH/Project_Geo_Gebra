@@ -66,4 +66,13 @@ class Point(Shape):
     def set_hidden(self, b):
         self.hidden = b
 
+    def area(self) -> float:
+        return 0
+
+    def perimeter(self) -> float:
+        return 0
+
+    def convex_hull(self):
+        return self
+
 
