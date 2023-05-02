@@ -36,10 +36,11 @@ class Line(Shape):
             return 0.000, b
 
     def draw(self, ax: Axes):
+
         m, b = self.m_b()
         # draw_line_shape(m, b)
         x_range = np.array([-100, 1000])
-        self.line_obj, = ax.plot([self.x1, self.x2], [self.y1, self.y2], color='black', linestyle='-', linewidth=2)
+        self.line_obj, = ax.plot([self.x1, self.x2], [self.y1, self.y2], color='black', linestyle='-', linewidth=2, clip_on=True)
 
         # Draw the dashed lines on either side of the solid line
 
