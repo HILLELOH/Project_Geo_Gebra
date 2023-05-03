@@ -71,7 +71,7 @@ def create_buttons():
                point_button,
                line_button,
                circle_button,
-               # polygon_button,
+               polygon_button,
 
                # file_button,
                clear_history_button,
@@ -488,8 +488,10 @@ def handle_input_polygon(event):
             config.undo_stack.pop()
             config.undo_stack.pop()
 
-            config.curr_polygon.add_line(line)
-            draw_shape(config.curr_polygon)
+            draw_shape(line)
+            # config.curr_polygon.add_line(line)
+            # draw_shape(config.curr_polygon)
+
             # config.ax.figure.canvas.mpl_disconnect(config.cid)
             # Remove start_point attribute so user can draw another line
             # config.polygon_x, config.polygon_y = [None] * 2
