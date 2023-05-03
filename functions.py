@@ -10,6 +10,7 @@ from Shapes.Circle import *
 from Shapes.Polygon import Polygon
 from Shapes.Point import *
 from Shapes.Line import *
+from Shapes.Segment import *
 from label_conf import generate_alphanumeric_sequence, get_label_parts
 import re
 
@@ -53,8 +54,9 @@ def create_buttons():
     global button_list, file_button
     point_button = tk.Button(config.buttons_panel, text="Draw Point", command=draw_point)
     line_button = tk.Button(config.buttons_panel, text="Draw Line", command=draw_line)
+    segment_button = tk.Button(config.buttons_panel, text="Draw Segment", command=draw_segment)
     circle_button = tk.Button(config.buttons_panel, text="Draw Circle", command=draw_circle)
-    polygon_button = tk.Button(config.buttons_panel, text="polygon", command=draw_polygon)
+    polygon_button = tk.Button(config.buttons_panel, text="Draw Polygon", command=draw_polygon)
     reset_button = tk.Button(config.buttons_panel, text="Reset", command=reset)
     save_button = tk.Button(config.buttons_panel, text="Save", command=save)
     load_button = tk.Button(config.buttons_panel, text="Load file", command=load)
@@ -70,8 +72,9 @@ def create_buttons():
 
                point_button,
                line_button,
+               segment_button,
                circle_button,
-               # polygon_button,
+               polygon_button,
 
                # file_button,
                clear_history_button,
@@ -392,6 +395,12 @@ def draw_line():
     plt.title("Click left mouse button to start line")
     plt.draw()
 
+def draw_segment():
+    reset_cids()
+    config.cid = config.ax.figure.canvas.mpl_connect('button_press_event', handle_input_segment)
+    plt.title("Click left mouse button to start line")
+    plt.draw()
+
 
 def draw_circle():
     reset_cids()
@@ -445,6 +454,33 @@ def handle_input_line(event):
             plt.draw()
 
 
+def handle_input_segment(event):
+    if event.button == 1:  # Left mouse button
+        if not config.line_x and not config.line_y:
+            # First click sets the start point
+            config.line_x, config.line_y = event.xdata, event.ydata
+            plt.title("Click left click to draw the end point")
+            plt.draw()
+
+        else:
+            # Second click sets the end point
+            p1 = Point((config.line_x, config.line_y), next(config.label_generator))
+            p2 = Point((event.xdata, event.ydata), next(config.label_generator))
+            line = Segment(p1, p2, next(config.label_generator))
+
+            draw_shape(p1)
+            draw_shape(p2)
+            config.undo_stack.pop()
+            config.undo_stack.pop()
+
+            draw_shape(line)
+            config.ax.figure.canvas.mpl_disconnect(config.cid)
+            # Remove start_point attribute so user can draw another line
+            config.line_x, config.line_y = [None] * 2
+            plt.title("")
+            plt.draw()
+
+
 def handle_input_circle(event):
     if event.button == 1:  # Left mouse button
         if not config.circle_x and not config.circle_y:  # first click
@@ -466,6 +502,7 @@ def handle_input_circle(event):
             config.circle_cid, config.circle_x, config.circle_y = [None] * 3
 
 
+
 def handle_input_polygon(event):
     if event.button == 1:  # Left mouse button
         if not config.polygon_x and not config.polygon_y:
@@ -481,15 +518,17 @@ def handle_input_polygon(event):
             p1 = config.last_point_polygon
             p2 = Point((event.xdata, event.ydata), next(config.label_generator))
             config.last_point_polygon = p2
-            line = Line(p1, p2, next(config.label_generator))
+            segment = Line(p1, p2, next(config.label_generator))
 
             draw_shape(p1)
             draw_shape(p2)
             config.undo_stack.pop()
             config.undo_stack.pop()
 
-            config.curr_polygon.add_line(line)
-            draw_shape(config.curr_polygon)
+            draw_shape(segment)
+            # config.curr_polygon.add_line(line)
+            # draw_shape(config.curr_polygon)
+
             # config.ax.figure.canvas.mpl_disconnect(config.cid)
             # Remove start_point attribute so user can draw another line
             # config.polygon_x, config.polygon_y = [None] * 2

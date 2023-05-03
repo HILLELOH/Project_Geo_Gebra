@@ -11,6 +11,7 @@ import tkinter as tk
 from Shapes.Circle import *
 from Shapes.Point import *
 from Shapes.Line import *
+from Shapes.Polygon import *
 import config
 config.label_generator = generate_alphanumeric_sequence()
 
@@ -54,7 +55,7 @@ def create_buttons():
     point_button = tk.Button(config.buttons_panel, text="Draw Point", command=draw_point)
     line_button = tk.Button(config.buttons_panel, text="Draw Line", command=draw_line)
     circle_button = tk.Button(config.buttons_panel, text="Draw Circle", command=draw_circle)
-    # polygon_button = tk.Button(config.buttons_panel, text="polygon", command=draw_polygon)
+    polygon_button = tk.Button(config.buttons_panel, text="polygon", command=draw_polygon)
     reset_button = tk.Button(config.buttons_panel, text="Reset", command=reset)
     save_button = tk.Button(config.buttons_panel, text="Save", command=save)
     load_button = tk.Button(config.buttons_panel, text="Load file", command=load)
@@ -71,7 +72,7 @@ def create_buttons():
                point_button,
                line_button,
                circle_button,
-               # polygon_button,
+               polygon_button,
 
                # file_button,
                clear_history_button,
@@ -266,16 +267,16 @@ def draw_circle():
     plt.draw()
 
 
-# def draw_polygon():
-#     if config.cid is not None:
-#         config.ax.figure.canvas.mpl_disconnect(config.cid)
-#
-#     if config.circle_cid is not None:
-#         config.ax.figure.canvas.mpl_disconnect(config.circle_cid)
-#
-#     config.circle_cid = config.ax.figure.canvas.mpl_connect('button_press_event', handle_input_polygon)
-#     plt.title("Click left mouse button to set points")
-#     plt.draw()
+def draw_polygon():
+    if config.cid is not None:
+        config.ax.figure.canvas.mpl_disconnect(config.cid)
+
+    if config.circle_cid is not None:
+        config.ax.figure.canvas.mpl_disconnect(config.circle_cid)
+
+    config.circle_cid = config.ax.figure.canvas.mpl_connect('button_press_event', handle_input_polygon)
+    plt.title("Click left mouse button to set points")
+    plt.draw()
 
 
 def handle_input_circle(event):
@@ -330,36 +331,36 @@ def handle_input_line(event):
             plt.draw()
 
 
-#
-# def handle_input_polygon(event):
-#     if event.button == 1:  # Left mouse button
-#         if len(config.polygon_vertices) == 0:
-#             draw_point_shape(event.xdata, event.ydata)
-#             config.polygon_vertices.append((event.xdata, event.ydata))
-#         else:
-#             if (event.xdata, event.ydata) == (config.polygon_vertices[0]):
-#                 draw_point_shape(event.xdata, event.ydata)
-#                 last_point = config.polygon_vertices[-1]
-#                 line = Line((event.xdata, event.ydata), (last_point[0], last_point[1]))
-#                 draw_line_shape(line)
-#                 config.polygon_vertices.append((event.xdata, event.ydata))
-#
-#                 config.ax.figure.canvas.mpl_disconnect(config.cid)
-#                 # Remove start_point attribute so user can draw another line
-#                 config.polygon_vertices = []
-#                 plt.title("")
-#                 plt.draw()
-#
-#             else:
-#                 draw_point_shape(event.xdata, event.ydata)
-#                 last_point = config.polygon_vertices[-1]
-#                 p1 = Point((event.xdata, event.ydata))
-#                 p2 = Point((last_point[0], last_point[1]))
-#                 line = Line(p1, p2)
-#                 draw_line_shape(line)
-#                 config.polygon_vertices.append((event.xdata, event.ydata))
-#
-#                 config.circle_cid = config.ax.figure.canvas.mpl_connect('button_press_event', handle_input_polygon)
+
+def handle_input_polygon(event):
+    if event.button == 1:  # Left mouse button
+        if len(config.polygon_vertices) == 0:
+            draw_point_shape(event.xdata, event.ydata)
+            config.polygon_vertices.append((event.xdata, event.ydata))
+        else:
+            if (event.xdata, event.ydata) == (config.polygon_vertices[0]):
+                draw_point_shape(event.xdata, event.ydata)
+                last_point = config.polygon_vertices[-1]
+                line = Line((event.xdata, event.ydata), (last_point[0], last_point[1]))
+                draw_line_shape(line)
+                config.polygon_vertices.append((event.xdata, event.ydata))
+
+                config.ax.figure.canvas.mpl_disconnect(config.cid)
+                # Remove start_point attribute so user can draw another line
+                config.polygon_vertices = []
+                plt.title("")
+                plt.draw()
+
+            else:
+                draw_point_shape(event.xdata, event.ydata)
+                last_point = config.polygon_vertices[-1]
+                p1 = Point((event.xdata, event.ydata))
+                p2 = Point((last_point[0], last_point[1]))
+                line = Line(p1, p2)
+                draw_line_shape(line)
+                config.polygon_vertices.append((event.xdata, event.ydata))
+
+                config.circle_cid = config.ax.figure.canvas.mpl_connect('button_press_event', handle_input_polygon)
 
 
 def handle_delete_shape(event):

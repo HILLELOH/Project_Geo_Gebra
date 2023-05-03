@@ -7,30 +7,31 @@ from scipy.spatial import ConvexHull, Delaunay
 import config
 from Shapes.Line import Line
 from Shapes.Point import Point
+from Shapes.Segment import Segment
 from Shapes.shapes import Shape
 
 
 class Polygon(Shape):
-    def __init__(self, lines_list, label):
-        self.lines_list = lines_list
+    def __init__(self, segments_list, label):
+        self.segments_list = segments_list
         self.label = label
         self.hidden = True
 
     def draw(self, ax: Axes):
-        for line in self.lines_list:
-            m, b = line.m_b()
+        for segment in self.segments_list:
+            m, b = segment.m_b()
             # draw_line_shape(m, b)
             x_range = np.array([-100, 1000])
-            start = line.get_start()
-            end = line.get_end()
-            line.set_line_obj(ax.plot([start.get_x(), end.get_x()], [start.get_y(), end.get_y()], color='black', linestyle='-', linewidth=2))
-            # line.dashes_obj, = ax.plot(x_range, m * x_range + b, linestyle='-', linewidth=1, color='black')
+            start = segment.get_start()
+            end = segment.get_end()
+            segment.set_segment_obj(ax.plot([start.get_x(), end.get_x()], [start.get_y(), end.get_y()], color='black', linestyle='-', linewidth=2))
+            # segment.dashes_obj, = ax.plot(x_range, m * x_range + b, linestyle='-', linewidth=1, color='black')
 
-    def add_line(self, line):
-        self.lines_list.append(line)
+    def add_segment(self, segment):
+        self.segments_list.append(segment)
 
-    def get_line_list(self):
-        return self.lines_list
+    def get_segment_list(self):
+        return self.segments_list
 
     def get_label(self):
         return self.label
@@ -48,8 +49,8 @@ class Polygon(Shape):
         using the formula: A = 1/2 * | x1*y2 + x2*y3 + ... + xn-1*yn + xn*y1 - y1*x2 - y2*x3 - ... - yn-1*xn - yn*x1 |
         :return: Area of the current 'Polygon' object
         '''
-        x = [line.get_start().get_x() for line in self.lines_list] + [self.lines_list[-1].get_end().get_x()]
-        y = [line.get_start().get_y() for line in self.lines_list] + [self.lines_list[-1].get_end().get_y()]
+        x = [segment.get_start().get_x() for segment in self.segments_list] + [self.segments_list[-1].get_end().get_x()]
+        y = [segment.get_start().get_y() for segment in self.segments_list] + [self.segments_list[-1].get_end().get_y()]
         area = 0.0
         j = len(x) - 1
         for i in range(len(x)):
@@ -64,8 +65,8 @@ class Polygon(Shape):
         :return: total perimeter of the current 'Polygon' object.
         '''
         perimeter = 0.0
-        for line in self.lines_list:
-            perimeter += line.perimeter()
+        for segment in self.segments_list:
+            perimeter += segment.perimeter()
         return perimeter
 
     def convex_hull(self):
@@ -79,20 +80,20 @@ class Polygon(Shape):
         :return: New 'Polygon' object that represents the convex hull of the current polygon.
         '''
         points = [] # Get a list of all the points in the polygon
-        for line in self.lines_list:
-            start = line.get_start()
-            end = line.get_end()
+        for segment in self.segments_list:
+            start = segment.get_start()
+            end = segment.get_end()
             points.append([start.get_x(), start.get_y()])
             points.append([end.get_x(), end.get_y()])
         hull = ConvexHull(points) # Calculate the convex hull of the points
-        hull_lines = [] # Create a list of lines that form the convex hull
+        hull_segments = [] # Create a list of segments that form the convex hull
         for simplex in hull.simplices:
             start = simplex[0]
             end = simplex[1]
             x1, y1 = points[start]
             x2, y2 = points[end]
-            hull_lines.append(Line(Point(x1, y1), Point(x2, y2)))
-        return Polygon(hull_lines, self.label)
+            hull_segments.append(Segment(Point(x1, y1), Point(x2, y2)))
+        return Polygon(hull_segments, self.label)
 
     def is_convex(self) -> bool:
         '''
@@ -103,14 +104,14 @@ class Polygon(Shape):
         is convex.
         :return: True if the polygon is convex, False otherwise.
         '''
-        num_vertices = len(self.lines_list)
+        num_vertices = len(self.segments_list)
         if num_vertices < 3:
             return False
         sign = None
         for i in range(num_vertices):
-            p1 = self.lines_list[i].get_start()
-            p2 = self.lines_list[(i + 1) % num_vertices].get_start()
-            p3 = self.lines_list[(i + 2) % num_vertices].get_start()
+            p1 = self.segments_list[i].get_start()
+            p2 = self.segments_list[(i + 1) % num_vertices].get_start()
+            p3 = self.segments_list[(i + 2) % num_vertices].get_start()
             cross_product = (p2.get_x() - p1.get_x()) * (p3.get_y() - p2.get_y()) - (p2.get_y() - p1.get_y()) * (
                         p3.get_x() - p2.get_x())
             if sign is None:
@@ -124,7 +125,7 @@ class Polygon(Shape):
         Triangulate the polygon into a list of triangles using the Delaunay triangulation method.
         :return: A list of tuples, where each tuple contains the indices of the vertices of a triangle.
         """
-        vertices = np.array([line.get_start().to_array() for line in self.lines_list]) # Get the polygon vertices as a numpy array
+        vertices = np.array([segment.get_start().to_array() for segment in self.segments_list]) # Get the polygon vertices as a numpy array
         tri = Delaunay(vertices) # Compute the Delaunay triangulation of the vertices
         triangles = [] # Create a list of tuples representing the triangles in the triangulation
         for indices in tri.simplices:

@@ -9,7 +9,7 @@ import config
 import math
 
 
-class Line(Shape):
+class Segment(Shape):
     def __init__(self, p1, p2, label):
         self.p1 = p1
         self.x1 = p1.coords[0][0]
@@ -18,12 +18,12 @@ class Line(Shape):
         self.p2 = p2
         self.x2 = p2.coords[0][0]
         self.y2 = p2.coords[0][1]
-        self.line_obj = None
+        self.segment_obj = None
         self.dashes_obj = None
         self.hidden = False
 
         self.label = label
-        # self.update_line_and_dashes()
+        # self.update_segment_and_dashes()
 
     def m_b(self):
         try:
@@ -48,7 +48,7 @@ class Line(Shape):
         #self.update_line_and_dashes()
         '''
 
-        self.line_obj, = ax.plot([self.x1, self.x2], [self.y1, self.y2], color='black', linestyle='-', linewidth=2)
+        self.segment_obj, = ax.plot([self.x1, self.x2], [self.y1, self.y2], color='black', linestyle='-', linewidth=2)
 
     # def update_line_and_dashes(self):
     #     self.draw(config.ax)
@@ -58,17 +58,17 @@ class Line(Shape):
     #     self.dashes_obj.set_data(x_range, m * x_range + b)
     #     config.fig.canvas.draw_idle()
 
-    def update_line_and_dashes(self):
+    def update_segment_and_dashes(self):
         m, b = self.m_b()
         x_range = np.array([-100, 1000])
 
-        if self.line_obj:
-            self.line_obj.pop(0).remove()  # remove old line
-        self.line_obj, = config.ax.plot([self.x1, self.x2], [self.y1, self.y2], color='black', linestyle='-',
+        if self.segment_obj:
+            self.segment_obj.pop(0).remove()  # remove old segment
+        self.segment_obj, = config.ax.plot([self.x1, self.x2], [self.y1, self.y2], color='black', linestyle='-',
                                        linewidth=2)
 
         if self.dashes_obj:
-            self.dashes_obj.pop(0).remove()  # remove old dashed line
+            self.dashes_obj.pop(0).remove()  # remove old dashed segment
         self.dashes_obj, = config.ax.plot(x_range, m * x_range + b, linestyle='--', linewidth=1, color='black')
 
         config.fig.canvas.draw_idle()
@@ -97,7 +97,7 @@ class Line(Shape):
         self.p2.set_x(x)
         self.p2.set_y(y)
 
-    def is_line_edge(self, p):
+    def is_segment_edge(self, p):
         if round(p.get_x(), 2) == round(self.x1, 2) and round(p.get_y(), 2) == round(self.y1, 2):
             return True, "start"
         elif round(p.get_x(), 2) == round(self.x2, 2) and round(p.get_y(), 2) == round(self.y2, 2):
@@ -106,7 +106,7 @@ class Line(Shape):
         return False, False
 
     # def __repr__(self):
-    #     return "Line"
+    #     return "Segment"
 
     def get_label(self):
         return self.label
@@ -117,8 +117,8 @@ class Line(Shape):
     def set_hidden(self, b):
         self.hidden = b
 
-    def set_line_obj(self, dash):
-        line_obj = dash
+    def set_segment_obj(self, dash):
+        segment_obj = dash
 
     def area(self) -> float:
         return 0
