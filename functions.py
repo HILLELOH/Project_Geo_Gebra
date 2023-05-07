@@ -94,23 +94,6 @@ def create_buttons():
     # make_file_button_frame(config.file_frame)
 
 
-def is_start_end(p, line):
-    threshold = 0.05
-
-    if abs(p.get_x() - line.get_start_point()[0]) < threshold and abs(
-            p.get_y() - line.get_start_point()[1]) < threshold:
-        return "start"
-
-    elif abs(p.get_x() - line.get_end_point()[0]) < threshold and abs(
-            p.get_y() - line.get_end_point()[1]) < threshold:
-        return "end"
-
-    else:
-        # return f'{abs(coords[0] - line.get_start_point()[0])}, {abs(coords[1] - line.get_start_point()[1])}\n' \
-        #        f'{abs(coords[0] - line.get_end_point()[0])}, {abs(coords[1] - line.get_end_point()[1])}'
-        return None
-
-
 def shape_clicked(x, y):
     threshold = 0.5
     for shape in config.shapes:
@@ -132,6 +115,12 @@ def shape_clicked(x, y):
             m, b = shape.m_b()
             line_y = m * x + b
             if np.abs(y - line_y) <= threshold:
+                return shape
+
+        elif isinstance(shape, Segment):
+            m, b = shape.m_b()
+            segment_y = m * x + b
+            if np.abs(y - segment_y) <= threshold:
                 return shape
     return
 
@@ -168,6 +157,21 @@ def on_motion(event):
                         break
 
                     elif shape.is_line_edge(config.selected_shape)[1] == "end":
+                        config.selected_shape.coords[0][0] += dx
+                        config.selected_shape.coords[0][1] += dy
+                        shape.set_end_point(dx, dy)
+                        flag = True
+                        break
+
+                elif isinstance(shape, Segment):
+                    if shape.is_segment_edge(config.selected_shape)[1] == "start":
+                        config.selected_shape.coords[0][0] += dx
+                        config.selected_shape.coords[0][1] += dy
+                        shape.set_start_point(dx, dy)
+                        flag = True
+                        break
+
+                    elif shape.is_segment_edge(config.selected_shape)[1] == "end":
                         config.selected_shape.coords[0][0] += dx
                         config.selected_shape.coords[0][1] += dy
                         shape.set_end_point(dx, dy)
@@ -216,6 +220,19 @@ def on_motion(event):
             end.coords[0][1] += dy
             config.selected_shape.set_end_point(dx, dy)
 
+
+        elif isinstance(config.selected_shape, Segment):  # Check if the selected_shape is a Line
+            start = config.selected_shape.get_start()
+            end = config.selected_shape.get_end()
+
+            start.coords[0][0] += dx
+            start.coords[0][1] += dy
+            config.selected_shape.set_start_point(dx, dy)
+
+            end.coords[0][0] += dx
+            end.coords[0][1] += dy
+            config.selected_shape.set_end_point(dx, dy)
+
         update_display()
         update_label()
         plt.draw()
@@ -248,6 +265,17 @@ def shape_set_coordinate(shape, x_coord, y_coord):
         end.coords[0][1] += dy
         shape.set_end_point(dx, dy)
 
+    elif isinstance(shape, Segment):
+        start = shape.get_start()
+        end = shape.get_end()
+
+        start.coords[0][0] += dx
+        start.coords[0][1] += dy
+        shape.set_start_point(dx, dy)
+
+        end.coords[0][0] += dx
+        end.coords[0][1] += dy
+        shape.set_end_point(dx, dy)
 
     update_display()
     update_label()
@@ -315,6 +343,7 @@ def hide(event):
     if isinstance(shape, Point):
         circle = shape.is_circle_part()
         line = shape.is_line_part()
+        segment = shape.is_segment_part()
         if circle:
             if shape.is_hidden():
                 circle.set_hidden(False)
@@ -337,13 +366,37 @@ def hide(event):
                 line.get_end().set_hidden(True)
                 line.set_hidden(True)
 
-        elif not line and not circle:
+        if segment:
+            if shape.is_hidden():
+                segment.get_start().set_hidden(False)
+                segment.get_end().set_hidden(False)
+                segment.set_hidden(False)
+
+            else:
+                segment.get_start().set_hidden(True)
+                segment.get_end().set_hidden(True)
+                segment.set_hidden(True)
+
+
+        elif not line and not circle and not segment:
             if shape.is_hidden():
                 shape.set_hidden(False)
             else:
                 shape.set_hidden(True)
 
     if isinstance(shape, Line):
+        if shape.is_hidden():
+            shape.get_start().set_hidden(False)
+            shape.get_end().set_hidden(False)
+            shape.set_hidden(False)
+
+        else:
+            shape.get_start().set_hidden(True)
+            shape.get_end().set_hidden(True)
+            shape.set_hidden(True)
+
+
+    if isinstance(shape, Segment):
         if shape.is_hidden():
             shape.get_start().set_hidden(False)
             shape.get_end().set_hidden(False)
@@ -408,7 +461,6 @@ def draw_circle():
     config.circle_cid = config.ax.figure.canvas.mpl_connect('button_press_event', handle_input_circle)
     plt.title("Click left mouse button to set center")
     plt.draw()
-
 
 
 def handle_input_point(event):
@@ -548,7 +600,7 @@ def delete_by_label(label):
         if isinstance(shape, Point):
             line = shape.is_line_part()
             circle = shape.is_circle_part()
-
+            segment = shape.is_segment_part()
             if line is not False:
                 debug("line_part")
 
@@ -566,6 +618,24 @@ def delete_by_label(label):
                 command = {"type": 'delete', "shape": line}
                 config.undo_stack.insert(len(config.undo_stack), command)
 
+
+            elif segment is not False:
+                debug("segment_part")
+
+                start = segment.get_start()
+                end = segment.get_end()
+
+                config.shapes.remove(start)
+                config.shapes.remove(end)
+                config.shapes.remove(segment)
+
+                config.deleted_labels.append(start.get_label())
+                config.deleted_labels.append(end.get_label())
+                config.deleted_labels.append(segment.get_label())
+
+                command = {"type": 'delete', "shape": segment}
+                config.undo_stack.insert(len(config.undo_stack), command)
+
             elif circle is not False:
                 debug("circle_part")
                 center = circle.get_center()
@@ -577,7 +647,7 @@ def delete_by_label(label):
                 command = {"type": 'delete', "shape": circle}
                 config.undo_stack.insert(len(config.undo_stack), command)
 
-            elif not line and not circle:
+            elif not line and not segment and not circle:
                 config.shapes.remove(shape)
                 config.deleted_labels.append(shape.get_label())
 
@@ -585,6 +655,20 @@ def delete_by_label(label):
                 config.undo_stack.insert(len(config.undo_stack), command)
 
         elif isinstance(shape, Line):
+            start = shape.get_start()
+            end = shape.get_end()
+            config.shapes.remove(start)
+            config.shapes.remove(end)
+            config.shapes.remove(shape)
+
+            config.deleted_labels.append(start.get_label())
+            config.deleted_labels.append(end.get_label())
+            config.deleted_labels.append(shape.get_label())
+
+            command = {"type": 'delete', "shape": shape}
+            config.undo_stack.insert(len(config.undo_stack), command)
+
+        elif isinstance(shape, Segment):
             start = shape.get_start()
             end = shape.get_end()
             config.shapes.remove(start)
@@ -788,6 +872,15 @@ def load():
             config.undo_stack.pop()
             config.undo_stack.pop()
 
+        elif isinstance(shape, Segment):
+            draw_shape(shape.get_start())
+            draw_shape(shape.get_end())
+            draw_shape(shape)
+
+            config.undo_stack.pop()
+            config.undo_stack.pop()
+            config.undo_stack.pop()
+
         elif isinstance(shape, Circle):
             center = shape.get_center()
             draw_shape(center)
@@ -798,7 +891,7 @@ def load():
 
         elif isinstance(shape, Point):
             l = [x["shape"] for x in shapes_data]
-            if not shape.is_line_part(l) and not shape.is_circle_part(l):
+            if not shape.is_line_part(l) and not shape.is_circle_part(l) and not shape.is_segment_part(l):
                 draw_shape(shape)
                 config.undo_stack.pop()
 
@@ -820,6 +913,14 @@ def do_same_command(command):
             config.shapes.remove(end)
             config.shapes.remove(shape)
 
+        if isinstance(shape, Segment):
+            start = shape.get_start()
+            end = shape.get_end()
+
+            config.shapes.remove(start)
+            config.shapes.remove(end)
+            config.shapes.remove(shape)
+
         if isinstance(shape, Circle):
             center = shape.get_center()
 
@@ -830,11 +931,23 @@ def do_same_command(command):
         shape = command["shape"]
 
         if isinstance(shape, Point):
-            if not shape.is_line_part() and not shape.is_circle_part():
+            if not shape.is_line_part() and not shape.is_circle_part() and not shape.is_segment_part():
                 draw_shape(shape)
                 config.undo_stack.pop()
 
         if isinstance(shape, Line):
+            start = shape.get_start()
+            end = shape.get_end()
+
+            draw_shape(start)
+            draw_shape(end)
+            draw_shape(shape)
+
+            config.undo_stack.pop()
+            config.undo_stack.pop()
+            config.undo_stack.pop()
+
+        if isinstance(shape, Segment):
             start = shape.get_start()
             end = shape.get_end()
 
@@ -865,6 +978,9 @@ def do_same_command(command):
             curr_y = -1 * shape.get_y() + y
 
         if isinstance(shape, Line):
+            pass
+
+        if isinstance(shape, Segment):
             pass
 
         if isinstance(shape, Circle):
@@ -901,6 +1017,14 @@ def do_opposite_command(command):
             config.shapes.remove(end)
             config.shapes.remove(shape)
 
+        if isinstance(shape, Segment):
+            start = shape.get_start()
+            end = shape.get_end()
+
+            config.shapes.remove(start)
+            config.shapes.remove(end)
+            config.shapes.remove(shape)
+
         if isinstance(shape, Circle):
             center = shape.get_center()
 
@@ -910,11 +1034,23 @@ def do_opposite_command(command):
     elif command["type"] == 'delete':
         shape = command["shape"]
         if isinstance(shape, Point):
-            if not shape.is_line_part() and not shape.is_circle_part():
+            if not shape.is_line_part() and not shape.is_circle_part() and not shape.is_segment_part():
                 draw_shape(shape)
                 config.undo_stack.pop()
 
         if isinstance(shape, Line):
+            start = shape.get_start()
+            end = shape.get_end()
+
+            draw_shape(start)
+            draw_shape(end)
+            draw_shape(shape)
+
+            config.undo_stack.pop()
+            config.undo_stack.pop()
+            config.undo_stack.pop()
+
+        if isinstance(shape, Segment):
             start = shape.get_start()
             end = shape.get_end()
 
