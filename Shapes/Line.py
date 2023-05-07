@@ -36,26 +36,14 @@ class Line(Shape):
 
     def draw(self, ax: Axes):
         m, b = self.m_b()
-        # draw_line_shape(m, b)
         x_range = np.array([-100, 1000])
         self.line_obj, = ax.plot([self.x1, self.x2], [self.y1, self.y2], color='black', linestyle='-', linewidth=2)
-
-        # Draw the dashed lines on either side of the solid line
-
         self.dashes_obj, = ax.plot(x_range, m * x_range + b, linestyle='-', linewidth=1, color='black')
-        #self.update_line_and_dashes()
 
-    # def update_line_and_dashes(self):
-    #     self.draw(config.ax)
-    #     m, b = self.m_b()
-    #     x_range = np.array([-100, 1000])
-    #     self.line_obj.set_data([self.x1, self.x2], [self.y1, self.y2])
-    #     self.dashes_obj.set_data(x_range, m * x_range + b)
-    #     config.fig.canvas.draw_idle()
 
     def update_line_and_dashes(self):
         m, b = self.m_b()
-        x_range = np.array([-100, 1000])
+        x_range = np.array([-1000, 1000])
 
         if self.line_obj:
             self.line_obj.pop(0).remove()  # remove old line

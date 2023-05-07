@@ -9,6 +9,7 @@ from tkinter import ttk, filedialog, messagebox
 from Shapes.Circle import *
 from Shapes.Point import *
 from Shapes.Line import *
+from Shapes.Segment import *
 from label_conf import generate_alphanumeric_sequence, get_label_parts
 import re
 
@@ -52,6 +53,7 @@ def create_buttons():
     global button_list, file_button
     point_button = tk.Button(config.buttons_panel, text="Draw Point", command=draw_point)
     line_button = tk.Button(config.buttons_panel, text="Draw Line", command=draw_line)
+    segment_button = tk.Button(config.buttons_panel, text="Draw Segment", command=draw_segment)
     circle_button = tk.Button(config.buttons_panel, text="Draw Circle", command=draw_circle)
     # polygon_button = tk.Button(config.buttons_panel, text="polygon", command=draw_polygon)
     reset_button = tk.Button(config.buttons_panel, text="Reset", command=reset)
@@ -69,6 +71,7 @@ def create_buttons():
 
                point_button,
                line_button,
+               segment_button,
                circle_button,
                # polygon_button,
 
@@ -393,6 +396,13 @@ def draw_line():
     plt.draw()
 
 
+def draw_segment():
+    reset_cids()
+    config.cid = config.ax.figure.canvas.mpl_connect('button_press_event', handle_input_segment)
+    plt.title("Click left mouse button to start segment")
+    plt.draw()
+
+
 def draw_circle():
     reset_cids()
     config.circle_cid = config.ax.figure.canvas.mpl_connect('button_press_event', handle_input_circle)
@@ -400,11 +410,6 @@ def draw_circle():
     plt.draw()
 
 
-# def draw_polygon():
-#     reset_cids()
-#     config.circle_cid = config.ax.figure.canvas.mpl_connect('button_press_event', handle_input_polygon)
-#     plt.title("Click left mouse button to set points")
-#     plt.draw()
 
 def handle_input_point(event):
     config.line_x, config.line_y = [None] * 2
@@ -442,6 +447,34 @@ def handle_input_line(event):
             config.line_x, config.line_y = [None] * 2
             plt.title("")
             plt.draw()
+
+
+def handle_input_segment(event):
+    if event.button == 1:  # Left mouse button
+        if not config.segment_x and not config.segment_y:
+            # First click sets the start point
+            config.segment_x, config.segment_y = event.xdata, event.ydata
+            plt.title("Click left click to draw the end segment point")
+            plt.draw()
+
+        else:
+            # Second click sets the end point
+            p1 = Point((config.segment_x, config.segment_y), next(config.label_generator))
+            p2 = Point((event.xdata, event.ydata), next(config.label_generator))
+            segment = Segment(p1, p2, next(config.label_generator))
+
+            draw_shape(p1)
+            draw_shape(p2)
+            config.undo_stack.pop()
+            config.undo_stack.pop()
+
+            draw_shape(segment)
+            config.ax.figure.canvas.mpl_disconnect(config.cid)
+            # Remove start_point attribute so user can draw another line
+            config.segment_x, config.segment_y = [None] * 2
+            plt.title("")
+            plt.draw()
+
 
 
 def handle_input_circle(event):
@@ -634,7 +667,9 @@ def update_display():
                     if isinstance(s, Line):
                         if s.is_line_edge(shape)[0]:
                             flag = True
-
+                    if isinstance(s, Segment):
+                        if s.is_segment_edge(shape)[0]:
+                            flag = True
                 if not flag:
                     shape.draw(config.ax)
 
@@ -649,6 +684,10 @@ def update_display():
                 shape.get_end().draw(config.ax)
                 shape.draw(config.ax)
 
+            elif isinstance(shape, Segment):
+                shape.get_start().draw(config.ax)
+                shape.get_end().draw(config.ax)
+                shape.draw(config.ax)
     plt.draw()
 
 
@@ -666,6 +705,10 @@ def update_label():
             m, b = shape.m_b()
             label_text = f'({shape.get_label()}) Line: y = {m:.3f}x + {b:.3f} {hidden_str} '
 
+        elif isinstance(shape, Segment):
+            m, b = shape.m_b()
+            label_text = f'({shape.get_label()}) Line: y = {m:.3f}x + {b:.3f} {hidden_str} '
+
         elif isinstance(shape, Point):
             try:
                 label_text = f'({shape.get_label()}) Point: ({shape.get_x():.3f}, {shape.get_y():.3f}) {hidden_str} '
@@ -679,6 +722,7 @@ def update_label():
             r = shape.get_radius()
 
             label_text = f'({shape.get_label()}) Circle: (x-{x:.3f})^2 + (y-{y:.3f})^2 = {r ** 2:.3f} {hidden_str} '
+
 
         config.label_widget = tk.Label(config.side_panel.text, text=label_text, bg='white')
         config.label_widget.pack(anchor='w')

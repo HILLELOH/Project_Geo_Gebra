@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import config
 from Shapes.Circle import Circle
 from Shapes.Line import Line
+from Shapes.Segment import Segment
 from Shapes.shapes import Shape
 from matplotlib.axes import Axes
 
@@ -46,6 +47,16 @@ class Point(Shape):
         flag = False
         for shape in shapes:
             if isinstance(shape, Line):
+                if shape.get_start() == self or shape.get_end() == self:
+                    flag = shape
+        return flag
+
+    def is_segment_part(self, shapes=None):
+        if shapes is None:
+            shapes = config.shapes
+        flag = False
+        for shape in shapes:
+            if isinstance(shape, Segment):
                 if shape.get_start() == self or shape.get_end() == self:
                     flag = shape
         return flag

@@ -10,6 +10,7 @@ x1, y1 = [None]*2
 
 circle_x, circle_y = [None]*2
 line_x, line_y = [None]*2
+segment_x, segment_y = [None]*2
 edit_frame, file_frame = [None]*2
 
 over_cid, leave_cid = [None]*2
