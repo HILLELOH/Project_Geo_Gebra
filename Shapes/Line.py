@@ -99,3 +99,7 @@ class Line(Shape):
 
     def set_hidden(self, b):
         self.hidden = b
+
+    def set_line_obj(self, dash):
+        line_obj = dash
+
