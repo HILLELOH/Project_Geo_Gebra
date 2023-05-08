@@ -74,7 +74,7 @@ class Point(Shape):
     def is_hidden(self):
         return self.hidden
 
-    def set_hidden(self, b):
-        self.hidden = b
+    def set_hidden(self, bool):
+        self.hidden = bool
 
 

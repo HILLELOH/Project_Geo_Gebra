@@ -573,27 +573,27 @@ def handle_input_polygon(event):
                 # Second click sets the end point
                 p1 = config.last_point_polygon
                 p2 = Point((event.xdata, event.ydata), next(config.label_generator))
-
-                config.last_point_polygon = p2
-
                 segment = Segment(p1, p2, next(config.label_generator))
                 config.curr_polygon.add_segment(segment)
                 draw_shape(p1)
                 draw_shape(p2)
-                config.undo_stack.pop()
-                config.undo_stack.pop()
-
                 draw_shape(segment)
+
                 config.undo_stack.pop()
-                draw_shape(config.curr_polygon)
+                config.undo_stack.pop()
+                config.undo_stack.pop()
+                config.last_point_polygon = p2
+                # draw_shape(config.curr_polygon)
                 # config.circle_cid = config.ax.figure.canvas.mpl_connect('button_press_event', handle_input_polygon)
 
             segment = Segment(config.last_point_polygon, config.first_point_polygon, next(config.label_generator))
+            config.curr_polygon.add_segment(segment)
             draw_shape(config.last_point_polygon)
             draw_shape(config.first_point_polygon)
-            config.undo_stack.pop()
-            config.undo_stack.pop()
             draw_shape(segment)
+
+            config.undo_stack.pop()
+            config.undo_stack.pop()
             config.undo_stack.pop()
             draw_shape(config.curr_polygon)
 
