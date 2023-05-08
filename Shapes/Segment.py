@@ -1,7 +1,12 @@
-import math
 
+import math
+import logging
+from logging import debug
 import numpy as np
 
+
+r = logging.getLogger()
+r.setLevel(logging.DEBUG)
 
 from Shapes.shapes import Shape
 from matplotlib.axes import Axes
@@ -17,31 +22,31 @@ class Segment(Shape):
         self.p2 = p2
         self.x2 = p2.coords[0][0]
         self.y2 = p2.coords[0][1]
-        self.line_obj = None
-        # self.dashes_obj = None
+        self.segment_obj = None
         self.hidden = False
-
         self.label = label
         # self.update_line_and_dashes()
 
     def m_b(self):
         try:
+            debug(f'\n p1: ({self.x1}, {self.y1})\n p2: ({self.x2}, {self.y2})')
             m = (self.y2 - self.y1) / (self.x2 - self.x1)
             b = self.y1 - m * self.x1
             return m, b
 
         except RuntimeWarning:
+            debug(f'p1: ({self.x1}, {self.y1})\n p2: ({self.x2}, {self.y2})')
             b = self.y1
             return 0.000, b
 
     def draw(self, ax: Axes):
-        self.line_obj, = ax.plot([self.x1, self.x2], [self.y1, self.y2], color='black', linestyle='-', linewidth=2)
+        self.segment_obj, = ax.plot([self.x1, self.x2], [self.y1, self.y2], color='black', linestyle='-', linewidth=2)
 
     def update_line_and_dashes(self):
-        if self.line_obj:
-            self.line_obj.pop(0).remove()  # remove old line
-        self.line_obj, = config.ax.plot([self.x1, self.x2], [self.y1, self.y2], color='black', linestyle='-',
-                                       linewidth=2)
+        if self.segment_obj:
+            self.segment_obj.pop(0).remove()  # remove old line
+        self.segment_obj, = config.ax.plot([self.x1, self.x2], [self.y1, self.y2], color='black', linestyle='-',
+                                           linewidth=2)
         config.fig.canvas.draw_idle()
 
     def get_start_point(self):
@@ -87,3 +92,6 @@ class Segment(Shape):
 
     def set_hidden(self, b):
         self.hidden = b
+
+    def set_segment_obj(self, dash):
+        self.segment_obj = dash

@@ -101,5 +101,5 @@ class Line(Shape):
         self.hidden = b
 
     def set_line_obj(self, dash):
-        line_obj = dash
+        self.line_obj = dash
 

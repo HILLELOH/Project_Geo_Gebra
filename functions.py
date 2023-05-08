@@ -9,6 +9,7 @@ from tkinter import ttk, filedialog, messagebox
 from Shapes.Circle import *
 from Shapes.Point import *
 from Shapes.Line import *
+from Shapes.Polygon import Polygon
 from Shapes.Segment import *
 from label_conf import generate_alphanumeric_sequence, get_label_parts
 import re
@@ -55,7 +56,7 @@ def create_buttons():
     line_button = tk.Button(config.buttons_panel, text="Draw Line", command=draw_line)
     segment_button = tk.Button(config.buttons_panel, text="Draw Segment", command=draw_segment)
     circle_button = tk.Button(config.buttons_panel, text="Draw Circle", command=draw_circle)
-    # polygon_button = tk.Button(config.buttons_panel, text="polygon", command=draw_polygon)
+    polygon_button = tk.Button(config.buttons_panel, text="polygon", command=draw_polygon)
     reset_button = tk.Button(config.buttons_panel, text="Reset", command=reset)
     save_button = tk.Button(config.buttons_panel, text="Save", command=save)
     load_button = tk.Button(config.buttons_panel, text="Load file", command=load)
@@ -73,7 +74,7 @@ def create_buttons():
                line_button,
                segment_button,
                circle_button,
-               # polygon_button,
+               polygon_button,
 
                # file_button,
                clear_history_button,
@@ -282,7 +283,6 @@ def shape_set_coordinate(shape, x_coord, y_coord):
     plt.draw()
 
 
-
 def on_scroll(event):
     ax = config.ax
     fig = config.fig
@@ -456,6 +456,14 @@ def draw_segment():
     plt.draw()
 
 
+def draw_polygon():
+    reset_cids()
+    config.cid = config.ax.figure.canvas.mpl_connect('button_press_event', handle_input_polygon)
+    plt.title("Click left mouse button to start polygon")
+    config.curr_polygon = Polygon([], next(config.label_generator))
+    plt.draw()
+
+
 def draw_circle():
     reset_cids()
     config.circle_cid = config.ax.figure.canvas.mpl_connect('button_press_event', handle_input_circle)
@@ -528,7 +536,6 @@ def handle_input_segment(event):
             plt.draw()
 
 
-
 def handle_input_circle(event):
     if event.button == 1:  # Left mouse button
         if not config.circle_x and not config.circle_x:  # first click
@@ -550,41 +557,54 @@ def handle_input_circle(event):
             config.circle_cid, config.circle_x, config.circle_y = [None] * 3
 
 
-#
-# def handle_input_polygon(event):
-#     if event.button == 1:  # Left mouse button
-#         if len(config.polygon_vertices) == 0:
-#             draw_point_shape(event.xdata, event.ydata)
-#             config.polygon_vertices.append((event.xdata, event.ydata))
-#         else:
-#             if (event.xdata, event.ydata) == (config.polygon_vertices[0]):
-#                 draw_point_shape(event.xdata, event.ydata)
-#                 last_point = config.polygon_vertices[-1]
-#                 line = Line((event.xdata, event.ydata), (last_point[0], last_point[1]))
-#                 draw_line_shape(line)
-#                 config.polygon_vertices.append((event.xdata, event.ydata))
-#
-#                 config.ax.figure.canvas.mpl_disconnect(config.cid)
-#                 # Remove start_point attribute so user can draw another line
-#                 config.polygon_vertices = []
-#                 plt.title("")
-#                 plt.draw()
-#
-#             else:
-#                 draw_point_shape(event.xdata, event.ydata)
-#                 last_point = config.polygon_vertices[-1]
-#                 p1 = Point((event.xdata, event.ydata))
-#                 p2 = Point((last_point[0], last_point[1]))
-#                 line = Line(p1, p2)
-#                 draw_line_shape(line)
-#                 config.polygon_vertices.append((event.xdata, event.ydata))
-#
-#                 config.circle_cid = config.ax.figure.canvas.mpl_connect('button_press_event', handle_input_polygon)
+def handle_input_polygon(event):
+    if event.button == 1:  # Left mouse button
+        if not config.polygon_x and not config.polygon_y:
+            # First click sets the start point
+            config.polygon_x, config.polygon_y = event.xdata, event.ydata
+            config.first_point_polygon = Point((event.xdata, event.ydata), next(config.label_generator))
+            config.last_point_polygon = config.first_point_polygon
+            plt.title("Click left click to draw the end segment point")
+            plt.draw()
 
-#
-# def hide_by_label(label):
-#     for shape in config.shapes:
-#         if shape.get_label() == label:
+        else:
+            config.cid = config.ax.figure.canvas.mpl_connect('button_press_event', handle_input_polygon)
+            while shape_clicked(event.xdata, event.ydata)!= config.first_point_polygon:
+                # Second click sets the end point
+                p1 = config.last_point_polygon
+                p2 = Point((event.xdata, event.ydata), next(config.label_generator))
+
+                config.last_point_polygon = p2
+
+                segment = Segment(p1, p2, next(config.label_generator))
+                config.curr_polygon.add_segment(segment)
+                draw_shape(p1)
+                draw_shape(p2)
+                config.undo_stack.pop()
+                config.undo_stack.pop()
+
+                draw_shape(segment)
+                config.undo_stack.pop()
+                draw_shape(config.curr_polygon)
+                # config.circle_cid = config.ax.figure.canvas.mpl_connect('button_press_event', handle_input_polygon)
+
+            segment = Segment(config.last_point_polygon, config.first_point_polygon, next(config.label_generator))
+            draw_shape(config.last_point_polygon)
+            draw_shape(config.first_point_polygon)
+            config.undo_stack.pop()
+            config.undo_stack.pop()
+            draw_shape(segment)
+            config.undo_stack.pop()
+            draw_shape(config.curr_polygon)
+
+            config.ax.figure.canvas.mpl_disconnect(config.cid)
+            config.polygon_x, config.polygon_y = [None] * 2
+            config.last_point_polygon, config.first_point_polygon = [None]*2
+            config.curr_polygon = None
+            plt.title("")
+            plt.draw()
+
+
 
 def get_shape_by_label(label):
     for shape in config.shapes:

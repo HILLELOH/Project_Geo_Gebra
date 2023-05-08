@@ -32,6 +32,7 @@ last_reset = []
 
 polygon_x = None
 polygon_y = None
+first_point_polygon = None
 last_point_polygon = None
 curr_polygon = None
 
