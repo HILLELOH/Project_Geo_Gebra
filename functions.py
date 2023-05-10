@@ -187,18 +187,26 @@ def on_motion(event):
 
 
         elif isinstance(config.selected_shape, Segment):  # Check if the selected_shape is a Line
+            print("asd")
             start = config.selected_shape.get_start()
             end = config.selected_shape.get_end()
 
             start.coords[0][0] += dx
             start.coords[0][1] += dy
-            config.selected_shape.set_start_point(dx, dy)
-
             end.coords[0][0] += dx
             end.coords[0][1] += dy
+            config.selected_shape.set_start_point(dx, dy)
             config.selected_shape.set_end_point(dx, dy)
 
-                    
+
+            for shape in config.shapes:
+                if isinstance(shape, Segment):
+                    if shape.get_start()==end:
+                        shape.set_start_point(dx, dy)
+
+                    elif shape.get_end()==start:
+                        shape.set_end_point(dx, dy)
+
 
         update_display()
         update_label()
@@ -539,17 +547,16 @@ def handle_input_polygon(event):
             p1 = config.last_point_polygon
             p2 = config.first_point_polygon
 
-            config.last_point_polygon = p2
-
             segment = Segment(p1, p2, next(config.label_generator))
             config.curr_polygon.add_segment(segment)
             draw_shape(p1)
             draw_shape(p2)
+            config.shapes.pop()
+            config.shapes.pop()
             draw_shape(segment)
             config.undo_stack.pop()
             config.undo_stack.pop()
             config.undo_stack.pop()
-            # draw_shape(config.curr_polygon)
 
             config.ax.figure.canvas.mpl_disconnect(config.cid)
             config.first_point_polygon = None
@@ -563,11 +570,14 @@ def handle_input_polygon(event):
             p1 = config.last_point_polygon
             p2 = Point((event.xdata, event.ydata), next(config.label_generator))
 
-            config.last_point_polygon = p2
+
 
             segment = Segment(p1, p2, next(config.label_generator))
             config.curr_polygon.add_segment(segment)
             draw_shape(p1)
+            if config.first_point_polygon!=config.last_point_polygon:
+                config.shapes.pop()
+
             draw_shape(p2)
             draw_shape(segment)
 
@@ -575,7 +585,7 @@ def handle_input_polygon(event):
             config.undo_stack.pop()
             config.undo_stack.pop()
             # draw_shape(config.curr_polygon)
-
+            config.last_point_polygon = p2
             plt.title("Click left click to draw the end segment point")
             plt.draw()
 
