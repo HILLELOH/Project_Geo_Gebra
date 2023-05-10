@@ -3,7 +3,7 @@ import math
 import logging
 from logging import debug
 import numpy as np
-
+from Shapes.Polygon import Polygon
 
 r = logging.getLogger()
 r.setLevel(logging.DEBUG)
@@ -48,6 +48,17 @@ class Segment(Shape):
         self.segment_obj, = config.ax.plot([self.x1, self.x2], [self.y1, self.y2], color='black', linestyle='-',
                                            linewidth=2)
         config.fig.canvas.draw_idle()
+
+
+    def is_polygon_part(self, shapes=None):
+        if shapes is None:
+            shapes = config.shapes
+        flag = False
+        for shape in shapes:
+            if isinstance(shape, Polygon):
+                if self in shape.get_segment_list():
+                    flag = shape
+        return flag
 
     def get_start_point(self):
         return round(self.x1, 3), round(self.y1, 3)

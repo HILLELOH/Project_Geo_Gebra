@@ -4,6 +4,7 @@ import config
 from Shapes.Circle import Circle
 from Shapes.Line import Line
 from Shapes.Segment import Segment
+from Shapes.Polygon import Polygon
 from Shapes.shapes import Shape
 from matplotlib.axes import Axes
 
@@ -70,6 +71,21 @@ class Point(Shape):
                 if shape.get_center() == self:
                     flag = shape
         return flag
+    
+    def is_polygon_part(self, shapes=None):
+        segments_part=[]
+        if shapes is None:
+            shapes = config.shapes
+        for shape in shapes:
+            if isinstance(shape, Polygon):
+                for segment in shape.get_segments():
+                    if segment.get_start() == self or segment.get_end() == self:
+                        segments_part.append(segment)
+                        if len(segments_part) == 2:
+                            return segments_part
+                        
+        print(segments_part)
+        return False
 
     def is_hidden(self):
         return self.hidden

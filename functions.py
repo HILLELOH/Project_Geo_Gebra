@@ -149,7 +149,23 @@ def on_motion(event):
         if isinstance(config.selected_shape, Point):
             flag = False
             for shape in config.shapes:
-                if isinstance(shape, Line):
+                segments = config.selected_shape.is_polygon_part()
+                if segments != False:
+                    print("is polygon part")
+                    config.selected_shape.coords[0][0] += dx
+                    config.selected_shape.coords[0][1] += dy
+                    config.selected_shape.set_x(dx)
+                    config.selected_shape.set_y(dy)
+                    for segment in segments:
+                        #move the segments connected to the point 
+                        if segment.is_segment_edge(config.selected_shape)[1] == "start":
+                            segment.set_start_point(dx, dy)
+                        elif segment.is_segment_edge(config.selected_shape)[1] == "end":
+                            segment.set_end_point(dx, dy)
+                    flag = True
+                    break
+                    
+                elif isinstance(shape, Line):
                     if shape.is_line_edge(config.selected_shape)[1] == "start":
                         config.selected_shape.coords[0][0] += dx
                         config.selected_shape.coords[0][1] += dy
@@ -580,7 +596,6 @@ def handle_input_polygon(event):
             draw_shape(p1)
             draw_shape(p2)
             draw_shape(segment)
-
             config.undo_stack.pop()
             config.undo_stack.pop()
             config.undo_stack.pop()
