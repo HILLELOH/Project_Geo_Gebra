@@ -147,84 +147,32 @@ def on_motion(event):
         config.start_drag_x, config.start_drag_y = x, y
 
         if isinstance(config.selected_shape, Point):
-            flag = False
+            config.selected_shape.coords[0][0] += dx
+            config.selected_shape.coords[0][1] += dy
+            # for all the shapes contains the point that was moved we need to update them
             for shape in config.shapes:
-                segments = config.selected_shape.is_polygon_part()
-                if segments != False:
-                    print("is polygon part")
-                    config.selected_shape.coords[0][0] += dx
-                    config.selected_shape.coords[0][1] += dy
-                    config.selected_shape.set_x(dx)
-                    config.selected_shape.set_y(dy)
-                    for segment in segments:
-                        #move the segments connected to the point 
-                        if segment.is_segment_edge(config.selected_shape)[1] == "start":
-                            segment.set_start_point(dx, dy)
-                        elif segment.is_segment_edge(config.selected_shape)[1] == "end":
-                            segment.set_end_point(dx, dy)
-                    flag = True
-                    break
-                    
-                elif isinstance(shape, Line):
-                    if shape.is_line_edge(config.selected_shape)[1] == "start":
-                        config.selected_shape.coords[0][0] += dx
-                        config.selected_shape.coords[0][1] += dy
+                if isinstance(shape, Line):
+                    if shape.get_start() == config.selected_shape:
                         shape.set_start_point(dx, dy)
-                        flag = True
-                        break
 
-                    elif shape.is_line_edge(config.selected_shape)[1] == "end":
-                        config.selected_shape.coords[0][0] += dx
-                        config.selected_shape.coords[0][1] += dy
+                    elif shape.get_end() == config.selected_shape:
                         shape.set_end_point(dx, dy)
-                        flag = True
-                        break
 
                 elif isinstance(shape, Segment):
-                    if shape.is_segment_edge(config.selected_shape)[1] == "start":
-                        config.selected_shape.coords[0][0] += dx
-                        config.selected_shape.coords[0][1] += dy
+                    if shape.get_start() == config.selected_shape:
                         shape.set_start_point(dx, dy)
-                        flag = True
-                        break
-
-                    elif shape.is_segment_edge(config.selected_shape)[1] == "end":
-                        config.selected_shape.coords[0][0] += dx
-                        config.selected_shape.coords[0][1] += dy
+                    elif shape.get_end() == config.selected_shape:
                         shape.set_end_point(dx, dy)
-                        flag = True
-                        break
 
-            circle = config.selected_shape.is_circle_part()
-            if circle is not False:
-                last_x = config.selected_shape.coords[0][0]
-                last_y = config.selected_shape.coords[0][1]
-                config.selected_shape.coords[0][0] += dx
-                config.selected_shape.coords[0][1] += dy
-                circle.set_center(dx, dy)
-                command = {"type": "move", "shape": circle, "last_x": last_x, "last_y": last_y}
-                # config.undo_stack.insert(len(config.undo_stack), command)
-                flag = True
-
-            if not flag:
-                last_x = config.selected_shape.coords[0][0]
-                last_y = config.selected_shape.coords[0][1]
-                config.selected_shape.coords[0][0] += dx
-                config.selected_shape.coords[0][1] += dy
-                config.selected_shape.set_x(dx)
-                config.selected_shape.set_y(dy)
-                command = {"type": "move", "shape": config.selected_shape, "last_x": last_x, "last_y": last_y}
-                # config.undo_stack.insert(len(config.undo_stack), command)
+                elif isinstance(shape, Circle):
+                    if shape.get_center() == config.selected_shape:
+                        shape.set_center(dx, dy) 
 
         elif isinstance(config.selected_shape, Circle):
-            last_x = config.selected_shape.get_center().coords[0][0]
-            last_y = config.selected_shape.get_center().coords[0][1]
             config.selected_shape.get_center().coords[0][0] += dx
             config.selected_shape.get_center().coords[0][1] += dy
             config.selected_shape.set_center(dx, dy)
-            command = {"type": "move", "shape": config.selected_shape, "last_x": last_x, "last_y": last_y}
-            # config.undo_stack.insert(len(config.undo_stack), command)
-
+           
         elif isinstance(config.selected_shape, Line):  # Check if the selected_shape is a Line
             start = config.selected_shape.get_start()
             end = config.selected_shape.get_end()
@@ -249,6 +197,8 @@ def on_motion(event):
             end.coords[0][0] += dx
             end.coords[0][1] += dy
             config.selected_shape.set_end_point(dx, dy)
+
+                    
 
         update_display()
         update_label()
