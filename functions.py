@@ -461,6 +461,7 @@ def draw_polygon():
     config.cid = config.ax.figure.canvas.mpl_connect('button_press_event', handle_input_polygon)
     plt.title("Click left mouse button to start polygon")
     config.curr_polygon = Polygon([], next(config.label_generator))
+    # config.curr_polygon = Polygon([], next(config.label_generator))
     plt.draw()
 
 
@@ -559,52 +560,59 @@ def handle_input_circle(event):
 
 def handle_input_polygon(event):
     if event.button == 1:  # Left mouse button
-        if not config.polygon_x and not config.polygon_y:
+        if not config.first_point_polygon:
             # First click sets the start point
+
             config.polygon_x, config.polygon_y = event.xdata, event.ydata
             config.first_point_polygon = Point((event.xdata, event.ydata), next(config.label_generator))
             config.last_point_polygon = config.first_point_polygon
             plt.title("Click left click to draw the end segment point")
             plt.draw()
 
-        else:
-            config.cid = config.ax.figure.canvas.mpl_connect('button_press_event', handle_input_polygon)
-            while shape_clicked(event.xdata, event.ydata)!= config.first_point_polygon:
-                # Second click sets the end point
-                p1 = config.last_point_polygon
-                p2 = Point((event.xdata, event.ydata), next(config.label_generator))
-                segment = Segment(p1, p2, next(config.label_generator))
-                config.curr_polygon.add_segment(segment)
-                draw_shape(p1)
-                draw_shape(p2)
-                draw_shape(segment)
+        elif shape_clicked(event.xdata, event.ydata) == config.first_point_polygon:
+            p1 = config.last_point_polygon
+            p2 = config.first_point_polygon
 
-                config.undo_stack.pop()
-                config.undo_stack.pop()
-                config.undo_stack.pop()
-                config.last_point_polygon = p2
-                # draw_shape(config.curr_polygon)
-                # config.circle_cid = config.ax.figure.canvas.mpl_connect('button_press_event', handle_input_polygon)
+            config.last_point_polygon = p2
 
-            segment = Segment(config.last_point_polygon, config.first_point_polygon, next(config.label_generator))
+            segment = Segment(p1, p2, next(config.label_generator))
             config.curr_polygon.add_segment(segment)
-            draw_shape(config.last_point_polygon)
-            draw_shape(config.first_point_polygon)
+            draw_shape(p1)
+            draw_shape(p2)
             draw_shape(segment)
 
             config.undo_stack.pop()
             config.undo_stack.pop()
             config.undo_stack.pop()
-            draw_shape(config.curr_polygon)
+            # draw_shape(config.curr_polygon)
 
             config.ax.figure.canvas.mpl_disconnect(config.cid)
+            config.first_point_polygon = None
+            config.last_point_polygon = None
             config.polygon_x, config.polygon_y = [None] * 2
-            config.last_point_polygon, config.first_point_polygon = [None]*2
-            config.curr_polygon = None
             plt.title("")
             plt.draw()
 
+        else:
+            # Second click sets the end point
+            p1 = config.last_point_polygon
+            p2 = Point((event.xdata, event.ydata), next(config.label_generator))
 
+            config.last_point_polygon = p2
+
+            segment = Segment(p1, p2, next(config.label_generator))
+            config.curr_polygon.add_segment(segment)
+            draw_shape(p1)
+            draw_shape(p2)
+            draw_shape(segment)
+
+            config.undo_stack.pop()
+            config.undo_stack.pop()
+            config.undo_stack.pop()
+            # draw_shape(config.curr_polygon)
+
+            plt.title("Click left click to draw the end segment point")
+            plt.draw()
 
 def get_shape_by_label(label):
     for shape in config.shapes:

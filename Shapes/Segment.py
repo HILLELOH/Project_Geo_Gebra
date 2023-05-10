@@ -29,7 +29,7 @@ class Segment(Shape):
 
     def m_b(self):
         try:
-            debug(f'\n p1: ({self.x1}, {self.y1})\n p2: ({self.x2}, {self.y2})')
+            # debug(f'\n p1: ({self.x1}, {self.y1})\n p2: ({self.x2}, {self.y2})')
             m = (self.y2 - self.y1) / (self.x2 - self.x1)
             b = self.y1 - m * self.x1
             return m, b

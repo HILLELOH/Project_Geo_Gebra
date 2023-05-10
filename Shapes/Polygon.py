@@ -5,7 +5,7 @@ import config
 from Shapes.shapes import Shape
 
 
-class Polygon(Shape):
+class Polygon:
     def __init__(self, segment_list, label):
         self.segment_list = segment_list
         self.label = label
