@@ -11,56 +11,25 @@ import config
 class Line(Shape):
     def __init__(self, p1, p2, label):
         self.p1 = p1
-        self.x1 = p1.coords[0][0]
-        self.y1 = p1.coords[0][1]
-
         self.p2 = p2
-        self.x2 = p2.coords[0][0]
-        self.y2 = p2.coords[0][1]
-        self.line_obj = None
-        self.dashes_obj = None
+        self.label = label
         self.hidden = False
 
-        self.label = label
-        # self.update_line_and_dashes()
+        self.line_obj = None
+        self.dashes_obj = None
 
     def m_b(self):
         try:
-            m = (self.y2 - self.y1) / (self.x2 - self.x1)
-            b = self.y1 - m * self.x1
+            m = (self.p2.get_y() - self.p1.get_y()) / (self.p2.get_x() - self.p1.get_x())
+            b = self.p1.get_y() - m * self.p1.get_x()
             return m, b
 
         except RuntimeWarning:
-            b = self.y1
-            return 0.000, b
+            return 0, 0
 
     def draw(self, ax: Axes):
-        m, b = self.m_b()
-        x_range = np.array([-100, 1000])
-        self.line_obj, = ax.plot([self.x1, self.x2], [self.y1, self.y2], color='black', linestyle='-', linewidth=2)
-        self.dashes_obj, = ax.plot(x_range, m * x_range + b, linestyle='-', linewidth=1, color='black')
-
-
-    def update_line_and_dashes(self):
-        m, b = self.m_b()
-        x_range = np.array([-1000, 1000])
-
-        if self.line_obj:
-            self.line_obj.pop(0).remove()  # remove old line
-        self.line_obj, = config.ax.plot([self.x1, self.x2], [self.y1, self.y2], color='black', linestyle='-',
-                                       linewidth=2)
-
-        if self.dashes_obj:
-            self.dashes_obj.pop(0).remove()  # remove old dashed line
-        self.dashes_obj, = config.ax.plot(x_range, m * x_range + b, linestyle='--', linewidth=1, color='black')
-
-        config.fig.canvas.draw_idle()
-
-    def get_start_point(self):
-        return round(self.x1, 3), round(self.y1, 3)
-
-    def get_end_point(self):
-        return round(self.x2, 3), round(self.y2, 3)
+        self.line_obj = ax.axline((self.p1.get_x(), self.p1.get_y()), (self.p2.get_x(), self.p2.get_y()), color='C3', label='by points')
+        ax.legend()
 
     def get_start(self):
         return self.p1
@@ -69,27 +38,12 @@ class Line(Shape):
         return self.p2
 
     def set_start_point(self, x, y):
-        self.x1 += x
-        self.y1 += y
         self.p1.set_x(x)
         self.p1.set_y(y)
 
     def set_end_point(self, x, y):
-        self.x2 += x
-        self.y2 += y
         self.p2.set_x(x)
         self.p2.set_y(y)
-
-    def is_line_edge(self, p):
-        if round(p.get_x(), 2) == round(self.x1, 2) and round(p.get_y(), 2) == round(self.y1, 2):
-            return True, "start"
-        elif round(p.get_x(), 2) == round(self.x2, 2) and round(p.get_y(), 2) == round(self.y2, 2):
-            return True, "end"
-
-        return False, False
-
-    # def __repr__(self):
-    #     return "Line"
 
     def get_label(self):
         return self.label
@@ -99,7 +53,4 @@ class Line(Shape):
 
     def set_hidden(self, b):
         self.hidden = b
-
-    def set_line_obj(self, dash):
-        self.line_obj = dash
 

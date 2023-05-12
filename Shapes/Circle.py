@@ -13,34 +13,27 @@ class Circle(Shape):
         self.center = center
         self.radius = radius
         self.label = label
-        self.circle_object = None
         self.hidden = False
 
-    # def draw(self, ax: Axes):
-    #     x = self.center.get_x()
-    #     y = self.center.get_y()
-    #     circle = plt.Circle((x, y), self.radius, fill=False)
-    #     ax.add_patch(circle)
+        self.circle_object = None
 
     def draw(self, ax: Axes):
         x = self.center.get_x()
         y = self.center.get_y()
+
         self.circle_object = plt.Circle((x, y), self.radius, fill=False)
         ax.add_patch(self.circle_object)
 
     def update_line_and_dashes(self):
         x = self.center.get_x()
         y = self.center.get_y()
+
         if self.circle_object:
             self.circle_object.pop(0).remove()  # remove old line
         self.circle_object = plt.Circle((x, y), self.radius, fill=False)
         config.ax.add_patch(self.circle_object)
 
         config.fig.canvas.draw_idle()
-
-
-    def getShape(self):
-        return f'{Circle}'
 
     def get_label(self):
         return self.label
@@ -51,7 +44,6 @@ class Circle(Shape):
     def set_center(self, x, y):
         self.center.set_x(x)
         self.center.set_y(y)
-
 
     def get_radius(self):
         return self.radius

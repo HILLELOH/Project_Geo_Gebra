@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import numpy as np
 
 import config
 from Shapes.Circle import Circle
@@ -10,22 +11,19 @@ from matplotlib.axes import Axes
 
 
 class Point(Shape):
-    def __init__(self, coords, label):
-        self.x = coords[0]
-        self.y = coords[1]
-        super().__init__([coords])
+    def __init__(self, x, y, label):
+        super().__init__([[x, y]])
+        self.x = x
+        self.y = y
         self.label = label
         self.hidden = False
 
     def draw(self, ax: Axes):
-        ax.plot(*self.coords.T, 'ro')
+        ax.plot(self.x, self.y, 'ro')
         plt.annotate(self.label, (self.x, self.y))
 
     def __str__(self):
         return f"({self.x:0.3f} , {self.y:0.3f})"
-
-    def getShape(self):
-        return f'{Point}'
 
     def get_x(self):
         return self.x
@@ -38,6 +36,12 @@ class Point(Shape):
 
     def set_y(self, y):
         self.y += y
+
+    def is_hidden(self):
+        return self.hidden
+
+    def set_hidden(self, bool):
+        self.hidden = bool
 
     def get_label(self):
         return self.label
@@ -87,10 +91,6 @@ class Point(Shape):
         print(segments_part)
         return False
 
-    def is_hidden(self):
-        return self.hidden
-
-    def set_hidden(self, bool):
-        self.hidden = bool
+   
 
 
