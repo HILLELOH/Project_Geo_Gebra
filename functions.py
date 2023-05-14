@@ -26,7 +26,7 @@ class SidePanel(tk.Frame):
         scrollbar = ttk.Scrollbar(self, command=self.text.yview)
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         self.text.config(yscrollcommand=scrollbar.set)
-            
+
 
 def init_program():
     config.root.geometry("1400x900")
@@ -139,6 +139,7 @@ def on_release(event):
         config.start_drag_x, config.start_drag_y = None, None
 
 
+
 def on_motion(event):
     if config.selected_shape is not None and event.xdata is not None and event.ydata is not None:
         x, y = event.xdata, event.ydata
@@ -213,6 +214,7 @@ def shape_set_coordinate(shape, x_coord, y_coord):
     update_display()
     update_label()
     plt.draw()
+
 
 
 def on_scroll(event):
@@ -441,6 +443,7 @@ def handle_input_line(event):
             config.ax.figure.canvas.mpl_disconnect(config.cid)
             # Remove start_point attribute so user can draw another line
             config.line_x, config.line_y = [None] * 2
+            config.this_point = None
             plt.title("")
             plt.draw()
 
@@ -469,13 +472,13 @@ def handle_input_segment(event):
             p2 = Point(event.xdata, event.ydata, next(config.label_generator))
             segment = Segment(p1, p2, next(config.label_generator))
 
-
             draw_shape(p2)
             config.undo_stack.pop()
             draw_shape(segment)
             config.ax.figure.canvas.mpl_disconnect(config.cid)
             # Remove start_point attribute so user can draw another line
             config.segment_x, config.segment_y = [None] * 2
+            config.this_point = None
             plt.title("")
             plt.draw()
 
