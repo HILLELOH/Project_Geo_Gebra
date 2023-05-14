@@ -26,7 +26,7 @@ class SidePanel(tk.Frame):
         scrollbar = ttk.Scrollbar(self, command=self.text.yview)
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         self.text.config(yscrollcommand=scrollbar.set)
-
+            
 
 def init_program():
     config.root.geometry("1400x900")
@@ -96,7 +96,7 @@ def create_buttons():
 
 
 def shape_clicked(x, y):
-    threshold = 0.2
+    threshold = 0.5
     for shape in config.shapes:
         if isinstance(shape, Point):
             try:
@@ -324,7 +324,6 @@ def hide(event):
             shape.get_end().set_hidden(True)
             shape.set_hidden(True)
 
-
     if isinstance(shape, Segment):
         if shape.is_hidden():
             shape.get_start().set_hidden(False)
@@ -416,21 +415,29 @@ def handle_input_line(event):
         if not config.line_x and not config.line_y:
             # First click sets the start point
             config.line_x, config.line_y = event.xdata, event.ydata
+            shape = shape_clicked(event.xdata, event.ydata)
+            if isinstance(shape, Point):
+                config.this_point = shape
             plt.title("Click left click to draw the end point")
             plt.draw()
 
         else:
             # Second click sets the end point
-            p1 = Point(config.line_x, config.line_y, next(config.label_generator))
+            if not config.this_point:
+                p1 = Point(config.line_x, config.line_y, next(config.label_generator))
+                draw_shape(p1)
+                config.undo_stack.pop()
+
+            else:
+                p1 = config.this_point
+
             p2 = Point(event.xdata, event.ydata, next(config.label_generator))
             line = Line(p1, p2, next(config.label_generator))
 
-            draw_shape(p1)
             draw_shape(p2)
             config.undo_stack.pop()
-            config.undo_stack.pop()
-
             draw_shape(line)
+
             config.ax.figure.canvas.mpl_disconnect(config.cid)
             # Remove start_point attribute so user can draw another line
             config.line_x, config.line_y = [None] * 2
@@ -443,20 +450,28 @@ def handle_input_segment(event):
         if not config.segment_x and not config.segment_y:
             # First click sets the start point
             config.segment_x, config.segment_y = event.xdata, event.ydata
+            shape = shape_clicked(event.xdata, event.ydata)
+            if isinstance(shape, Point):
+                config.this_point = shape
             plt.title("Click left click to draw the end segment point")
             plt.draw()
 
         else:
             # Second click sets the end point
-            p1 = Point(config.segment_x, config.segment_y, next(config.label_generator))
+            if not config.this_point:
+                p1 = Point(config.segment_x, config.segment_y, next(config.label_generator))
+                draw_shape(p1)
+                config.undo_stack.pop()
+
+            else:
+                p1 = config.this_point
+
             p2 = Point(event.xdata, event.ydata, next(config.label_generator))
             segment = Segment(p1, p2, next(config.label_generator))
 
-            draw_shape(p1)
+
             draw_shape(p2)
             config.undo_stack.pop()
-            config.undo_stack.pop()
-
             draw_shape(segment)
             config.ax.figure.canvas.mpl_disconnect(config.cid)
             # Remove start_point attribute so user can draw another line
@@ -512,6 +527,9 @@ def handle_input_polygon(event):
             config.undo_stack.pop()
             config.undo_stack.pop()
             config.undo_stack.pop()
+
+            command = {"type": 'draw', "shape": config.curr_polygon}
+            config.undo_stack.insert(len(config.undo_stack), command)
 
             config.ax.figure.canvas.mpl_disconnect(config.cid)
             config.first_point_polygon = None
@@ -899,6 +917,15 @@ def do_same_command(command):
             config.undo_stack.pop()
             config.undo_stack.pop()
 
+        if isinstance(shape, Polygon):
+            for segment in shape.get_segment_list():
+                draw_shape(segment)
+                config.undo_stack.pop()
+
+                draw_shape(segment.get_start())
+                config.undo_stack.pop()
+
+
     elif command["type"] == 'move':
         shape = command["shape"]
         x = command["last_x"]
@@ -961,6 +988,13 @@ def do_opposite_command(command):
 
             config.shapes.remove(center)
             config.shapes.remove(shape)
+
+        if isinstance(shape, Polygon):
+            for segment in shape.get_segment_list():
+                config.shapes.remove(segment)
+                config.shapes.remove(segment.get_start())
+
+
 
     elif command["type"] == 'delete':
         shape = command["shape"]
@@ -1033,10 +1067,6 @@ def do_opposite_command(command):
     update_label()
 
 
-r = logging.getLogger()
-r.setLevel(logging.DEBUG)
-
-
 def redo():
     if len(config.redo_stack) == 0:
         "nothing to redo"
@@ -1048,9 +1078,6 @@ def redo():
         do_same_command(command)
         config.undo_stack.append(command)
 
-    # debug(f'redo: {config.redo_stack}')
-    # debug(f'undo: {config.undo_stack}')
-
 
 def undo():
     if len(config.undo_stack) == 0:
@@ -1061,9 +1088,6 @@ def undo():
         config.last_command_undo = command
         do_opposite_command(command)
         config.redo_stack.append(command)
-
-    # debug(f'redo: {config.redo_stack}')
-    # debug(f'undo: {config.undo_stack}')
 
 
 def clear_history():

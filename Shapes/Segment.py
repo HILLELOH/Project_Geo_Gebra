@@ -23,13 +23,12 @@ class Segment(Shape):
         self.segment_obj = None
 
     def m_b(self):
-        try:
-            m = (self.p2.get_y() - self.p1.get_y()) / (self.p2.get_x() - self.p1.get_x())
-            b = self.p1.get_y() - m * self.p1.get_x()
-            return m, b
+        if self.p2.get_x() - self.p1.get_x() == 0:
+            return 1, 0
 
-        except RuntimeWarning:
-            return 0, 0
+        m = (self.p2.get_y() - self.p1.get_y()) / (self.p2.get_x() - self.p1.get_x())
+        b = self.p1.get_y() - m * self.p1.get_x()
+        return m, b
 
     def draw(self, ax: Axes):
         self.segment_obj, = ax.plot([self.p1.get_x(), self.p2.get_x()], [self.p1.get_y(), self.p2.get_y()], color='black', linestyle='-', linewidth=2)

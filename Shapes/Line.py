@@ -19,17 +19,18 @@ class Line(Shape):
         self.dashes_obj = None
 
     def m_b(self):
-        try:
-            m = (self.p2.get_y() - self.p1.get_y()) / (self.p2.get_x() - self.p1.get_x())
-            b = self.p1.get_y() - m * self.p1.get_x()
-            return m, b
+        if self.p2.get_x() - self.p1.get_x() == 0:
+            return 1, 0
 
-        except RuntimeWarning:
-            return 0, 0
+        m = (self.p2.get_y() - self.p1.get_y()) / (self.p2.get_x() - self.p1.get_x())
+        b = self.p1.get_y() - m * self.p1.get_x()
+        return m, b
+
+
 
     def draw(self, ax: Axes):
-        self.line_obj = ax.axline((self.p1.get_x(), self.p1.get_y()), (self.p2.get_x(), self.p2.get_y()), color='C3', label='by points')
-        ax.legend()
+        self.line_obj = ax.axline((self.p1.get_x(), self.p1.get_y()), (self.p2.get_x(), self.p2.get_y()), color='black', label='by points')
+        # ax.legend()
 
     def get_start(self):
         return self.p1

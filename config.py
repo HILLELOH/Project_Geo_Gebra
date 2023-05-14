@@ -36,4 +36,6 @@ first_point_polygon = None
 last_point_polygon = None
 curr_polygon = None
 
+this_point = None
+
 
