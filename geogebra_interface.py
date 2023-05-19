@@ -35,6 +35,7 @@ config.label_widget = tk.Label(config.side_panel.text, text="Algebra ", bg="whit
 config.label_widget.pack(anchor='w')
 
 config.press_cid = config.ax.figure.canvas.mpl_connect('button_press_event', on_press)
+
 config.release_cid = config.ax.figure.canvas.mpl_connect('button_release_event', on_release)
 config.motion_cid = config.ax.figure.canvas.mpl_connect('motion_notify_event', on_motion)
 config.ax.figure.canvas.mpl_connect('scroll_event', on_scroll)

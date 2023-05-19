@@ -37,6 +37,10 @@ class Point(Shape):
     def set_y(self, y):
         self.y += y
 
+    def set_p(self, x, y):
+        self.x=x
+        self.y=y
+
     def is_hidden(self):
         return self.hidden
 

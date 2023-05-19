@@ -1,6 +1,7 @@
 import json
 import logging
 import pickle
+import random
 import tkinter as tk
 import config
 
@@ -11,7 +12,7 @@ from Shapes.Point import *
 from Shapes.Line import *
 from Shapes.Polygon import Polygon
 from Shapes.Segment import *
-from label_conf import generate_alphanumeric_sequence, get_label_parts
+from label_generator import generate_alphanumeric_sequence, get_label_parts
 import re
 
 config.label_generator = generate_alphanumeric_sequence()
@@ -126,6 +127,37 @@ def shape_clicked(x, y):
     return
 
 
+def open_insert_window(point):
+    # Create a new Tkinter window
+    insert_window = tk.Toplevel()
+
+    # Create labels and entry fields for x and y coordinates
+    x_label = tk.Label(insert_window, text="X Coordinate:")
+    x_label.pack()
+    x_entry = tk.Entry(insert_window)
+    x_entry.pack()
+
+    y_label = tk.Label(insert_window, text="Y Coordinate:")
+    y_label.pack()
+    y_entry = tk.Entry(insert_window)
+    y_entry.pack()
+
+    # Function to handle the submission of x and y coordinates
+    def set_point():
+        x = x_entry.get()
+        y = y_entry.get()
+        # print("X Coordinate:", x)
+        # print("Y Coordinate:", y)
+        point.set_p(int(x), int(y))
+        insert_window.destroy()
+
+        update_label()
+        update_display()
+
+    submit_button = tk.Button(insert_window, text="Submit", command=set_point)
+    submit_button.pack()
+
+
 def on_press(event):
     if event.button == 1:  # Left mouse button
         config.selected_shape = shape_clicked(event.xdata, event.ydata)
@@ -133,11 +165,17 @@ def on_press(event):
             config.start_drag_x, config.start_drag_y = event.xdata, event.ydata
 
 
+    elif event.button == 3:
+        config.selected_shape = shape_clicked(event.xdata, event.ydata)
+        if isinstance(config.selected_shape, Point):
+            config.start_drag_x, config.start_drag_y = event.xdata, event.ydata
+            open_insert_window(config.selected_shape)
+
+
 def on_release(event):
     if config.selected_shape is not None:
         config.selected_shape = None
         config.start_drag_x, config.start_drag_y = None, None
-
 
 
 def on_motion(event):
@@ -156,7 +194,7 @@ def on_motion(event):
             center = config.selected_shape.get_center()
             center.set_x(dx)
             center.set_y(dy)
-           
+
         elif isinstance(config.selected_shape, Line):  # Check if the selected_shape is a Line
             s = config.selected_shape
             s.set_start_point(dx, dy)
@@ -214,7 +252,6 @@ def shape_set_coordinate(shape, x_coord, y_coord):
     update_display()
     update_label()
     plt.draw()
-
 
 
 def on_scroll(event):
@@ -390,7 +427,7 @@ def draw_polygon():
     reset_cids()
     config.cid = config.ax.figure.canvas.mpl_connect('button_press_event', handle_input_polygon)
     plt.title("Click left mouse button to start polygon")
-   
+
     plt.draw()
 
 
@@ -405,6 +442,8 @@ def handle_input_point(event):
     config.line_x, config.line_y = [None] * 2
     if event.button == 1:  # Left mouse button
         x, y = event.xdata, event.ydata
+        if x is None and y is None:
+            return
         point = Point(x, y, next(config.label_generator))
         draw_shape(point)
 
@@ -414,6 +453,8 @@ def handle_input_point(event):
 
 def handle_input_line(event):
     if event.button == 1:  # Left mouse button
+        if event.xdata is None and event.ydata is None:
+            return
         if not config.line_x and not config.line_y:
             # First click sets the start point
             config.line_x, config.line_y = event.xdata, event.ydata
@@ -450,6 +491,8 @@ def handle_input_line(event):
 
 def handle_input_segment(event):
     if event.button == 1:  # Left mouse button
+        if event.xdata is None and event.ydata is None:
+            return
         if not config.segment_x and not config.segment_y:
             # First click sets the start point
             config.segment_x, config.segment_y = event.xdata, event.ydata
@@ -485,17 +528,30 @@ def handle_input_segment(event):
 
 def handle_input_circle(event):
     if event.button == 1:  # Left mouse button
+        if event.xdata is None and event.ydata is None:
+            return
         if not config.circle_x and not config.circle_x:  # first click
             config.circle_x, config.circle_y = event.xdata, event.ydata
+            shape = shape_clicked(event.xdata, event.ydata)
+            if isinstance(shape, Point):
+                config.this_point = shape
+
             config.ax.set_title("Click left click again to set the radius")
             config.ax.figure.canvas.draw()
 
         else:  # second click
             x, y = event.xdata, event.ydata
-            radius = np.sqrt((x - config.circle_x) ** 2 + (y - config.circle_y) ** 2)
-            center = Point(config.circle_x, config.circle_y, next(config.label_generator))
-            draw_shape(center)
-            config.undo_stack.pop()
+            if not config.this_point:
+                radius = np.sqrt((x - config.circle_x) ** 2 + (y - config.circle_y) ** 2)
+                center = Point(config.circle_x, config.circle_y, next(config.label_generator))
+                draw_shape(center)
+                config.undo_stack.pop()
+
+            else:
+                last_x, last_y = config.this_point.get_x(), config.this_point.get_y()
+                radius = np.sqrt((x - last_x) ** 2 + (y - last_y) ** 2)
+                center = config.this_point
+
             circle = Circle(center, radius, next(config.label_generator))
             draw_shape(circle)
 
@@ -506,6 +562,8 @@ def handle_input_circle(event):
 
 def handle_input_polygon(event):
     if event.button == 1:  # Left mouse button
+        if event.xdata is None and event.ydata is None:
+            return
         if not config.curr_polygon:
             # First click sets the start point
 
@@ -549,7 +607,7 @@ def handle_input_polygon(event):
 
             config.curr_polygon.add_segment(segment)
             draw_shape(p1)
-            if config.first_point_polygon!=config.last_point_polygon:
+            if config.first_point_polygon != config.last_point_polygon:
                 config.shapes.pop()
 
             draw_shape(p2)
@@ -673,7 +731,6 @@ def delete_by_label(label):
             command = {"type": 'delete', "shape": shape}
             config.undo_stack.insert(len(config.undo_stack), command)
 
-
         update_display()
         update_label()
 
@@ -707,7 +764,8 @@ def run():
 
 
 def on_closing():
-    # if messagebox.askokcancel("Quit", "Do you want to quit?"):
+    if messagebox.askyesno("Quit", "Do you want to Save?"):
+        save()
     config.root.quit()
     config.root.destroy()
 
@@ -758,7 +816,6 @@ def update_label():
             r = shape.get_radius()
 
             label_text = f'({shape.get_label()}) Circle: (x-{x:.3f})^2 + (y-{y:.3f})^2 = {r ** 2:.3f} {hidden_str} '
-
 
         config.label_widget = tk.Label(config.side_panel.text, text=label_text, bg='white')
         config.label_widget.pack(anchor='w')
@@ -1064,7 +1121,6 @@ def do_opposite_command(command):
 
     elif command["type"] == 'reset':
         config.shapes = command["list"]
-
 
     update_display()
     update_label()
