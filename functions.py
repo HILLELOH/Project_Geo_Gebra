@@ -129,7 +129,11 @@ def shape_clicked(x, y):
 
 def open_insert_window(point):
     # Create a new Tkinter window
+
     insert_window = tk.Toplevel()
+    config.set_shape = 1
+    insert_window.geometry("200x120")
+    insert_window.resizable(False, False)
 
     # Create labels and entry fields for x and y coordinates
     x_label = tk.Label(insert_window, text="X Coordinate:")
@@ -146,14 +150,21 @@ def open_insert_window(point):
     def set_point():
         x = x_entry.get()
         y = y_entry.get()
-        # print("X Coordinate:", x)
-        # print("Y Coordinate:", y)
         point.set_p(int(x), int(y))
+        config.set_shape = 0
         insert_window.destroy()
-
         update_label()
         update_display()
 
+        # Bind the window closing event to a function
+
+    def on_closing():
+        config.set_shape = 0
+        insert_window.destroy()
+
+        # Set the window closing event handler
+
+    insert_window.protocol("WM_DELETE_WINDOW", on_closing)
     submit_button = tk.Button(insert_window, text="Submit", command=set_point)
     submit_button.pack()
 
@@ -164,12 +175,15 @@ def on_press(event):
         if config.selected_shape is not None:
             config.start_drag_x, config.start_drag_y = event.xdata, event.ydata
 
-
     elif event.button == 3:
         config.selected_shape = shape_clicked(event.xdata, event.ydata)
         if isinstance(config.selected_shape, Point):
             config.start_drag_x, config.start_drag_y = event.xdata, event.ydata
-            open_insert_window(config.selected_shape)
+            print(config.set_shape)
+            if config.set_shape == 0:
+                open_insert_window(config.selected_shape)
+
+
 
 
 def on_release(event):
@@ -179,7 +193,8 @@ def on_release(event):
 
 
 def on_motion(event):
-    if config.selected_shape is not None and event.xdata is not None and event.ydata is not None:
+    if config.selected_shape is not None and event.xdata is not None and event.ydata is not None and event.button == 1:
+
         x, y = event.xdata, event.ydata
         dx = x - config.start_drag_x
         dy = y - config.start_drag_y
@@ -771,14 +786,22 @@ def on_closing():
 
 
 def update_display():
+    prev_xlim = config.ax.get_xlim()
+    prev_ylim = config.ax.get_ylim()
+    prev_aspect = config.ax.get_aspect()
+    prev_xticks = config.ax.get_xticks()
+    prev_yticks = config.ax.get_yticks()
+
     config.ax.cla()
-    config.ax.set_xlim(-10, 10)
-    config.ax.set_ylim(-10, 10)
-    config.ax.set_aspect('equal')  # Set the aspect ratio to 'equal'
+    config.ax.set_xlim(prev_xlim)
+    config.ax.set_ylim(prev_ylim)
+
+    config.ax.set_xticks(prev_xticks)
+    config.ax.set_yticks(prev_yticks)
+    config.ax.set_aspect(prev_aspect)  # Set the aspect ratio to 'equal'
     config.ax.grid(True)
-    config.ax.set_xticks(np.arange(-20, 21, 5))
-    config.ax.set_yticks(np.arange(-20, 21, 5))
-    # config.canvas.update_idletasks()
+
+
     for shape in config.shapes:
         if not shape.is_hidden():
             shape.draw(config.ax)

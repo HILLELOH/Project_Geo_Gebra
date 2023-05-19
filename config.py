@@ -38,4 +38,6 @@ curr_polygon = None
 
 this_point = None
 
+set_shape = 0
+
 
