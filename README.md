@@ -39,7 +39,7 @@ Our Gui use two main classes:<br />
 ## How to use it?
 clone our project, and simply run with python the class 'geogebrah_interface.py' and start explore.
 
-<img src="Images/sample.PNG" alt="Image">
+<img src="Images/sample.PNG" alt="Image" width="300" height="200">
 
 ## Original Java based project
 https://github.com/geogebra/geogebra.git
