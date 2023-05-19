@@ -41,7 +41,7 @@ clone our project, and simply run with python the class 'geogebrah_interface.py'
 
 <img src="Images/sample.PNG" alt="Image" width="1000" height="600">
 
-## Original Java based project
+### Original Java based project
 https://github.com/geogebra/geogebra.git
 
 
