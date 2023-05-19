@@ -1,5 +1,10 @@
 # Geo-Gebra
 
+## Introduction
+GeoGebra is a mathematical UI software that integrates geometry, algebra, and calculus. 
+It allows users to explore mathematical concepts through dynamic visualizations, making it an invaluable tool for students, teachers, and professionals alike.
+Our contribution is to translation of GeoGebra from Java to Python.
+
 ## features
 ### Draw / Delete
 Our GUI is able to handle inputs of data, Draw it and Delete. <br />
@@ -25,6 +30,17 @@ Delete history simply delete all the operations from the history s.t you can't r
 ### Save / Load
 Save the current poisition of the figure with all the shaped on it.<br />
 Load from file a position and continue from there.<br />
+
+## platform
+Our Gui use two main classes:<br />
+   1) matplotlib - to display information on the grids (such as plotting shapes).<br />
+   2) tkinter - to display all the wrraper information (such as equalitions, buttons and other features).<br />
+
+## How to use it?
+clone our project, and simply run with python the class 'geogebrah_interface.py' and start explore.
+
+## Original Java based project
+https://github.com/geogebra/geogebra.git
 
 
 
