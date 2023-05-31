@@ -14,7 +14,7 @@ from Shapes.Polygon import Polygon
 from Shapes.Segment import *
 from label_generator import generate_alphanumeric_sequence, get_label_parts
 import re
-
+from screeninfo import get_monitors
 config.label_generator = generate_alphanumeric_sequence()
 
 
@@ -29,10 +29,34 @@ class SidePanel(tk.Frame):
         self.text.config(yscrollcommand=scrollbar.set)
 
 
+def center_window(window):
+    window.update_idletasks()  # Ensure that window dimensions are updated
+
+    # Get screen dimensions
+    screen_width = window.winfo_screenwidth()
+    screen_height = window.winfo_screenheight()
+
+    # Calculate the position for the window
+    x = (screen_width - window.winfo_width()) // 2
+    y = (screen_height - window.winfo_height()) // 2
+
+    # Set the window position
+    window.geometry(f"+{x}+{y}")
+
 def init_program():
-    config.root.geometry("1400x900")
+    # config.root.geometry("1400x900")
+    # config.root.geometry("1920x1080")
+    screen_width = get_monitors()[0].width
+    screen_height = get_monitors()[0].height
+
+    # Set the size of the root window to match the screen size
+    config.root.geometry(f"{screen_width}x{screen_height}")
+
+
     config.root.resizable(False, False)
+
     config.root.wm_title("Geogebra")
+
 
     config.fig.set_size_inches(8, 8)
     config.ax.set_xlim(-10, 10)
@@ -590,6 +614,8 @@ def handle_input_polygon(event):
             plt.draw()
 
         elif shape_clicked(event.xdata, event.ydata) == config.first_point_polygon:
+            print(shape_clicked(event.xdata, event.ydata))
+            print(config.first_point_polygon)
             p1 = config.last_point_polygon
             p2 = config.first_point_polygon
 
@@ -610,6 +636,7 @@ def handle_input_polygon(event):
             config.ax.figure.canvas.mpl_disconnect(config.cid)
             config.first_point_polygon = None
             config.last_point_polygon = None
+            config.curr_polygon = None
             config.polygon_x, config.polygon_y = [None] * 2
             plt.title("")
             plt.draw()
@@ -633,7 +660,7 @@ def handle_input_polygon(event):
             config.undo_stack.pop()
             # draw_shape(config.curr_polygon)
             config.last_point_polygon = p2
-            plt.title("Click left click to draw the end segment point")
+            plt.title("Click left click to draw segment or finish the poly")
             plt.draw()
 
 
