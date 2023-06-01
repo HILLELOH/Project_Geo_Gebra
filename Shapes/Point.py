@@ -94,6 +94,15 @@ class Point(Shape):
                         
         print(segments_part)
         return False
+    
+    def area(self) -> float:
+        return 0
+
+    def perimeter(self) -> float:
+        return 0
+
+    def convex_hull(self):
+        return self
 
    
 
