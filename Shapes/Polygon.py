@@ -6,6 +6,7 @@ from Shapes.Point import *
 from Shapes.shapes import Shape
 
 from scipy.spatial import ConvexHull, Delaunay
+from math import atan2
 
 
 class Polygon:
@@ -66,6 +67,54 @@ class Polygon:
             perimeter += segment.perimeter()
         return perimeter
 
+    def polar_angle(self, p1, p2):
+        return atan2(p2.y - p1.y, p2.x - p1.x)
+
+    def find_lowest_point(self, points):
+        lowest_point = points[0]
+        for point in points:
+            if point.y < lowest_point.y:
+                lowest_point = point
+            elif point.y == lowest_point.y and point.x < lowest_point.x:
+                lowest_point = point
+        return lowest_point
+
+    def orientation(self, p, q, r):
+        value = (q.y - p.y) * (r.x - q.x) - (q.x - p.x) * (r.y - q.y)
+        if value == 0:
+            return 0  # Collinear points
+        elif value > 0:
+            return 1  # Clockwise orientation
+        else:
+            return 2  # Counterclockwise orientation
+
+    def graham_scan(self, points):
+        n = len(points)
+        if n < 3:
+            return []  # Not enough points to form a convex hull
+
+        lowest_point = self.find_lowest_point(points)
+        sorted_points = sorted(points, key=lambda p: self.polar_angle(lowest_point, p))
+
+        stack = [lowest_point, sorted_points[0], sorted_points[1]]
+
+        for i in range(2, n):
+            while len(stack) > 1 and self.orientation(stack[-2], stack[-1], sorted_points[i]) != 2:
+                stack.pop()
+            stack.append(sorted_points[i])
+
+        segments = []
+        for i in range(len(stack) - 1):
+            p1, p2 = stack[i], stack[i + 1]
+            segments.append(Segment(p1, p2, ''))
+
+        p1, p2 = stack[-1], stack[0]
+        segments.append(Segment(p1, p2, ''))
+
+        return segments
+
+
+
     def convex_hull(self):
         '''
         This method calculates the convex hull of the current polygon and returns it as a new 'Polygon' object.
@@ -84,6 +133,11 @@ class Polygon:
             end = segment.get_end()
             points.append([start.get_x(), start.get_y()])
             points.append([end.get_x(), end.get_y()])
+            # if start not in points:
+            #     points.append(start)
+            # if end not in points:
+            #     points.append(end)
+
         hull = ConvexHull(points)  # Calculate the convex hull of the points
         hull_segments = []  # Create a list of segments that form the convex hull
         for simplex in hull.simplices:
@@ -91,6 +145,9 @@ class Polygon:
             end = simplex[1]
             x1, y1 = points[start]
             x2, y2 = points[end]
+            # for seg in config.shapes:
+            #     if isinstance(seg, Segment):
+            #         if seg.get_start().get_x()
             hull_segments.append(
                 Segment(Point(x1, y1, ''), Point(x2, y2, ''), ''))
         return Polygon(hull_segments, self.label)

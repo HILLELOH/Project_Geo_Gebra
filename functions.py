@@ -16,6 +16,7 @@ from label_generator import generate_alphanumeric_sequence, get_label_parts
 import re
 from screeninfo import get_monitors
 config.label_generator = generate_alphanumeric_sequence()
+from scipy.spatial import ConvexHull, Delaunay
 
 
 class SidePanel(tk.Frame):
@@ -55,7 +56,7 @@ def init_program():
 
     config.root.resizable(False, False)
 
-    config.root.wm_title("Geogebra")
+    config.root.wm_title("PyGeoGebra")
 
 
     config.fig.set_size_inches(8, 8)
@@ -89,6 +90,8 @@ def create_buttons():
     undo_button = tk.Button(config.buttons_panel, text="undo", command=undo)
     redo_button = tk.Button(config.buttons_panel, text="redo", command=redo)
     clear_history_button = tk.Button(config.buttons_panel, text="clear history", command=clear_history)
+    tmp = tk.Button(config.buttons_panel, text="convex", command=convex)
+    ix = tk.Button(config.buttons_panel, text="x", command=x)
 
     buttons = [save_button,
                load_button,
@@ -100,6 +103,8 @@ def create_buttons():
                segment_button,
                circle_button,
                polygon_button,
+               tmp,
+               ix,
 
                # file_button,
                clear_history_button,
@@ -118,6 +123,66 @@ def create_buttons():
             buttons[i].pack(side=tk.LEFT, padx=padding)
 
     # make_file_button_frame(config.file_frame)
+
+def x():
+    for shape in config.shapes:
+        if isinstance(shape, Segment):
+            if shape.get_label() == '':
+                config.shapes.remove(shape)
+    update_label()
+    update_display()
+
+
+def convex():
+    # for shape in config.shapes:
+    #     if isinstance(shape, Polygon):
+    #         points = []  # Get a list of all the points in the polygon
+    #         for segment in shape.segment_list:
+    #             start = segment.get_start()
+    #             end = segment.get_end()
+    #             points.append([start.get_x(), start.get_y()])
+    #             points.append([end.get_x(), end.get_y()])
+    #         hull = ConvexHull(points)  # Calculate the convex hull of the points
+    #         hull_segments = []  # Create a list of segments that form the convex hull
+    #         for simplex in hull.simplices:
+    #             start = simplex[0]
+    #             end = simplex[1]
+    #             x1, y1 = points[start]
+    #             x2, y2 = points[end]
+    #             curr_hull_seg = Segment(Point(x1, y1, ''), Point(x2, y2, ''), '')
+    #             for seg in shape.segment_list:
+    #                 if seg != curr_hull_seg:
+    #                     hull_segments.append(curr_hull_seg)
+    #         poly = Polygon(hull_segments, '')
+    #         for edge_poly in poly.get_segment_list():
+    #             draw_shape(edge_poly)
+            # poly = shape.convex_hull()
+            # points_poly = []  # Get a list of all the points in the polygon
+            # for segment in poly.segment_list:
+            #     start = segment.get_start()
+            #     end = segment.get_end()
+            #     points_poly.append(start)
+            #     points_poly.append(end)
+            #
+            # for edge_con in poly.segment_list:
+            #     for edge_reg in shape.segment_list:
+            #         if edge_con.get_start().get_x() == edge_reg.get_start().get_x() and edge_con.get_start().get_y() == edge_reg.get_start().get_y():
+            #             continue
+            #         else:
+            #             draw_shape(edge_con)
+    for shape in config.shapes:
+        if isinstance(shape, Polygon):
+            poly = shape.convex_hull()
+            for edge_poly in poly.get_segment_list():
+                draw_shape(edge_poly)
+                draw_shape(edge_poly.get_start())
+                draw_shape(edge_poly.get_end())
+    # for shape in config.shapes:
+    #     if isinstance(shape, Polygon):
+    #         list = shape.triangulate()
+    #         for tri in list:
+    #             for point in tri:
+    #                 draw_shape(point)
 
 
 def shape_clicked(x, y):
@@ -629,6 +694,8 @@ def handle_input_polygon(event):
             config.undo_stack.pop()
             config.undo_stack.pop()
             config.undo_stack.pop()
+            config.shapes.append(config.curr_polygon)
+            print(config.shapes)
 
             command = {"type": 'draw', "shape": config.curr_polygon}
             config.undo_stack.insert(len(config.undo_stack), command)
@@ -842,6 +909,8 @@ def update_label():
     config.label_widgets = []
 
     for shape in config.shapes:
+        if shape.get_label == '':
+            pass
         hidden_str = ''
         if shape.is_hidden():
             hidden_str = '[hidden]'
@@ -871,6 +940,7 @@ def update_label():
         config.label_widget.pack(anchor='w')
         config.label_widgets.append(config.label_widget)
         config.label_widget.bind("<Button-1>", hide)
+
 
 
 def reset():
