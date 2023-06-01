@@ -54,4 +54,14 @@ class Line(Shape):
 
     def set_hidden(self, b):
         self.hidden = b
+        
+    def area(self) -> float:
+        return 0
+
+    def perimeter(self) -> float:
+        distance = math.sqrt((self.p2.get_x() - self.p1.get_x()) ** 2 + (self.p2.get_y() - self.p2.get_y()) ** 2)
+        return distance
+
+    def convex_hull(self):
+        return self
 
