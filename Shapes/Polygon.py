@@ -1,8 +1,11 @@
+import math
+
 import numpy as np
 from matplotlib.axes import Axes
 
 import config
 from Shapes.Point import *
+from Shapes.Triangle import Triangle
 from Shapes.shapes import Shape
 from Shapes.Segment import Segment
 
@@ -18,15 +21,11 @@ class Polygon:
 
     def draw(self, ax: Axes):
         for segment in self.segment_list:
-            # m, b = segment.m_b()
-            # # draw_line_shape(m, b)
-            # x_range = np.array([-100, 1000])
             start = segment.get_start()
             end = segment.get_end()
             segment.set_segment_obj(
                 ax.plot([start.get_x(), end.get_x()], [start.get_y(), end.get_y()], color='black', linestyle='-',
                         linewidth=2))
-            # line.dashes_obj, = ax.plot(x_range, m * x_range + b, linestyle='-', linewidth=1, color='black')
 
     def add_segment(self, segment):
         self.segment_list.append(segment)
@@ -181,27 +180,88 @@ class Polygon:
         return True
 
     def triangulate(self):
-        """
-        Triangulate the polygon into a list of triangles using the Delaunay triangulation method.
-        :return: A list of tuples, where each tuple contains the indices of the vertices of a triangle.
-        """
-        vertices = []  # List to store the polygon vertices
-        for segment in self.segment_list:
-            vertices.append(segment.p1)
-            vertices.append(segment.p2)
-        vertices_array = np.array([[point.x, point.y] for point in vertices])
-        tri = Delaunay(vertices_array)  # Compute the Delaunay triangulation of the vertices
         triangles = []
-        for indices in tri.simplices:
-            triangle = (vertices[indices[0]], vertices[indices[1]], vertices[indices[2]])
-            triangles.append(triangle)
+        remaining_segments = self.segment_list.copy()
+        while len(remaining_segments) >= 3:
+            p1, p2, p3 = None, None, None
+            for i, segment1 in enumerate(remaining_segments):
+                for j, segment2 in enumerate(remaining_segments[i + 1:], start=i + 1):
+                    if self.is_diagonal(segment1, segment2):
+                        p1, p2 = segment1.p1, segment2.p1
+                        p3 = segment2.p2 if segment1.p2 == p1 else segment1.p2
+                        break
+                if p1 and p2 and p3:
+                    break
+            if p1 and p2 and p3:
+                triangle = Triangle(p1, p2, p3)
+                triangles.append(triangle)
+                remaining_segments.remove(segment1)
+                remaining_segments.remove(segment2)
+                remaining_segments.extend([
+                    Segment(p1, p3, ""),
+                    Segment(p3, p2, "")
+                ])
+            else:
+                # No valid diagonal found, the polygon may not be simple
+                break
         return triangles
 
+    def is_diagonal(self, segment1, segment2):
+        p1, p2, p3, p4 = segment1.p1, segment1.p2, segment2.p1, segment2.p2
+        if self.are_points_collinear(p1, p2, p3) or self.are_points_collinear(p1, p2, p4):
+            return False
+        return self.is_point_inside_triangle(p1, p2, p3, p4) and self.is_point_inside_triangle(p1, p2, p4, p3)
+
+    def are_points_collinear(self, p1, p2, p3):
+        return math.isclose((p2.get_y() - p1.get_y()) * (p3.get_x() - p2.get_x()), (p3.get_y() - p2.get_y()) * (p2.get_x() - p1.get_x()))
+
+    def is_point_inside_triangle(self, p1, p2, p3, point):
+        area_triangle = self.calculate_area(p1, p2, p3)
+        area_sub1 = self.calculate_area(p1, p2, point)
+        area_sub2 = self.calculate_area(p2, p3, point)
+        area_sub3 = self.calculate_area(p3, p1, point)
+
+        return math.isclose(area_triangle, area_sub1 + area_sub2 + area_sub3)
+
+    def calculate_area(self, p1, p2, p3):
+        return abs(0.5 * (p1.get_x() * (p2.get_y() - p3.get_y()) + p2.get_x() * (p3.get_y() - p1.get_y()) + p3.get_x() * (p1.get_y() - p2.get_y())))
+
+
+    def tri(self):
+        points = []  # Get a list of all the points in the polygon
+        for segment in self.segment_list:
+            start = segment.get_start()
+            # end = segment.get_end()
+            points.append([start.get_x(), start.get_y()])
+            #points.append([end.get_x(), end.get_y()])
         # vertices = np.array([segment.get_start().to_array() for segment in
         #                      self.segment_list])  # Get the polygon vertices as a numpy array
-        # tri = Delaunay(vertices)  # Compute the Delaunay triangulation of the vertices
-        # triangles = []  # Create a list of tuples representing the triangles in the triangulation
-        # for indices in tri.simplices:
-        #     triangles.append(tuple(indices))
-        #
-        # return triangles
+        tri = Delaunay(points)  # Compute the Delaunay triangulation of the vertices
+        triangles = []  # Create a list of tuples representing the triangles in the triangulation
+        for indices in tri.simplices:
+            # triangles.append(tuple(indices))
+            # print(indices)
+            p1 = self.segment_list[indices[0]].get_start()
+            p2 = self.segment_list[indices[1]].p1
+            p3 = self.segment_list[indices[2]].p1
+            triangle = Triangle(p1, p2, p3, '')
+            triangles.append(triangle)
+            # print(triangle.__repr__())
+        return triangles
+
+
+if __name__ == '__main__':
+    p1 = Point(-4, 0, "A")
+    p2 = Point(4, 0, "B")
+    p3 = Point(4, 4, "C")
+    p4 = Point(-4, 4, "D")
+
+    seg1 = Segment(p1, p2, "AB")
+    seg2 = Segment(p2, p3, "BC")
+    seg3 = Segment(p3, p4, "CD")
+    seg4 = Segment(p4, p1, "DA")
+
+    poly = Polygon([seg1, seg2, seg3, seg4], "ABCD")
+    l = poly.tri()
+
+    print(l)

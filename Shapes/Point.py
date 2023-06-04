@@ -18,6 +18,12 @@ class Point(Shape):
         self.label = label
         self.hidden = False
 
+    def get_x(self):
+        return self.x
+
+    def get_y(self):
+        return self.y
+
     def draw(self, ax: Axes):
         ax.plot(self.x, self.y, 'ro')
         plt.annotate(self.label, (self.x, self.y))
@@ -25,12 +31,8 @@ class Point(Shape):
     def __str__(self):
         return f"({self.x:0.3f} , {self.y:0.3f})"
 
-    def get_x(self):
-        return self.x
-
-    def get_y(self):
-        return self.y
-
+    def __repr__(self):
+        return f"({self.x:0.3f} , {self.y:0.3f})"
     def set_x(self, x):
         self.x += x
 

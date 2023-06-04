@@ -19,7 +19,6 @@ class Segment(Shape):
         self.p2 = p2
         self.label = label
         self.hidden = False
-
         self.segment_obj = None
 
     def m_b(self):

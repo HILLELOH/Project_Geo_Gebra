@@ -165,9 +165,9 @@ def convex():
 def triangulation():
     for shape in config.shapes:
         if isinstance(shape, Polygon):
-            triangles = shape.triangulate()
-            for edge in triangles:
-                draw_shape(edge)
+            triangles = shape.tri()
+            for tria in triangles:
+                draw_shape(tria)
 
 
 
