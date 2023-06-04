@@ -7,5 +7,5 @@ class Shape:
         self.coords= np.array(coords)
 
     def __repr__(self):
-        return str(self.__class__).split(".")[-1][:-2]
+        return str(self.__class__).split(".")[1][:]
 

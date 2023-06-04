@@ -36,6 +36,9 @@ class Polygon:
     def get_label(self):
         return self.label
 
+    def set_label(self, label):
+        self.label = f'{self.label}{label}'
+
     def is_hidden(self):
         return self.hidden
 
@@ -125,115 +128,18 @@ class Polygon:
         segments.append(Segment(p1, p2, ''))
         return segments
 
-    def convex_hull(self):
+    def triangulation(self):
         '''
-        This method calculates the convex hull of the current polygon and returns it as a new 'Polygon' object.
-        To do this, we first create a list of all the points in the polygon by iterating over all the lines in the
-        polygon and adding the start and end points of each line to the list. We then pass this list of points to the
-        'ConvexHull' function from the 'scipy.spatial' module to calculate the convex hull. Finally, we create a new
-        list of lines that form the convex hull by iterating over the simplices in the convex hull and creating a new
-        'Line' object for each one.
-        :return: New 'Polygon' object that represents the convex hull of the current polygon.
+        When triangulating a polygon using the Delaunay method, the new edges can be created both inside and outside the
+        polygon.
+        :return:
         '''
-        from Shapes.Point import Point
-        from Shapes.Segment import Segment
-        points = []  # Get a list of all the points in the polygon
-        for segment in self.segment_list:
-            start = segment.get_start()
-            end = segment.get_end()
-            points.append([start.get_x(), start.get_y()])
-            points.append([end.get_x(), end.get_y()])
-        hull = ConvexHull(points)  # Calculate the convex hull of the points
-        hull_segments = []  # Create a list of segments that form the convex hull
-        for simplex in hull.simplices:
-            start = simplex[0]
-            end = simplex[1]
-            x1, y1 = points[start]
-            x2, y2 = points[end]
-            hull_segments.append(
-                Segment(Point(x1, y1, ''), Point(x2, y2, ''), ''))
-        return Polygon(hull_segments, self.label)
-
-    def is_convex(self) -> bool:
-        '''
-        The 'is_convex' function determines whether the polygon is convex or not. A polygon is convex if all its interior
-        angles are less than 180 degrees. We iterate over all the vertices of the polygon and calculate the cross product
-        of the vectors formed by adjacent edges. If the sign of the cross product changes for any adjacent edge, then the
-        polygon is not convex. If the sign of the cross product remains the same for all adjacent edges, then the polygon
-        is convex.
-        :return: True if the polygon is convex, False otherwise.
-        '''
-        num_vertices = len(self.segment_list)
-        if num_vertices < 3:
-            return False
-        sign = None
-        for i in range(num_vertices):
-            p1 = self.segment_list[i].get_start()
-            p2 = self.segment_list[(i + 1) % num_vertices].get_start()
-            p3 = self.segment_list[(i + 2) % num_vertices].get_start()
-            cross_product = (p2.get_x() - p1.get_x()) * (p3.get_y() - p2.get_y()) - (p2.get_y() - p1.get_y()) * (
-                    p3.get_x() - p2.get_x())
-            if sign is None:
-                sign = np.sign(cross_product)
-            elif np.sign(cross_product) != sign:
-                return False
-        return True
-
-    def triangulate(self):
-        triangles = []
-        remaining_segments = self.segment_list.copy()
-        while len(remaining_segments) >= 3:
-            p1, p2, p3 = None, None, None
-            for i, segment1 in enumerate(remaining_segments):
-                for j, segment2 in enumerate(remaining_segments[i + 1:], start=i + 1):
-                    if self.is_diagonal(segment1, segment2):
-                        p1, p2 = segment1.p1, segment2.p1
-                        p3 = segment2.p2 if segment1.p2 == p1 else segment1.p2
-                        break
-                if p1 and p2 and p3:
-                    break
-            if p1 and p2 and p3:
-                triangle = Triangle(p1, p2, p3)
-                triangles.append(triangle)
-                remaining_segments.remove(segment1)
-                remaining_segments.remove(segment2)
-                remaining_segments.extend([
-                    Segment(p1, p3, ""),
-                    Segment(p3, p2, "")
-                ])
-            else:
-                # No valid diagonal found, the polygon may not be simple
-                break
-        return triangles
-
-    def is_diagonal(self, segment1, segment2):
-        p1, p2, p3, p4 = segment1.p1, segment1.p2, segment2.p1, segment2.p2
-        if self.are_points_collinear(p1, p2, p3) or self.are_points_collinear(p1, p2, p4):
-            return False
-        return self.is_point_inside_triangle(p1, p2, p3, p4) and self.is_point_inside_triangle(p1, p2, p4, p3)
-
-    def are_points_collinear(self, p1, p2, p3):
-        return math.isclose((p2.get_y() - p1.get_y()) * (p3.get_x() - p2.get_x()), (p3.get_y() - p2.get_y()) * (p2.get_x() - p1.get_x()))
-
-    def is_point_inside_triangle(self, p1, p2, p3, point):
-        area_triangle = self.calculate_area(p1, p2, p3)
-        area_sub1 = self.calculate_area(p1, p2, point)
-        area_sub2 = self.calculate_area(p2, p3, point)
-        area_sub3 = self.calculate_area(p3, p1, point)
-
-        return math.isclose(area_triangle, area_sub1 + area_sub2 + area_sub3)
-
-    def calculate_area(self, p1, p2, p3):
-        return abs(0.5 * (p1.get_x() * (p2.get_y() - p3.get_y()) + p2.get_x() * (p3.get_y() - p1.get_y()) + p3.get_x() * (p1.get_y() - p2.get_y())))
-
-
-    def tri(self):
         points = []  # Get a list of all the points in the polygon
         for segment in self.segment_list:
             start = segment.get_start()
             # end = segment.get_end()
             points.append([start.get_x(), start.get_y()])
-            #points.append([end.get_x(), end.get_y()])
+            # points.append([end.get_x(), end.get_y()])
         # vertices = np.array([segment.get_start().to_array() for segment in
         #                      self.segment_list])  # Get the polygon vertices as a numpy array
         tri = Delaunay(points)  # Compute the Delaunay triangulation of the vertices
@@ -242,26 +148,9 @@ class Polygon:
             # triangles.append(tuple(indices))
             # print(indices)
             p1 = self.segment_list[indices[0]].get_start()
-            p2 = self.segment_list[indices[1]].p1
-            p3 = self.segment_list[indices[2]].p1
+            p2 = self.segment_list[indices[1]].get_start()
+            p3 = self.segment_list[indices[2]].get_start()
             triangle = Triangle(p1, p2, p3, '')
             triangles.append(triangle)
-            # print(triangle.__repr__())
         return triangles
 
-
-if __name__ == '__main__':
-    p1 = Point(-4, 0, "A")
-    p2 = Point(4, 0, "B")
-    p3 = Point(4, 4, "C")
-    p4 = Point(-4, 4, "D")
-
-    seg1 = Segment(p1, p2, "AB")
-    seg2 = Segment(p2, p3, "BC")
-    seg3 = Segment(p3, p4, "CD")
-    seg4 = Segment(p4, p1, "DA")
-
-    poly = Polygon([seg1, seg2, seg3, seg4], "ABCD")
-    l = poly.tri()
-
-    print(l)

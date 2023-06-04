@@ -3,9 +3,12 @@ import logging
 import pickle
 import random
 import tkinter as tk
+from tkinter import Menu, OptionMenu
+from colorama import init as coloramainit
 
-import matplotlib.pyplot as plt
-import numpy as np
+coloramainit()
+
+from PIL.ImageEnhance import Color
 
 import config
 
@@ -19,19 +22,38 @@ from Shapes.Segment import *
 from label_generator import generate_alphanumeric_sequence, get_label_parts
 import re
 from screeninfo import get_monitors
+
 config.label_generator = generate_alphanumeric_sequence()
 from scipy.spatial import ConvexHull, Delaunay
 
 
 class SidePanel(tk.Frame):
-    def __init__(self, parent):
+    def __init__(self, parent, bool, side, pack_bool):
         tk.Frame.__init__(self, parent)
         self.text = tk.Text(self, wrap=tk.WORD)
-        self.text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        self.text.configure(state="disabled")
 
-        scrollbar = ttk.Scrollbar(self, command=self.text.yview)
-        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-        self.text.config(yscrollcommand=scrollbar.set)
+        if pack_bool:
+            self.text.pack(side=side, fill=tk.BOTH, expand=True)
+
+        if bool:
+            scrollbar = ttk.Scrollbar(self, command=self.text.yview)
+            scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+            self.text.config(yscrollcommand=scrollbar.set)
+
+    def insert_text(self, text):
+        self.text.configure(state="normal")  # Enable editing
+        self.text.insert(tk.END, text)  # Insert the text at the end
+        self.text.configure(state="disabled")  # Disable editing
+
+    def insert_block(self, texts):
+        for text in texts:
+            self.insert_text(text)
+
+    def clear_text(self):
+        self.text.configure(state="normal")  # Enable editing
+        self.text.delete(1.0, tk.END)  # Delete all text from the start to the end
+        self.text.configure(state="disabled")  # Disable editing
 
 
 def center_window(window):
@@ -48,20 +70,19 @@ def center_window(window):
     # Set the window position
     window.geometry(f"+{x}+{y}")
 
+
 def init_program():
     # config.root.geometry("1400x900")
     # config.root.geometry("1920x1080")
-    screen_width = get_monitors()[0].width
-    screen_height = get_monitors()[0].height
+    screen_width = get_monitors()[0].width - 100
+    screen_height = get_monitors()[0].height - 100
 
     # Set the size of the root window to match the screen size
     config.root.geometry(f"{screen_width}x{screen_height}")
 
-
     config.root.resizable(False, False)
 
     config.root.wm_title("PyGeoGebra")
-
 
     config.fig.set_size_inches(8, 8)
     config.ax.set_xlim(-10, 10)
@@ -91,12 +112,13 @@ def create_buttons():
     save_button = tk.Button(config.buttons_panel, text="Save", command=save)
     load_button = tk.Button(config.buttons_panel, text="Load file", command=load)
     delete_button = tk.Button(config.buttons_panel, text="Delete shape", command=delete_shape)
+
+    algors = tk.Button(config.buttons_panel, text="Algorithms", command=algos)
     undo_button = tk.Button(config.buttons_panel, text="undo", command=undo)
     redo_button = tk.Button(config.buttons_panel, text="redo", command=redo)
     clear_history_button = tk.Button(config.buttons_panel, text="clear history", command=clear_history)
-    tmp = tk.Button(config.buttons_panel, text="convex hull", command=convex)
+    # tmp = tk.Button(config.buttons_panel, text="convex", command=convex)
     ix = tk.Button(config.buttons_panel, text="x", command=x)
-    tri = tk.Button(config.buttons_panel, text="triangulation", command=triangulation)
 
     buttons = [save_button,
                load_button,
@@ -108,9 +130,9 @@ def create_buttons():
                segment_button,
                circle_button,
                polygon_button,
-               tmp,
+               algors,
+               # tmp,
                ix,
-               tri,
 
                # file_button,
                clear_history_button,
@@ -130,6 +152,7 @@ def create_buttons():
 
     # make_file_button_frame(config.file_frame)
 
+
 def x():
     for shape in config.shapes:
         if isinstance(shape, Segment):
@@ -139,37 +162,194 @@ def x():
     update_display()
 
 
-def convex():
+def convex(label):
+    config.conv_vx = ""
     x()
     points = []
-    # b = False
-    for shape in config.shapes:
-        if isinstance(shape, Polygon):
-            for segment in shape.get_segment_list():
-                start = segment.get_start()
-                end = segment.get_end()
-                if start not in points:
-                    points.append(start)
-                if end not in points:
-                    points.append(end)
-    for shape in config.shapes:
-        if isinstance(shape, Polygon):
-            poly = shape.graham_scan(points)
-            for edge_poly in poly:
-                draw_shape(edge_poly)
-        #         edge_poly.set_color('green')
-        #     for seg in shape.get_segment_list():
-        #         seg.set_color('blue')
-        # plt.draw()
+    shape = find_shape(label)
 
-def triangulation():
-    for shape in config.shapes:
-        if isinstance(shape, Polygon):
-            triangles = shape.tri()
-            for tria in triangles:
-                draw_shape(tria)
+    for segment in shape.get_segment_list():
+        start = segment.get_start()
+        end = segment.get_end()
+        if start not in points:
+            points.append(start)
+        if end not in points:
+            points.append(end)
+
+    poly = shape.graham_scan(points)
+    for edge_poly in poly:
+        # draw_shape(edge_poly)
+        edge_poly.draw(config.ax)
+
+        l=edge_poly.get_start().get_label()
+        if l not in config.conv_vx.split(", "):
+            if config.conv_vx == "":
+                config.conv_vx = l
+
+            else:
+                config.conv_vx = f'{config.conv_vx}, {l}'
 
 
+def triangulation(label):
+    shape = find_shape(label)
+    triangles = shape.triangulation()
+    for tria in triangles:
+        tria.draw(config.ax)
+        # draw_shape(tria)
+
+
+
+def find_shape(label):
+    for shape in config.shapes:
+        if label == shape.get_label():
+            return shape
+    return None
+
+
+def activate():
+    if not config.algorithms_panel is None:
+        x()
+        config.algorithms_panel.clear_text()
+        config.bool_panel_algo = False
+
+    if not config.calc:
+        config.info = tk.Label(config.algorithms_panel.text, text="Information: ", font='Helvetica 25 bold')
+        config.info.pack(anchor='w', padx=10)
+        config.calc = True
+
+    chosen_algo = config.algo_var.get()
+    chosen_shape = config.poly_var.get()
+
+    if chosen_algo == "choose" or chosen_shape == "choose":
+        print("you didn't chose!")
+        return
+
+    else:
+
+        shape = find_shape(chosen_shape)
+        type=''
+        if isinstance(shape, Point):
+            type = 'Point'
+        elif isinstance(shape, Line):
+            type = 'Line'
+        elif isinstance(shape, Segment):
+            type = 'Segment'
+        elif isinstance(shape, Circle):
+            type = 'Circle'
+        elif isinstance(shape, Polygon):
+            type = 'Polygon'
+
+
+        data = ['\n'*35,
+                f' Type: {type}\n',
+                f' Label: {shape.get_label()}\n'
+                ]
+        config.algorithms_panel.insert_block(data)
+
+        if isinstance(shape, Point):
+            config.algorithms_panel.insert_text(f' Coords: ({shape.get_x():0.3f}, {shape.get_y():0.3f})\n')
+
+        elif isinstance(shape, Circle):
+            data = [f' Radius: {shape.get_radius():0.3f}\n',
+                    f' Center: ({shape.get_center().get_x():0.3f}, {shape.get_center().get_y():0.3f})\n'
+                    ]
+            config.algorithms_panel.insert_block(data)
+
+        elif isinstance(shape, Segment) or isinstance(shape, Line):
+            data = [f' Start: ({shape.get_start().get_x():0.3f}, {shape.get_start().get_y():0.3f})\n',
+                    f' End: ({shape.get_end().get_x():0.3f}, {shape.get_end().get_y():0.3f})\n'
+                    ]
+            config.algorithms_panel.insert_block(data)
+
+        elif isinstance(shape, Polygon):
+            pass
+
+
+        if chosen_algo == 'Perimeter':
+            config.algorithms_panel.insert_text(f' Perimeter: {shape.perimeter()}\n')
+
+        elif chosen_algo == 'Area':
+            config.algorithms_panel.insert_text(f' Area: {shape.area()}\n')
+
+        elif chosen_algo == 'Convex-hull':
+            convex(chosen_shape)
+            config.algorithms_panel.insert_text(f' Convex: {config.conv_vx}\n')
+
+        elif chosen_algo == 'Triangulation':
+            triangulation(chosen_shape)
+
+    return
+
+
+def reset_button():
+    x()
+    config.algorithms_panel.clear_text()
+    config.algorithms_panel.pack_forget()
+    config.bool_panel_algo = False
+    config.algo_var = None
+    config.poly_var = None
+    algos()
+
+
+def algos():
+    config.calc = False
+    if not config.bool_panel_algo:
+        config.bool_panel_algo = True
+
+        config.algorithms_panel = SidePanel(config.root, False, tk.RIGHT, True)
+        config.algorithms_panel.pack(side=tk.RIGHT, fill=tk.BOTH, expand=False)
+
+        tk.Label(config.algorithms_panel.text, text="Algorithms ", bg="white",
+                 font='Helvetica 18 bold underline').pack(anchor='w', fill=tk.BOTH)
+
+        # Add menu, text, and button
+        menu_label = tk.Label(config.algorithms_panel.text, text="Choose an algorithm:", font='Helvetica 20 bold')
+        menu_label.pack(anchor='center', pady=20)
+
+        config.algo_var = tk.StringVar()
+        config.algo_var.set("choose")  # Set default value
+
+        algos = ["choose", "Perimeter", "Area", "Convex-hull", "Triangulation"]
+
+        menu = tk.OptionMenu(config.algorithms_panel.text, config.algo_var, *algos)
+        menu.pack(anchor='center', pady=10)
+
+        choice_label = tk.Label(config.algorithms_panel.text, text="Choose Shape:", font='Helvetica 20 bold')
+        choice_label.pack(anchor='center', pady=20)
+
+        config.poly_var = tk.StringVar()
+        config.poly_var.set("choose")  # Set default value
+
+        labels=["choose"]
+        for shape in config.shapes:
+            labels.append(shape.get_label())
+            # if isinstance(shape, Polygon):
+            #     labels.append(shape.get_label())
+
+        menu = tk.OptionMenu(config.algorithms_panel.text, config.poly_var, *labels)
+        menu.pack(anchor='center', pady=10)
+
+
+
+
+        calculate_button = tk.Button(config.algorithms_panel.text, text="Calculate", command=activate, font='Helvetica 15 bold')
+        calculate_button.pack(anchor='center', pady=60)
+
+        reset_butto = tk.Button(config.algorithms_panel.text, text="reset", command=reset_button,
+                                     font='Helvetica 10')
+        reset_butto.pack(anchor='center', pady=5)
+
+        left_line = tk.Frame(config.algorithms_panel, bg="black", width=2)
+        left_line.place(x=0, y=0, relheight=1)
+
+        right_line = tk.Frame(config.algorithms_panel, bg="black", width=2)
+        right_line.place(relx=1, y=0, relheight=1, anchor=tk.NE)
+
+        config.bool_panel_algo = True
+
+    else:
+        config.algorithms_panel.pack_forget()
+        config.bool_panel_algo = False
 
 def shape_clicked(x, y):
     threshold = 0.5
@@ -257,8 +437,6 @@ def on_press(event):
             print(config.set_shape)
             if config.set_shape == 0:
                 open_insert_window(config.selected_shape)
-
-
 
 
 def on_release(event):
@@ -399,7 +577,7 @@ def hide(event):
     equality = clicked_label.cget("text")
     label = re.match("\((\\w+)\)", equality).groups()[0]
     shape = get_shape_by_label(label)
-    print(label)
+    # print(label)
 
     if isinstance(shape, Point):
         circle = shape.is_circle_part()
@@ -657,16 +835,17 @@ def handle_input_polygon(event):
         if not config.curr_polygon:
             # First click sets the start point
 
-            config.curr_polygon = Polygon([], next(config.label_generator))
+            config.curr_polygon = Polygon([], '')
             config.polygon_x, config.polygon_y = event.xdata, event.ydata
             config.first_point_polygon = Point(event.xdata, event.ydata, next(config.label_generator))
+            config.curr_polygon.set_label(config.first_point_polygon.get_label())
             config.last_point_polygon = config.first_point_polygon
             plt.title("Click left click to draw the end segment point")
             plt.draw()
 
         elif shape_clicked(event.xdata, event.ydata) == config.first_point_polygon:
-            print(shape_clicked(event.xdata, event.ydata))
-            print(config.first_point_polygon)
+            # print(shape_clicked(event.xdata, event.ydata))
+            # print(config.first_point_polygon)
             p1 = config.last_point_polygon
             p2 = config.first_point_polygon
 
@@ -677,9 +856,12 @@ def handle_input_polygon(event):
             config.shapes.pop()
             config.shapes.pop()
             draw_shape(segment)
+
             config.undo_stack.pop()
             config.undo_stack.pop()
             config.undo_stack.pop()
+
+            config.curr_polygon.set_label(config.first_point_polygon.get_label())
             config.shapes.append(config.curr_polygon)
             print(config.shapes)
 
@@ -700,11 +882,11 @@ def handle_input_polygon(event):
             p2 = Point(event.xdata, event.ydata, next(config.label_generator))
             segment = Segment(p1, p2, next(config.label_generator))
 
+            config.curr_polygon.set_label(p2.get_label())
             config.curr_polygon.add_segment(segment)
             draw_shape(p1)
             if config.first_point_polygon != config.last_point_polygon:
                 config.shapes.pop()
-
             draw_shape(p2)
             draw_shape(segment)
 
@@ -845,6 +1027,9 @@ def draw_shape(shape):
     config.last_turn_before_return = numbers
 
     shape.draw(config.ax)
+    if shape in config.shapes:
+        print(shape.get_x())
+
     config.shapes.append(shape)
 
     command = {"type": 'draw', "shape": shape}
@@ -881,7 +1066,6 @@ def update_display():
     config.ax.set_aspect(prev_aspect)  # Set the aspect ratio to 'equal'
     config.ax.grid(True)
 
-
     for shape in config.shapes:
         if not shape.is_hidden():
             shape.draw(config.ax)
@@ -893,31 +1077,13 @@ def update_label():
     for widget in config.label_widgets:
         widget.destroy()
     config.label_widgets = []
-
-    # unique = np.array(config.shapes)
-    # uni = np.unique(unique)
-    # config.shapes = uni.tolist()
-    # res = [i for n, i in enumerate(test_list) if i not in test_list[:n]]
-
-    # config.shapes = [i for n, i in enu]
-
-    # print(f"Before:  {config.shapes}")
-    # uni = []
-    # for shape in config.shapes:
-    #     if shape not in uni:
-    #         uni.append(shape)
-    # config.shapes = uni
-    # print(f"After:  {uni}")
-
-    # config.shapes = list(set(config.shapes))
-
-    l = []
+    draw = []
     for shape in config.shapes:
-        if shape.get_label() in l:
+        if shape.get_label == '':
             continue
-        l.append(shape.get_label())
-        if shape.get_label() == '':
+        if shape in draw:
             continue
+        draw.append(shape)
         hidden_str = ''
         if shape.is_hidden():
             hidden_str = '[hidden]'
@@ -947,7 +1113,6 @@ def update_label():
         config.label_widget.pack(anchor='w')
         config.label_widgets.append(config.label_widget)
         config.label_widget.bind("<Button-1>", hide)
-
 
 
 def reset():

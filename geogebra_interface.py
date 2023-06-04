@@ -16,6 +16,8 @@ config.fig, config.ax = plt.subplots()
 # config.fig.withdraw()
 
 config.buttons_panel = tk.Frame(root)
+
+# config.algorithms_panel = tk.Frame(root)
 init_program()
 
 config.canvas = FigureCanvasTkAgg(config.fig, master=root)
@@ -29,7 +31,7 @@ config.shapes = []
 config.label_widgets = []
 create_buttons()
 
-config.side_panel = SidePanel(config.root)
+config.side_panel = SidePanel(config.root, True, tk.LEFT, True)
 config.side_panel.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 config.label_widget = tk.Label(config.side_panel.text, text="Algebra ", bg="white", font='Helvetica 18 bold underline')
 config.label_widget.pack(anchor='w')

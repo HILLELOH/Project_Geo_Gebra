@@ -39,5 +39,13 @@ curr_polygon = None
 this_point = None
 
 set_shape = 0
+bool_conv = False
+bool_tria = False
+bool_panel_algo = False
+algorithms_panel = None
+algo_var, poly_var = [None]*2
+info = None
+calc = False
+conv_vx = ""
 
 

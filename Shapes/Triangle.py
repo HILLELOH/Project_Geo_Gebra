@@ -1,4 +1,5 @@
 from Shapes.shapes import Shape
+from matplotlib.axes import Axes
 
 class Triangle(Shape):
     def __init__(self, p1, p2, p3, label):
@@ -16,6 +17,11 @@ class Triangle(Shape):
 
     def get_p3(self):
         return self.p3
+
+    def draw(self, ax: Axes):
+        ax.plot([self.p1.get_x(), self.p2.get_x(), self.p3.get_x(), self.p1.get_x()], [self.p1.get_y(), self.p2.get_y(), self.p3.get_y(), self.p1.get_y()],
+                color='black', linestyle='-', linewidth=2)
+
 
     def set_p1(self, p1):
         self.p1 = p1
@@ -40,5 +46,4 @@ class Triangle(Shape):
 
     def __repr__(self):
         return f"({self.p1.__repr__()} , {self.p2.__repr__()} , {self.p3.__repr__()})"
-
 
