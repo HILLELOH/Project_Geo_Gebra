@@ -3,6 +3,10 @@ import logging
 import pickle
 import random
 import tkinter as tk
+
+import matplotlib.pyplot as plt
+import numpy as np
+
 import config
 
 from logging import debug
@@ -90,8 +94,9 @@ def create_buttons():
     undo_button = tk.Button(config.buttons_panel, text="undo", command=undo)
     redo_button = tk.Button(config.buttons_panel, text="redo", command=redo)
     clear_history_button = tk.Button(config.buttons_panel, text="clear history", command=clear_history)
-    tmp = tk.Button(config.buttons_panel, text="convex", command=convex)
+    tmp = tk.Button(config.buttons_panel, text="convex hull", command=convex)
     ix = tk.Button(config.buttons_panel, text="x", command=x)
+    tri = tk.Button(config.buttons_panel, text="triangulation", command=triangulation)
 
     buttons = [save_button,
                load_button,
@@ -105,6 +110,7 @@ def create_buttons():
                polygon_button,
                tmp,
                ix,
+               tri,
 
                # file_button,
                clear_history_button,
@@ -134,55 +140,35 @@ def x():
 
 
 def convex():
-    # for shape in config.shapes:
-    #     if isinstance(shape, Polygon):
-    #         points = []  # Get a list of all the points in the polygon
-    #         for segment in shape.segment_list:
-    #             start = segment.get_start()
-    #             end = segment.get_end()
-    #             points.append([start.get_x(), start.get_y()])
-    #             points.append([end.get_x(), end.get_y()])
-    #         hull = ConvexHull(points)  # Calculate the convex hull of the points
-    #         hull_segments = []  # Create a list of segments that form the convex hull
-    #         for simplex in hull.simplices:
-    #             start = simplex[0]
-    #             end = simplex[1]
-    #             x1, y1 = points[start]
-    #             x2, y2 = points[end]
-    #             curr_hull_seg = Segment(Point(x1, y1, ''), Point(x2, y2, ''), '')
-    #             for seg in shape.segment_list:
-    #                 if seg != curr_hull_seg:
-    #                     hull_segments.append(curr_hull_seg)
-    #         poly = Polygon(hull_segments, '')
-    #         for edge_poly in poly.get_segment_list():
-    #             draw_shape(edge_poly)
-            # poly = shape.convex_hull()
-            # points_poly = []  # Get a list of all the points in the polygon
-            # for segment in poly.segment_list:
-            #     start = segment.get_start()
-            #     end = segment.get_end()
-            #     points_poly.append(start)
-            #     points_poly.append(end)
-            #
-            # for edge_con in poly.segment_list:
-            #     for edge_reg in shape.segment_list:
-            #         if edge_con.get_start().get_x() == edge_reg.get_start().get_x() and edge_con.get_start().get_y() == edge_reg.get_start().get_y():
-            #             continue
-            #         else:
-            #             draw_shape(edge_con)
+    x()
+    points = []
+    # b = False
     for shape in config.shapes:
         if isinstance(shape, Polygon):
-            poly = shape.convex_hull()
-            for edge_poly in poly.get_segment_list():
+            for segment in shape.get_segment_list():
+                start = segment.get_start()
+                end = segment.get_end()
+                if start not in points:
+                    points.append(start)
+                if end not in points:
+                    points.append(end)
+    for shape in config.shapes:
+        if isinstance(shape, Polygon):
+            poly = shape.graham_scan(points)
+            for edge_poly in poly:
                 draw_shape(edge_poly)
-                draw_shape(edge_poly.get_start())
-                draw_shape(edge_poly.get_end())
-    # for shape in config.shapes:
-    #     if isinstance(shape, Polygon):
-    #         list = shape.triangulate()
-    #         for tri in list:
-    #             for point in tri:
-    #                 draw_shape(point)
+        #         edge_poly.set_color('green')
+        #     for seg in shape.get_segment_list():
+        #         seg.set_color('blue')
+        # plt.draw()
+
+def triangulation():
+    for shape in config.shapes:
+        if isinstance(shape, Polygon):
+            triangles = shape.triangulate()
+            for edge in triangles:
+                draw_shape(edge)
+
 
 
 def shape_clicked(x, y):
@@ -908,9 +894,30 @@ def update_label():
         widget.destroy()
     config.label_widgets = []
 
+    # unique = np.array(config.shapes)
+    # uni = np.unique(unique)
+    # config.shapes = uni.tolist()
+    # res = [i for n, i in enumerate(test_list) if i not in test_list[:n]]
+
+    # config.shapes = [i for n, i in enu]
+
+    # print(f"Before:  {config.shapes}")
+    # uni = []
+    # for shape in config.shapes:
+    #     if shape not in uni:
+    #         uni.append(shape)
+    # config.shapes = uni
+    # print(f"After:  {uni}")
+
+    # config.shapes = list(set(config.shapes))
+
+    l = []
     for shape in config.shapes:
-        if shape.get_label == '':
-            pass
+        if shape.get_label() in l:
+            continue
+        l.append(shape.get_label())
+        if shape.get_label() == '':
+            continue
         hidden_str = ''
         if shape.is_hidden():
             hidden_str = '[hidden]'

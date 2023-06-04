@@ -59,7 +59,7 @@ class Line(Shape):
         return 0
 
     def perimeter(self) -> float:
-        distance = math.sqrt((self.p2.get_x() - self.p1.get_x()) ** 2 + (self.p2.get_y() - self.p2.get_y()) ** 2)
+        distance = math.sqrt((self.p2.get_x() - self.p1.get_x()) ** 2 + (self.p2.get_y() - self.p1.get_y()) ** 2)
         return distance
 
     def convex_hull(self):

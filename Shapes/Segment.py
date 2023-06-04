@@ -3,7 +3,7 @@ import math
 import logging
 from logging import debug
 import numpy as np
-from Shapes.Polygon import Polygon
+# from Shapes.Polygon import Polygon
 
 r = logging.getLogger()
 r.setLevel(logging.DEBUG)
@@ -34,15 +34,15 @@ class Segment(Shape):
         self.segment_obj, = ax.plot([self.p1.get_x(), self.p2.get_x()], [self.p1.get_y(), self.p2.get_y()], color='black', linestyle='-', linewidth=2)
 
 
-    def is_polygon_part(self, shapes=None):
-        if shapes is None:
-            shapes = config.shapes
-        flag = False
-        for shape in shapes:
-            if isinstance(shape, Polygon):
-                if self in shape.get_segment_list():
-                    flag = shape
-        return flag
+    # def is_polygon_part(self, shapes=None):
+    #     if shapes is None:
+    #         shapes = config.shapes
+    #     flag = False
+    #     for shape in shapes:
+    #         if isinstance(shape, Polygon):
+    #             if self in shape.get_segment_list():
+    #                 flag = shape
+    #     return flag
 
     def get_start(self):
         return self.p1
@@ -66,12 +66,15 @@ class Segment(Shape):
 
     def set_hidden(self, b):
         self.hidden = b
+
+    def set_color(self, color):
+        self.segment_obj.set_color(color)
         
     def area(self) -> float:
         return 0
 
     def perimeter(self) -> float:
-        distance = math.sqrt((self.p2.get_x() - self.p1.get_x()) ** 2 + (self.p2.get_y() - self.p2.get_y()) ** 2)
+        distance = math.sqrt((self.p2.get_x() - self.p1.get_x()) ** 2 + (self.p2.get_y() - self.p1.get_y()) ** 2)
         return distance
 
     def convex_hull(self):

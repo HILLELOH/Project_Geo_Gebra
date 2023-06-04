@@ -14,7 +14,7 @@ class GeoGebra_TEST(unittest.TestCase):
         self.assertEqual(p.get_y(), 2)
         self.assertEqual(p.get_label(), "A")
         self.assertEqual(p.is_hidden(), False)
-        
+
         self.assertEqual(p.area(), 0)
         self.assertEqual(p.perimeter(), 0)
         self.assertEqual(p.convex_hull(), p)
@@ -27,7 +27,7 @@ class GeoGebra_TEST(unittest.TestCase):
         self.assertEqual(l.get_end(), p2)
         self.assertEqual(l.get_label(), "AB")
         self.assertEqual(l.is_hidden(), False)
-        
+
         self.assertEqual(l.area(), 0)
         self.assertEqual(l.perimeter(), 5)
         self.assertEqual(l.convex_hull(), l)
@@ -40,7 +40,7 @@ class GeoGebra_TEST(unittest.TestCase):
         self.assertEqual(s.get_end(), p2)
         self.assertEqual(s.get_label(), "AB")
         self.assertEqual(s.is_hidden(), False)
-        
+
         self.assertEqual(s.area(), 0)
         self.assertEqual(s.perimeter(), 2)
         self.assertEqual(s.convex_hull(), s)
@@ -52,7 +52,7 @@ class GeoGebra_TEST(unittest.TestCase):
         self.assertEqual(c.get_radius(), 3)
         self.assertEqual(c.get_label(), "C")
         self.assertEqual(c.is_hidden(), False)
-        
+
         self.assertEqual(c.area(), math.pi*3**2)
         self.assertEqual(c.perimeter(), 2*math.pi*3)
 
