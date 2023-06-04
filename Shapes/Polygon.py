@@ -179,55 +179,12 @@ class Polygon:
                 return False
         return True
 
-    def triangulate(self):
-        triangles = []
-        remaining_segments = self.segment_list.copy()
-        while len(remaining_segments) >= 3:
-            p1, p2, p3 = None, None, None
-            for i, segment1 in enumerate(remaining_segments):
-                for j, segment2 in enumerate(remaining_segments[i + 1:], start=i + 1):
-                    if self.is_diagonal(segment1, segment2):
-                        p1, p2 = segment1.p1, segment2.p1
-                        p3 = segment2.p2 if segment1.p2 == p1 else segment1.p2
-                        break
-                if p1 and p2 and p3:
-                    break
-            if p1 and p2 and p3:
-                triangle = Triangle(p1, p2, p3)
-                triangles.append(triangle)
-                remaining_segments.remove(segment1)
-                remaining_segments.remove(segment2)
-                remaining_segments.extend([
-                    Segment(p1, p3, ""),
-                    Segment(p3, p2, "")
-                ])
-            else:
-                # No valid diagonal found, the polygon may not be simple
-                break
-        return triangles
-
-    def is_diagonal(self, segment1, segment2):
-        p1, p2, p3, p4 = segment1.p1, segment1.p2, segment2.p1, segment2.p2
-        if self.are_points_collinear(p1, p2, p3) or self.are_points_collinear(p1, p2, p4):
-            return False
-        return self.is_point_inside_triangle(p1, p2, p3, p4) and self.is_point_inside_triangle(p1, p2, p4, p3)
-
-    def are_points_collinear(self, p1, p2, p3):
-        return math.isclose((p2.get_y() - p1.get_y()) * (p3.get_x() - p2.get_x()), (p3.get_y() - p2.get_y()) * (p2.get_x() - p1.get_x()))
-
-    def is_point_inside_triangle(self, p1, p2, p3, point):
-        area_triangle = self.calculate_area(p1, p2, p3)
-        area_sub1 = self.calculate_area(p1, p2, point)
-        area_sub2 = self.calculate_area(p2, p3, point)
-        area_sub3 = self.calculate_area(p3, p1, point)
-
-        return math.isclose(area_triangle, area_sub1 + area_sub2 + area_sub3)
-
-    def calculate_area(self, p1, p2, p3):
-        return abs(0.5 * (p1.get_x() * (p2.get_y() - p3.get_y()) + p2.get_x() * (p3.get_y() - p1.get_y()) + p3.get_x() * (p1.get_y() - p2.get_y())))
-
-
-    def tri(self):
+    def triangulation(self):
+        '''
+        When triangulating a polygon using the Delaunay method, the new edges can be created both inside and outside the
+        polygon.
+        :return:
+        '''
         points = []  # Get a list of all the points in the polygon
         for segment in self.segment_list:
             start = segment.get_start()
