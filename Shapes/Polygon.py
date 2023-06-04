@@ -242,26 +242,9 @@ class Polygon:
             # triangles.append(tuple(indices))
             # print(indices)
             p1 = self.segment_list[indices[0]].get_start()
-            p2 = self.segment_list[indices[1]].p1
-            p3 = self.segment_list[indices[2]].p1
+            p2 = self.segment_list[indices[1]].get_start()
+            p3 = self.segment_list[indices[2]].get_start()
             triangle = Triangle(p1, p2, p3, '')
             triangles.append(triangle)
-            # print(triangle.__repr__())
         return triangles
 
-
-if __name__ == '__main__':
-    p1 = Point(-4, 0, "A")
-    p2 = Point(4, 0, "B")
-    p3 = Point(4, 4, "C")
-    p4 = Point(-4, 4, "D")
-
-    seg1 = Segment(p1, p2, "AB")
-    seg2 = Segment(p2, p3, "BC")
-    seg3 = Segment(p3, p4, "CD")
-    seg4 = Segment(p4, p1, "DA")
-
-    poly = Polygon([seg1, seg2, seg3, seg4], "ABCD")
-    l = poly.tri()
-
-    print(l)

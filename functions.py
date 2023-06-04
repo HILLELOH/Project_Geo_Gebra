@@ -86,7 +86,7 @@ def create_buttons():
     line_button = tk.Button(config.buttons_panel, text="Line", command=draw_line)
     segment_button = tk.Button(config.buttons_panel, text="Segment", command=draw_segment)
     circle_button = tk.Button(config.buttons_panel, text="Circle", command=draw_circle)
-    polygon_button = tk.Button(config.buttons_panel, text="polygon", command=draw_polygon)
+    polygon_button = tk.Button(config.buttons_panel, text="Polygon", command=draw_polygon)
     reset_button = tk.Button(config.buttons_panel, text="Reset", command=reset)
     save_button = tk.Button(config.buttons_panel, text="Save", command=save)
     load_button = tk.Button(config.buttons_panel, text="Load file", command=load)
@@ -94,9 +94,9 @@ def create_buttons():
     undo_button = tk.Button(config.buttons_panel, text="undo", command=undo)
     redo_button = tk.Button(config.buttons_panel, text="redo", command=redo)
     clear_history_button = tk.Button(config.buttons_panel, text="clear history", command=clear_history)
-    tmp = tk.Button(config.buttons_panel, text="convex hull", command=convex)
+    tmp = tk.Button(config.buttons_panel, text="Convex Hull", command=convex)
     ix = tk.Button(config.buttons_panel, text="x", command=x)
-    tri = tk.Button(config.buttons_panel, text="triangulation", command=triangulation)
+    tri = tk.Button(config.buttons_panel, text="Triangulation", command=triangulation)
 
     buttons = [save_button,
                load_button,
@@ -141,10 +141,9 @@ def x():
 
 def convex():
     x()
-    points = []
-    # b = False
     for shape in config.shapes:
         if isinstance(shape, Polygon):
+            points = []
             for segment in shape.get_segment_list():
                 start = segment.get_start()
                 end = segment.get_end()
@@ -152,8 +151,6 @@ def convex():
                     points.append(start)
                 if end not in points:
                     points.append(end)
-    for shape in config.shapes:
-        if isinstance(shape, Polygon):
             poly = shape.graham_scan(points)
             for edge_poly in poly:
                 draw_shape(edge_poly)
