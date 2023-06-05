@@ -47,5 +47,6 @@ algo_var, poly_var = [None]*2
 info = None
 calc = False
 conv_vx = ""
+null_segments = []
 
 

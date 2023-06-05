@@ -163,6 +163,8 @@ def x():
 
 
 def convex(label):
+    config.null_segments=[]
+
     config.conv_vx = ""
     x()
     points = []
@@ -180,6 +182,7 @@ def convex(label):
     for edge_poly in poly:
         # draw_shape(edge_poly)
         edge_poly.draw(config.ax)
+        config.null_segments.append(edge_poly)
 
         l=edge_poly.get_start().get_label()
         if l not in config.conv_vx.split(", "):
@@ -190,11 +193,15 @@ def convex(label):
                 config.conv_vx = f'{config.conv_vx}, {l}'
 
 
+
+
 def triangulation(label):
+    config.null_segments = []
     shape = find_shape(label)
     triangles = shape.triangulation()
     for tria in triangles:
         tria.draw(config.ax)
+        config.null_segments.append(tria)
         # draw_shape(tria)
 
 
@@ -207,10 +214,12 @@ def find_shape(label):
 
 
 def activate():
-    if not config.algorithms_panel is None:
-        x()
+    config.null_segments = []
+    if config.bool_panel_algo:
+        # x()
+        update_display()
         config.algorithms_panel.clear_text()
-        config.bool_panel_algo = False
+        # config.bool_panel_algo = False
 
     if not config.calc:
         config.info = tk.Label(config.algorithms_panel.text, text="Information: ", font='Helvetica 25 bold')
@@ -283,9 +292,10 @@ def activate():
 
 def reset_button():
     x()
-    config.algorithms_panel.clear_text()
-    config.algorithms_panel.pack_forget()
-    config.bool_panel_algo = False
+    if config.algorithms_panel is not None:
+        config.algorithms_panel.clear_text()
+        config.algorithms_panel.pack_forget()
+        config.bool_panel_algo = False
     config.algo_var = None
     config.poly_var = None
     algos()
@@ -294,10 +304,9 @@ def reset_button():
 def algos():
     config.calc = False
     if not config.bool_panel_algo:
-        config.bool_panel_algo = True
-
         config.algorithms_panel = SidePanel(config.root, False, tk.RIGHT, True)
         config.algorithms_panel.pack(side=tk.RIGHT, fill=tk.BOTH, expand=False)
+        config.bool_panel_algo = True
 
         tk.Label(config.algorithms_panel.text, text="Algorithms ", bg="white",
                  font='Helvetica 18 bold underline').pack(anchor='w', fill=tk.BOTH)
@@ -314,8 +323,6 @@ def algos():
         menu = tk.OptionMenu(config.algorithms_panel.text, config.algo_var, *algos)
         menu.pack(anchor='center', pady=10)
 
-
-
         choice_label = tk.Label(config.algorithms_panel.text, text="Choose Shape:", font='Helvetica 20 bold')
         choice_label.pack(anchor='center', pady=20)
 
@@ -331,10 +338,6 @@ def algos():
         menu = tk.OptionMenu(config.algorithms_panel.text, config.poly_var, *labels)
         menu.pack(anchor='center', pady=10)
 
-
-
-
-
         calculate_button = tk.Button(config.algorithms_panel.text, text="Calculate", command=activate, font='Helvetica 15 bold')
         calculate_button.pack(anchor='center', pady=60)
 
@@ -347,10 +350,6 @@ def algos():
 
         right_line = tk.Frame(config.algorithms_panel, bg="black", width=2)
         right_line.place(relx=1, y=0, relheight=1, anchor=tk.NE)
-
-
-
-        config.bool_panel_algo = True
 
     else:
         config.algorithms_panel.pack_forget()
@@ -1084,6 +1083,8 @@ def update_display():
     config.ax.set_yticks(prev_yticks)
     config.ax.set_aspect(prev_aspect)  # Set the aspect ratio to 'equal'
     config.ax.grid(True)
+    for shape in config.null_segments:
+        shape.draw(config.ax)
 
     for shape in config.shapes:
         if not shape.is_hidden():
@@ -1110,7 +1111,7 @@ def update_label():
             hidden_str = '[hidden]'
 
         if isinstance(shape, Polygon):
-            label_text = f'Polygon: ({shape.get_label()})'
+            label_text = f'({shape.get_label()}): Polygon'
 
         if isinstance(shape, Line):
             m, b = shape.m_b()
@@ -1137,7 +1138,7 @@ def update_label():
         config.label_widget = tk.Label(config.side_panel.text, text=label_text, bg='white')
         config.label_widget.pack(anchor='w')
         config.label_widgets.append(config.label_widget)
-        config.label_widget.bind("<Double-Button-1>", hide)
+        config.label_widget.bind("<Button-3>", hide)
         config.label_widget.bind("<Button-1>", set_shape_color)
 
 

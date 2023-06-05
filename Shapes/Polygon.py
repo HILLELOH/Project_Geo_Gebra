@@ -42,7 +42,7 @@ class Polygon:
             self.label = label
 
         else:
-            self.label = f'{self.label}, {label}'
+            self.label = f'{self.label},{label}'
 
     def is_hidden(self):
         return self.hidden
