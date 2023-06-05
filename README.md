@@ -39,7 +39,21 @@ Our Gui use two main classes:<br />
 <img src="Images/sample.PNG" alt="Image" width="1000" height="600">
 
 ## How to use it?
-clone our project, and simply run with python the class 'geogebrah_interface.py' and start explore.
+### Prerequisites
+- Python: If you do not have Python installed, please follow this [link](https://www.python.org/downloads/) to download and install the latest version.
+
+1. Clone the repository to your local machine using the following command: git clone https://github.com/HILLELOH/Project_Geo_Gebra.git
+2. Open your command prompt (CMD) or terminal and navigate to the project directory.
+3. Install the required packages by running the following commands: 
+    - pip install matplotlib
+    - pip install colorama
+    - pip install scipy
+    - pip install screeninfo
+
+   or simply, navigate to the requirements.txt in the cmd and run: pip install -r requirements.txt
+
+4. Run the `geogebra_interface.py` file using the following command:
+    - python geogebra_interface.py
 
 ### Original Java based project
 https://github.com/geogebra/geogebra.git
