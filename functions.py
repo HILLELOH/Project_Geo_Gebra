@@ -146,11 +146,8 @@ def create_buttons():
     for i in range(len(buttons)):
         if buttons[i] in right:
             buttons[i].pack(side=tk.RIGHT, padx=padding)
-        # buttons[i].pack(side=tk.RIGHT, padx=padding)
         else:
             buttons[i].pack(side=tk.LEFT, padx=padding)
-
-    # make_file_button_frame(config.file_frame)
 
 
 def x():
@@ -216,10 +213,8 @@ def find_shape(label):
 def activate():
     config.null_segments = []
     if config.bool_panel_algo:
-        # x()
         update_display()
         config.algorithms_panel.clear_text()
-        # config.bool_panel_algo = False
 
     if not config.calc:
         config.info = tk.Label(config.algorithms_panel.text, text="Information: ", font='Helvetica 25 bold')
@@ -234,7 +229,6 @@ def activate():
         return
 
     else:
-
         shape = find_shape(chosen_shape)
         type=''
         if isinstance(shape, Point):
@@ -318,6 +312,8 @@ def algos():
         config.algo_var = tk.StringVar()
         config.algo_var.set("choose")  # Set default value
 
+        config.algo_var.trace('w', update_shape_options)
+
         algos = ["choose", "Perimeter", "Area", "Convex-hull", "Triangulation"]
 
         menu = tk.OptionMenu(config.algorithms_panel.text, config.algo_var, *algos)
@@ -332,16 +328,16 @@ def algos():
         labels=["choose"]
         for shape in config.shapes:
             labels.append(shape.get_label())
-            # if isinstance(shape, Polygon):
-            #     labels.append(shape.get_label())
 
-        menu = tk.OptionMenu(config.algorithms_panel.text, config.poly_var, *labels)
-        menu.pack(anchor='center', pady=10)
+        config.menu = None
+        l = tk.OptionMenu(config.algorithms_panel.text, config.poly_var, *labels)
+        l.pack(anchor='center', pady=10)
+        config.menu = l
 
         calculate_button = tk.Button(config.algorithms_panel.text, text="Calculate", command=activate, font='Helvetica 15 bold')
         calculate_button.pack(anchor='center', pady=60)
 
-        reset_butto = tk.Button(config.algorithms_panel.text, text="reset", command=reset_button,
+        reset_butto = tk.Button (config.algorithms_panel.text, text="reset", command=reset_button,
                                      font='Helvetica 10')
         reset_butto.pack(anchor='center', pady=5)
 
@@ -354,6 +350,26 @@ def algos():
     else:
         config.algorithms_panel.pack_forget()
         config.bool_panel_algo = False
+
+
+def update_shape_options(*args):
+    selected_algo = config.algo_var.get()
+    labels = []
+    if selected_algo == "Convex-hull" or selected_algo == "Triangulation":
+        print("yes")
+        for shape in config.shapes:
+            if isinstance(shape, Polygon):
+                labels.append(shape.get_label())
+
+    else:
+        for shape in config.shapes:
+            labels.append(shape.get_label())
+
+
+    config.menu['menu'].delete(0, 'end')
+    # config.menu = tk.OptionMenu(config.algorithms_panel.text, config.algo_var, *labels)
+    for option in labels:
+        config.menu["menu"].add_command(label=option, command=lambda opt=option: config.poly_var.set(opt))
 
 def shape_clicked(x, y):
     threshold = 0.5
@@ -431,8 +447,10 @@ def open_insert_window(point):
 def on_press(event):
     if event.button == 1:  # Left mouse button
         config.selected_shape = shape_clicked(event.xdata, event.ydata)
+
         if config.selected_shape is not None:
             config.start_drag_x, config.start_drag_y = event.xdata, event.ydata
+
 
     elif event.button == 3:
         config.selected_shape = shape_clicked(event.xdata, event.ydata)
@@ -579,60 +597,77 @@ def on_scroll(event):
 def set_shape_color(event):
     update_display()
     clicked_label = event.widget
+    if config.last_widget is not None:
+        config.last_widget.configure(fg='black')
+
     equality = clicked_label.cget("text")
-    label = re.match("\((\\w+)\)", equality).groups()[0]
+
+    pattern = r'\((.*?)\)'
+    matches = re.findall(pattern, equality)
+    label = matches[0]
+
     shape = get_shape_by_label(label)
     shape.set_color('cyan')
+    clicked_label.configure(fg='cyan')
+    config.last_widget = clicked_label
     plt.draw()
 
 
 def hide(event):
     clicked_label = event.widget
     equality = clicked_label.cget("text")
-    label = re.match("\((\\w+)\)", equality).groups()[0]
+    # label = re.match("\((\\w+)\)", equality).groups()[0]
+    pattern = r'\((.*?)\)'
+    matches = re.findall(pattern, equality)
+    label = matches[0]
+    print(label)
     shape = get_shape_by_label(label)
     # print(label)
 
     if isinstance(shape, Point):
-        circle = shape.is_circle_part()
-        line = shape.is_line_part()
-        segment = shape.is_segment_part()
-        if circle:
-            if shape.is_hidden():
-                circle.set_hidden(False)
-                shape.set_hidden(False)
-
-            else:
-                circle.set_hidden(True)
-                shape.set_hidden(True)
-
-        if line:
-            if shape.is_hidden():
-                line.get_start().set_hidden(False)
-                line.get_end().set_hidden(False)
-                line.set_hidden(False)
-
-            else:
-                line.get_start().set_hidden(True)
-                line.get_end().set_hidden(True)
-                line.set_hidden(True)
-
-        if segment:
-            if shape.is_hidden():
-                segment.get_start().set_hidden(False)
-                segment.get_end().set_hidden(False)
-                segment.set_hidden(False)
-
-            else:
-                segment.get_start().set_hidden(True)
-                segment.get_end().set_hidden(True)
-                segment.set_hidden(True)
-
-        elif not line and not circle and not segment:
-            if shape.is_hidden():
-                shape.set_hidden(False)
-            else:
-                shape.set_hidden(True)
+        if shape.is_hidden():
+            shape.set_hidden(False)
+        else:
+            shape.set_hidden(True)
+        # circle = shape.is_circle_part()
+        # line = shape.is_line_part()
+        # segment = shape.is_segment_part()
+        # if circle:
+        #     if shape.is_hidden():
+        #         circle.set_hidden(False)
+        #         shape.set_hidden(False)
+        #
+        #     else:
+        #         circle.set_hidden(True)
+        #         shape.set_hidden(True)
+        #
+        # if line:
+        #     if shape.is_hidden():
+        #         line.get_start().set_hidden(False)
+        #         line.get_end().set_hidden(False)
+        #         line.set_hidden(False)
+        #
+        #     else:
+        #         line.get_start().set_hidden(True)
+        #         line.get_end().set_hidden(True)
+        #         line.set_hidden(True)
+        #
+        # if segment:
+        #     if shape.is_hidden():
+        #         segment.get_start().set_hidden(False)
+        #         segment.get_end().set_hidden(False)
+        #         segment.set_hidden(False)
+        #
+        #     else:
+        #         segment.get_start().set_hidden(True)
+        #         segment.get_end().set_hidden(True)
+        #         segment.set_hidden(True)
+        #
+        # elif not line and not circle and not segment:
+        #     if shape.is_hidden():
+        #         shape.set_hidden(False)
+        #     else:
+        #         shape.set_hidden(True)
 
     if isinstance(shape, Line):
         if shape.is_hidden():
@@ -1106,24 +1141,24 @@ def update_label():
         if shape in draw:
             continue
         draw.append(shape)
-        hidden_str = ''
+        hidden_str = '\u25D9'
         if shape.is_hidden():
-            hidden_str = '[hidden]'
+            hidden_str = '\u25CB'
 
         if isinstance(shape, Polygon):
             label_text = f'({shape.get_label()}): Polygon'
 
         if isinstance(shape, Line):
             m, b = shape.m_b()
-            label_text = f'({shape.get_label()}) Line: y = {m:.3f}x + {b:.3f} {hidden_str} '
+            label_text = f'{hidden_str} ({shape.get_label()}) Line: y = {m:.3f}x + {b:.3f}'
 
         elif isinstance(shape, Segment):
             m, b = shape.m_b()
-            label_text = f'({shape.get_label()}) Segment: y = {m:.3f}x + {b:.3f} {hidden_str} '
+            label_text = f'{hidden_str} ({shape.get_label()}) Segment: y = {m:.3f}x + {b:.3f} '
 
         elif isinstance(shape, Point):
             try:
-                label_text = f'({shape.get_label()}) Point: ({shape.get_x():.3f}, {shape.get_y():.3f}) {hidden_str} '
+                label_text = f'{hidden_str} ({shape.get_label()}) Point: ({shape.get_x():.3f}, {shape.get_y():.3f})'
 
             except TypeError:
                 print(f'coords:')
@@ -1133,7 +1168,7 @@ def update_label():
             y = shape.get_center().get_y()
             r = shape.get_radius()
 
-            label_text = f'({shape.get_label()}) Circle: (x-{x:.3f})^2 + (y-{y:.3f})^2 = {r ** 2:.3f} {hidden_str} '
+            label_text = f'{hidden_str} ({shape.get_label()}) Circle: (x-{x:.3f})^2 + (y-{y:.3f})^2 = {r ** 2:.3f}'
 
         config.label_widget = tk.Label(config.side_panel.text, text=label_text, bg='white')
         config.label_widget.pack(anchor='w')

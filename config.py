@@ -48,5 +48,7 @@ info = None
 calc = False
 conv_vx = ""
 null_segments = []
+last_widget = None
+menu = None
 
 
