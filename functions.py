@@ -5,6 +5,7 @@ import random
 import tkinter as tk
 from tkinter import Menu, OptionMenu
 from colorama import init as coloramainit
+import colorama
 
 coloramainit()
 
