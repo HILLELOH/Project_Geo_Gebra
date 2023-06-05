@@ -45,8 +45,7 @@ Our Gui use two main classes:<br />
 1. Clone the repository to your local machine using the following command: git clone https://github.com/HILLELOH/Project_Geo_Gebra.git
 2. Open your command prompt (CMD) or terminal and navigate to the project directory.
 3. Install the required packages by running the following commands: 
-    - pip install matplotlib,colorama,scipy,screeninfo
-
+    - pip install matplotlib,colorama,scipy
    or simply, navigate to the requirements.txt in the cmd and run: pip install -r requirements.txt
 
 4. Run the `geogebra_interface.py` file using the following command:
