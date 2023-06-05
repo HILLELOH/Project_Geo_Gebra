@@ -3,17 +3,10 @@ import logging
 import pickle
 import random
 import tkinter as tk
-from tkinter import Menu, OptionMenu
 from colorama import init as coloramainit
-import colorama
 
 coloramainit()
 
-from PIL.ImageEnhance import Color
-
-import config
-
-from logging import debug
 from tkinter import ttk, filedialog, messagebox
 from Shapes.Circle import *
 from Shapes.Point import *
@@ -22,8 +15,7 @@ from Shapes.Polygon import Polygon
 from Shapes.Segment import *
 from label_generator import generate_alphanumeric_sequence, get_label_parts
 import re
-from screeninfo import get_monitors
-
+import config
 config.label_generator = generate_alphanumeric_sequence()
 from scipy.spatial import ConvexHull, Delaunay
 
@@ -73,15 +65,10 @@ def center_window(window):
 
 
 def init_program():
-    # config.root.geometry("1400x900")
-    # config.root.geometry("1920x1080")
-    screen_width = get_monitors()[0].width - 100
-    screen_height = get_monitors()[0].height - 100
-
-    # Set the size of the root window to match the screen size
-    config.root.geometry(f"{screen_width}x{screen_height}")
-
-    config.root.resizable(False, False)
+    width = config.root.winfo_screenwidth()
+    height = config.root.winfo_screenheight()
+    # setting tkinter window size
+    config.root.geometry("%dx%d" % (width, height))
 
     config.root.wm_title("PyGeoGebra")
 
@@ -286,6 +273,8 @@ def activate():
 
 
 def reset_button():
+    config.null_segments = []
+
     x()
     if config.algorithms_panel is not None:
         config.algorithms_panel.clear_text()
