@@ -48,22 +48,6 @@ class SidePanel(tk.Frame):
         self.text.delete(1.0, tk.END)  # Delete all text from the start to the end
         self.text.configure(state="disabled")  # Disable editing
 
-
-def center_window(window):
-    window.update_idletasks()  # Ensure that window dimensions are updated
-
-    # Get screen dimensions
-    screen_width = window.winfo_screenwidth()
-    screen_height = window.winfo_screenheight()
-
-    # Calculate the position for the window
-    x = (screen_width - window.winfo_width()) // 2
-    y = (screen_height - window.winfo_height()) // 2
-
-    # Set the window position
-    window.geometry(f"+{x}+{y}")
-
-
 def init_program():
     width = config.root.winfo_screenwidth()
     height = config.root.winfo_screenheight()
@@ -178,8 +162,6 @@ def convex(label):
                 config.conv_vx = f'{config.conv_vx}, {l}'
 
 
-
-
 def triangulation(label):
     config.null_segments = []
     shape = find_shape(label)
@@ -188,7 +170,6 @@ def triangulation(label):
         tria.draw(config.ax)
         config.null_segments.append(tria)
         # draw_shape(tria)
-
 
 
 def find_shape(label):
@@ -361,6 +342,7 @@ def update_shape_options(*args):
     for option in labels:
         config.menu["menu"].add_command(label=option, command=lambda opt=option: config.poly_var.set(opt))
 
+
 def shape_clicked(x, y):
     threshold = 0.5
     for shape in config.shapes:
@@ -380,13 +362,29 @@ def shape_clicked(x, y):
 
         elif isinstance(shape, Line):
             m, b = shape.m_b()
-            line_y = m * x + b
+            if m==None:
+                line_y=b
+
+            elif b==None:
+                line_y = m
+
+            else:
+                line_y = m * x + b
+
             if np.abs(y - line_y) <= threshold:
                 return shape
 
         elif isinstance(shape, Segment):
             m, b = shape.m_b()
-            segment_y = m * x + b
+            if m == None:
+                segment_y = b
+
+            elif b == None:
+                segment_y = m
+
+            else:
+                segment_y = m * x + b
+
             if np.abs(y - segment_y) <= threshold:
                 return shape
     return
@@ -433,14 +431,54 @@ def open_insert_window(point):
     submit_button = tk.Button(insert_window, text="Submit", command=set_point)
     submit_button.pack()
 
+def find_widget_by_shape(shape):
+    for widget in config.label_widgets:
+        equality = widget.cget("text")
+        pattern = r'\((.*?)\)'
+        matches = re.findall(pattern, equality)
+        label = matches[0]
+        if label == shape.get_label():
+            return widget
+
+
 
 def on_press(event):
     if event.button == 1:  # Left mouse button
         config.selected_shape = shape_clicked(event.xdata, event.ydata)
 
+
         if config.selected_shape is not None:
             config.start_drag_x, config.start_drag_y = event.xdata, event.ydata
 
+            if config.last_shape is not None:
+                w = find_widget_by_shape(config.last_shape)
+                w.configure(fg='black')
+                update_display()
+
+            curr_widget = None
+            for widget in config.label_widgets:
+                equality = widget.cget("text")
+                pattern = r'\((.*?)\)'
+                matches = re.findall(pattern, equality)
+                label = matches[0]
+                if label==config.selected_shape.get_label():
+                    curr_widget = widget
+
+            # print(curr_widget.cget("text"))
+            # if curr_widget.cget("text") is not None:
+
+            config.selected_shape.set_color('cyan')
+            curr_widget.configure(fg='cyan')
+            config.last_widget = curr_widget
+            config.last_shape = config.selected_shape
+
+            plt.draw()
+
+        else:
+            if config.last_shape is not None:
+                w = find_widget_by_shape(config.last_shape)
+                w.configure(fg='black')
+                update_display()
 
     elif event.button == 3:
         config.selected_shape = shape_clicked(event.xdata, event.ydata)
@@ -1140,11 +1178,21 @@ def update_label():
 
         if isinstance(shape, Line):
             m, b = shape.m_b()
-            label_text = f'{hidden_str} ({shape.get_label()}) Line: y = {m:.3f}x + {b:.3f}'
+            if m==None:
+                label_text = f'{hidden_str} ({shape.get_label()}) Line: y = {b}'
+            elif b==None:
+                label_text = f'{hidden_str} ({shape.get_label()}) Line: x = {m}'
+            else:
+                label_text = f'{hidden_str} ({shape.get_label()}) Line: y = {m:.3f}x + {b:.3f}'
 
         elif isinstance(shape, Segment):
             m, b = shape.m_b()
-            label_text = f'{hidden_str} ({shape.get_label()}) Segment: y = {m:.3f}x + {b:.3f} '
+            if m==None:
+                label_text = f'{hidden_str} ({shape.get_label()}) Segment: y = {b}'
+            elif b==None:
+                label_text = f'{hidden_str} ({shape.get_label()}) Segment: x = {m}'
+            else:
+                label_text = f'{hidden_str} ({shape.get_label()}) Segment: y = {m:.3f}x + {b:.3f} '
 
         elif isinstance(shape, Point):
             try:

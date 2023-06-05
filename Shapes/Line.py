@@ -20,7 +20,10 @@ class Line(Shape):
 
     def m_b(self):
         if self.p2.get_x() - self.p1.get_x() == 0:
-            return 1, 0
+            return None, self.p2.get_x()
+
+        elif self.p1.get_y() == self.p2.get_y():
+            return self.p1.get_y(), None
 
         m = (self.p2.get_y() - self.p1.get_y()) / (self.p2.get_x() - self.p1.get_x())
         b = self.p1.get_y() - m * self.p1.get_x()
