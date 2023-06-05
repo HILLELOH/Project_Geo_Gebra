@@ -20,12 +20,13 @@ class Polygon:
         self.hidden = True
 
     def draw(self, ax: Axes):
-        for segment in self.segment_list:
-            start = segment.get_start()
-            end = segment.get_end()
-            segment.set_segment_obj(
-                ax.plot([start.get_x(), end.get_x()], [start.get_y(), end.get_y()], color='black', linestyle='-',
-                        linewidth=2))
+        # for segment in self.segment_list:
+        #     start = segment.get_start()
+        #     end = segment.get_end()
+        #     segment.set_segment_obj(
+        #         ax.plot([start.get_x(), end.get_x()], [start.get_y(), end.get_y()], color='black', linestyle='-',
+        #                 linewidth=2))
+        pass
 
     def add_segment(self, segment):
         self.segment_list.append(segment)
@@ -37,7 +38,11 @@ class Polygon:
         return self.label
 
     def set_label(self, label):
-        self.label = f'{self.label}{label}'
+        if self.label=="":
+            self.label = label
+
+        else:
+            self.label = f'{self.label}, {label}'
 
     def is_hidden(self):
         return self.hidden
@@ -102,8 +107,8 @@ class Polygon:
 
     def set_color(self, color):
         for seg in self.segment_list:
-            seg.set_color("green")
-        plt.draw()
+            seg.set_color(color)
+            seg.get_start().set_color(color)
 
     def graham_scan(self, points):
         n = len(points)

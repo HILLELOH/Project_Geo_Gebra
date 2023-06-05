@@ -68,6 +68,8 @@ class Segment(Shape):
 
     def set_color(self, color):
         self.segment_obj.set_color(color)
+        self.p1.set_color(color)
+        self.p2.set_color(color)
         
     def area(self) -> float:
         return 0

@@ -35,6 +35,11 @@ class Circle(Shape):
 
         config.fig.canvas.draw_idle()
 
+
+    def set_color(self, color):
+        self.circle_object.set_color(color)
+        self.center.set_color(color)
+
     def get_label(self):
         return self.label
 

@@ -17,6 +17,7 @@ class Point(Shape):
         self.y = y
         self.label = label
         self.hidden = False
+        self.p = None
 
     def get_x(self):
         return self.x
@@ -25,8 +26,12 @@ class Point(Shape):
         return self.y
 
     def draw(self, ax: Axes):
-        ax.plot(self.x, self.y, 'ro')
+        self.p = ax.plot(self.x, self.y, 'ro')
         plt.annotate(self.label, (self.x, self.y))
+
+    def set_color(self, color):
+        self.p[0].set_color(color)
+
 
     def __str__(self):
         return f"({self.x:0.3f} , {self.y:0.3f})"

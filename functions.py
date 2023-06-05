@@ -107,7 +107,7 @@ def create_buttons():
     line_button = tk.Button(config.buttons_panel, text="Line", command=draw_line)
     segment_button = tk.Button(config.buttons_panel, text="Segment", command=draw_segment)
     circle_button = tk.Button(config.buttons_panel, text="Circle", command=draw_circle)
-    polygon_button = tk.Button(config.buttons_panel, text="polygon", command=draw_polygon)
+    polygon_button = tk.Button(config.buttons_panel, text="Polygon", command=draw_polygon)
     reset_button = tk.Button(config.buttons_panel, text="Reset", command=reset)
     save_button = tk.Button(config.buttons_panel, text="Save", command=save)
     load_button = tk.Button(config.buttons_panel, text="Load file", command=load)
@@ -118,7 +118,7 @@ def create_buttons():
     redo_button = tk.Button(config.buttons_panel, text="redo", command=redo)
     clear_history_button = tk.Button(config.buttons_panel, text="clear history", command=clear_history)
     # tmp = tk.Button(config.buttons_panel, text="convex", command=convex)
-    ix = tk.Button(config.buttons_panel, text="x", command=x)
+    # ix = tk.Button(config.buttons_panel, text="x", command=x)
 
     buttons = [save_button,
                load_button,
@@ -132,7 +132,7 @@ def create_buttons():
                polygon_button,
                algors,
                # tmp,
-               ix,
+               # ix,
 
                # file_button,
                clear_history_button,
@@ -314,6 +314,8 @@ def algos():
         menu = tk.OptionMenu(config.algorithms_panel.text, config.algo_var, *algos)
         menu.pack(anchor='center', pady=10)
 
+
+
         choice_label = tk.Label(config.algorithms_panel.text, text="Choose Shape:", font='Helvetica 20 bold')
         choice_label.pack(anchor='center', pady=20)
 
@@ -332,6 +334,7 @@ def algos():
 
 
 
+
         calculate_button = tk.Button(config.algorithms_panel.text, text="Calculate", command=activate, font='Helvetica 15 bold')
         calculate_button.pack(anchor='center', pady=60)
 
@@ -344,6 +347,8 @@ def algos():
 
         right_line = tk.Frame(config.algorithms_panel, bg="black", width=2)
         right_line.place(relx=1, y=0, relheight=1, anchor=tk.NE)
+
+
 
         config.bool_panel_algo = True
 
@@ -434,7 +439,7 @@ def on_press(event):
         config.selected_shape = shape_clicked(event.xdata, event.ydata)
         if isinstance(config.selected_shape, Point):
             config.start_drag_x, config.start_drag_y = event.xdata, event.ydata
-            print(config.set_shape)
+            # print(config.set_shape)
             if config.set_shape == 0:
                 open_insert_window(config.selected_shape)
 
@@ -570,6 +575,16 @@ def on_scroll(event):
     ax.grid(True, which='minor', linewidth=0.5)
 
     fig.canvas.draw_idle()
+
+
+def set_shape_color(event):
+    update_display()
+    clicked_label = event.widget
+    equality = clicked_label.cget("text")
+    label = re.match("\((\\w+)\)", equality).groups()[0]
+    shape = get_shape_by_label(label)
+    shape.set_color('cyan')
+    plt.draw()
 
 
 def hide(event):
@@ -863,7 +878,7 @@ def handle_input_polygon(event):
 
             config.curr_polygon.set_label(config.first_point_polygon.get_label())
             config.shapes.append(config.curr_polygon)
-            print(config.shapes)
+            # print(config.shapes)
 
             command = {"type": 'draw', "shape": config.curr_polygon}
             config.undo_stack.insert(len(config.undo_stack), command)
@@ -873,6 +888,8 @@ def handle_input_polygon(event):
             config.last_point_polygon = None
             config.curr_polygon = None
             config.polygon_x, config.polygon_y = [None] * 2
+            # if config.algorithms_panel is not None:
+            reset_button()
             plt.title("")
             plt.draw()
 
@@ -902,6 +919,8 @@ def handle_input_polygon(event):
 def get_shape_by_label(label):
     for shape in config.shapes:
         if shape.get_label() == label:
+            if isinstance(shape, Polygon):
+                print("oupd")
             return shape
 
     return None
@@ -1027,8 +1046,8 @@ def draw_shape(shape):
     config.last_turn_before_return = numbers
 
     shape.draw(config.ax)
-    if shape in config.shapes:
-        print(shape.get_x())
+    # if shape in config.shapes:
+    #     print(shape.get_x())
 
     config.shapes.append(shape)
 
@@ -1079,6 +1098,8 @@ def update_label():
     config.label_widgets = []
     draw = []
     for shape in config.shapes:
+
+
         if shape.get_label == '':
             continue
         if shape in draw:
@@ -1087,13 +1108,17 @@ def update_label():
         hidden_str = ''
         if shape.is_hidden():
             hidden_str = '[hidden]'
+
+        if isinstance(shape, Polygon):
+            label_text = f'Polygon: ({shape.get_label()})'
+
         if isinstance(shape, Line):
             m, b = shape.m_b()
             label_text = f'({shape.get_label()}) Line: y = {m:.3f}x + {b:.3f} {hidden_str} '
 
         elif isinstance(shape, Segment):
             m, b = shape.m_b()
-            label_text = f'({shape.get_label()}) Line: y = {m:.3f}x + {b:.3f} {hidden_str} '
+            label_text = f'({shape.get_label()}) Segment: y = {m:.3f}x + {b:.3f} {hidden_str} '
 
         elif isinstance(shape, Point):
             try:
@@ -1112,7 +1137,8 @@ def update_label():
         config.label_widget = tk.Label(config.side_panel.text, text=label_text, bg='white')
         config.label_widget.pack(anchor='w')
         config.label_widgets.append(config.label_widget)
-        config.label_widget.bind("<Button-1>", hide)
+        config.label_widget.bind("<Double-Button-1>", hide)
+        config.label_widget.bind("<Button-1>", set_shape_color)
 
 
 def reset():
