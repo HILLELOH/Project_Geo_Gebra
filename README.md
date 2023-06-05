@@ -3,7 +3,7 @@
 ## Introduction
 GeoGebra is a mathematical UI software that integrates geometry, algebra, and calculus. 
 It allows users to explore mathematical concepts through dynamic visualizations, making it an invaluable tool for students, teachers, and professionals alike.
-Our contribution is to translation of GeoGebra from Java to Python.
+Our contribution is the translation of GeoGebra from Java to Python.
 
 ## features
 ### Draw / Delete
