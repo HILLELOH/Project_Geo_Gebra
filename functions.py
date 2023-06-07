@@ -253,17 +253,21 @@ def activate():
     return
 
 
-def reset_button():
+def reset_button(bool=True):
     config.null_segments = []
 
     x()
     if config.algorithms_panel is not None:
         config.algorithms_panel.clear_text()
-        config.algorithms_panel.pack_forget()
-        config.bool_panel_algo = False
+        if not config.bool_panel_algo:
+            config.algorithms_panel.pack_forget()
+            config.bool_panel_algo = False
+
+
     config.algo_var = None
     config.poly_var = None
-    algos()
+    if bool:
+        algos()
 
 
 def algos():
@@ -344,6 +348,8 @@ def update_shape_options(*args):
 
 
 def shape_clicked(x, y):
+    if x is None or y is None:
+        return
     threshold = 0.5
     for shape in config.shapes:
         if isinstance(shape, Point):
@@ -440,7 +446,16 @@ def find_widget_by_shape(shape):
         if label == shape.get_label():
             return widget
 
+def on_key(event):
+    if event.key == 'ctrl+z' or event.key == 'ctrl+Z':
+        undo()
 
+    elif event.key == 'ctrl+y' or event.key == 'ctrl+Y':
+        redo()
+
+    elif event.key == 'delete':
+        print(config.last_shape)
+        delete_by_label(config.last_shape.get_label())
 
 def on_press(event):
     if event.button == 1:  # Left mouse button
@@ -450,9 +465,13 @@ def on_press(event):
         if config.selected_shape is not None:
             config.start_drag_x, config.start_drag_y = event.xdata, event.ydata
 
+            if config.last_shape not in config.shapes:
+                config.last_shape=None
+
             if config.last_shape is not None:
                 w = find_widget_by_shape(config.last_shape)
-                w.configure(fg='black')
+                if w is not None:
+                    w.configure(fg='black')
                 update_display()
 
             curr_widget = None
@@ -477,7 +496,8 @@ def on_press(event):
         else:
             if config.last_shape is not None:
                 w = find_widget_by_shape(config.last_shape)
-                w.configure(fg='black')
+                if w is not None:
+                    w.configure(fg='black')
                 update_display()
 
     elif event.button == 3:
@@ -921,8 +941,6 @@ def handle_input_polygon(event):
             plt.draw()
 
         elif shape_clicked(event.xdata, event.ydata) == config.first_point_polygon:
-            # print(shape_clicked(event.xdata, event.ydata))
-            # print(config.first_point_polygon)
             p1 = config.last_point_polygon
             p2 = config.first_point_polygon
 
@@ -940,7 +958,6 @@ def handle_input_polygon(event):
 
             config.curr_polygon.set_label(config.first_point_polygon.get_label())
             config.shapes.append(config.curr_polygon)
-            # print(config.shapes)
 
             command = {"type": 'draw', "shape": config.curr_polygon}
             config.undo_stack.insert(len(config.undo_stack), command)
@@ -951,7 +968,7 @@ def handle_input_polygon(event):
             config.curr_polygon = None
             config.polygon_x, config.polygon_y = [None] * 2
             # if config.algorithms_panel is not None:
-            reset_button()
+            reset_button(False)
             plt.title("")
             plt.draw()
 
@@ -990,8 +1007,30 @@ def get_shape_by_label(label):
 
 def delete_by_label(label):
     shape = get_shape_by_label(label)
+
+
     if shape is not None:
         if isinstance(shape, Point):
+            p=shape.is_polygon_part()
+            if p:
+                for segment in p.get_segment_list():
+                    start = segment.get_start()
+                    end = segment.get_end()
+                    if start in config.shapes:
+                        config.shapes.remove(start)
+                    if end in config.shapes:
+                        config.shapes.remove(end)
+
+                    config.shapes.remove(segment)
+
+
+                config.shapes.remove(p)
+                update_display()
+                update_label()
+                return
+
+
+
             line = shape.is_line_part()
             circle = shape.is_circle_part()
             segment = shape.is_segment_part()
@@ -1063,6 +1102,24 @@ def delete_by_label(label):
             config.undo_stack.insert(len(config.undo_stack), command)
 
         elif isinstance(shape, Segment):
+            for s in config.shapes:
+                if isinstance(s, Polygon):
+                    if shape in s.get_segment_list():
+                        for segment in s.get_segment_list():
+                            start = segment.get_start()
+                            end = segment.get_end()
+                            if start in config.shapes:
+                                config.shapes.remove(start)
+                            if end in config.shapes:
+                                config.shapes.remove(end)
+
+                            config.shapes.remove(segment)
+
+                        config.shapes.remove(s)
+                        update_display()
+                        update_label()
+                        return
+
             start = shape.get_start()
             end = shape.get_end()
             config.shapes.remove(start)

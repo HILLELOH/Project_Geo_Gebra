@@ -93,13 +93,20 @@ class Point(Shape):
             shapes = config.shapes
         for shape in shapes:
             if isinstance(shape, Polygon):
-                for segment in shape.get_segments():
+                for segment in shape.get_segment_list():
                     if segment.get_start() == self or segment.get_end() == self:
-                        segments_part.append(segment)
-                        if len(segments_part) == 2:
-                            return segments_part
+                        return shape
+                        # segments_part.append(segment)
+                        # if len(segments_part) == 2:
+                        #     return segments_part
                         
-        print(segments_part)
+        # print(segments_part)
+        return False
+
+    def is_in_poly(self, poly):
+        for segment in poly.get_segment_list():
+            if segment.get_start() == self or segment.get_end() == self:
+                return True
         return False
     
     def area(self) -> float:
