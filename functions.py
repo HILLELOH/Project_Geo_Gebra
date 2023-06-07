@@ -1186,13 +1186,22 @@ def draw_shape(shape):
     config.last_turn_before_return = numbers
 
     shape.draw(config.ax)
-    # if shape in config.shapes:
-    #     print(shape.get_x())
 
     config.shapes.append(shape)
 
+
     command = {"type": 'draw', "shape": shape}
     config.undo_stack.insert(len(config.undo_stack), command)
+
+
+    config.last_shapes_list.append(list(config.shapes))
+    config.index = len(config.last_shapes_list) - 1
+    config.last_pos.append(config.index+1)
+
+
+    print(f"last_shapes_list: {config.last_shapes_list}")
+    print(f"last_pos: {config.last_pos}")
+    print(f"index: {config.index}")
 
     update_display()
     update_label()
@@ -1618,7 +1627,67 @@ def undo():
         do_opposite_command(command)
         config.redo_stack.append(command)
 
+# def undo():
+#
+#     if config.index > 0:
+#         config.index -= 1
+#         config.shapes = config.last_shapes_list[config.last_pos[config.index]]
+#         config.last_pos.append(config.index)
+#
+#
+#     print(f"last_shapes_list: {config.last_shapes_list}")
+#     print(f"last_pos: {config.last_pos}")
+#     print(f"index: {config.index}")
+#
+#     update_label()
+#     update_display()
+
+
+# def redo():
+#     if config.index<len(config.last_pos)-1:
+#         config.index += 1
+#         config.shapes = config.last_shapes_list[config.last_pos[config.index]]
+#         config.last_pos.append(config.index)
+#
+#     print(f"last_shapes_list: {config.last_shapes_list}")
+#     print(f"last_pos: {config.last_pos}")
+#     print(f"index: {config.index}")
+#
+#     update_label()
+#     update_display()
+
+
+# def undo():
+#     if config.index > 0:
+#         config.index -= 1
+#          config.shapes = list(config.last_shapes_list[config.last_pos[config.index]])
+#
+#         config.last_shapes_list.append(list(config.shapes))
+#         config.shapes = list(config.last_shapes_list[config.index])
+#
+#     print(f"last_shapes_list: {config.last_shapes_list}")
+#     print(f"last_pos: {config.last_pos}")
+#     print(f"index: {config.index}")
+#
+#     update_label()
+#     update_display()
+#
+#
+# def redo():
+#     if config.index < len(config.last_pos) - 1:
+#         # config.index += 1
+#         # config.shapes = list(config.last_shapes_list[config.last_pos[config.index]])
+#         config.index += 1
+#         config.shapes = list(config.last_shapes_list[config.index])
+#
+#     print(f"last_shapes_list: {config.last_shapes_list}")
+#     print(f"last_pos: {config.last_pos}")
+#     print(f"index: {config.index}")
+#
+#     update_label()
+#     update_display()
 
 def clear_history():
     config.undo_stack = []
     config.redo_stack = []
+

@@ -53,4 +53,20 @@ last_marked_shape = None
 last_shape = None
 menu = None
 
+""" shapes_list
+need to insert there all the last config.shapes and then:
+each command will be append to it and then:
+ for undo:
+    return to the last version of config.shape until get to the bottom
+ 
+ for redo:
+    go forward in the version of config.shapes
+"""
+
+last_shapes_list = [[]]
+last_pos = [0]
+index = 0
+
+
+
 
