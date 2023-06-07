@@ -49,6 +49,7 @@ calc = False
 conv_vx = ""
 null_segments = []
 last_widget = None
+last_marked_shape = None
 last_shape = None
 menu = None
 

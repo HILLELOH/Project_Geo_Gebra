@@ -48,6 +48,7 @@ class SidePanel(tk.Frame):
         self.text.delete(1.0, tk.END)  # Delete all text from the start to the end
         self.text.configure(state="disabled")  # Disable editing
 
+
 def init_program():
     width = config.root.winfo_screenwidth()
     height = config.root.winfo_screenheight()
@@ -381,6 +382,15 @@ def shape_clicked(x, y):
                 return shape
 
         elif isinstance(shape, Segment):
+            # start = shape.get_start()
+            # end = shape.get_end()
+            # if start.get_x() < end.get_x():
+            #     if x>end.get_x() or x<start.get_x():
+            #         return None
+            # elif start.get_x() > end.get_x():
+            #     if x<end.get_x() or x>start.get_x():
+            #         return None
+
             m, b = shape.m_b()
             if m == None:
                 segment_y = b
@@ -514,6 +524,13 @@ def on_release(event):
         config.selected_shape = None
         config.start_drag_x, config.start_drag_y = None, None
 
+    # if config.last_shape is not None and config.last_widget is not None:
+    #     config.last_shape.set_color('cyan')
+    #     w = find_widget_by_shape(config.last_shape)
+    #     if w is not None:
+    #
+    #         w.configure(fg='cyan')
+
 
 def on_motion(event):
     if config.selected_shape is not None and event.xdata is not None and event.ydata is not None and event.button == 1:
@@ -645,8 +662,13 @@ def on_scroll(event):
 def set_shape_color(event):
     update_display()
     clicked_label = event.widget
-    if config.last_widget is not None:
-        config.last_widget.configure(fg='black')
+
+
+
+    if config.last_shape is not None and config.last_widget is not None:
+        w = find_widget_by_shape(config.last_shape)
+        if w is not None:
+            w.configure(fg='black')
 
     equality = clicked_label.cget("text")
 
@@ -658,6 +680,7 @@ def set_shape_color(event):
     shape.set_color('cyan')
     clicked_label.configure(fg='cyan')
     config.last_widget = clicked_label
+    config.last_shape = shape
     plt.draw()
 
 
@@ -668,7 +691,7 @@ def hide(event):
     pattern = r'\((.*?)\)'
     matches = re.findall(pattern, equality)
     label = matches[0]
-    print(label)
+    # print(label)
     shape = get_shape_by_label(label)
     # print(label)
 
@@ -998,8 +1021,6 @@ def handle_input_polygon(event):
 def get_shape_by_label(label):
     for shape in config.shapes:
         if shape.get_label() == label:
-            if isinstance(shape, Polygon):
-                print("oupd")
             return shape
 
     return None
