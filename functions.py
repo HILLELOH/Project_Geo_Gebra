@@ -1199,9 +1199,9 @@ def draw_shape(shape):
     config.last_pos.append(config.index+1)
 
 
-    print(f"last_shapes_list: {config.last_shapes_list}")
-    print(f"last_pos: {config.last_pos}")
-    print(f"index: {config.index}")
+    # print(f"last_shapes_list: {config.last_shapes_list}")
+    # print(f"last_pos: {config.last_pos}")
+    # print(f"index: {config.index}")
 
     update_display()
     update_label()
@@ -1305,7 +1305,9 @@ def update_label():
 def reset():
     command = {"type": 'reset', "list": config.shapes}
     config.undo_stack.insert(len(config.undo_stack), command)
-
+    x()
+    reset_button()
+    config.null_segments = []
     config.ax.clear()
     config.shapes = []
     config.deleted_labels = []
