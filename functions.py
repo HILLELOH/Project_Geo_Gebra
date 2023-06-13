@@ -195,7 +195,6 @@ def activate():
     chosen_shape = config.poly_var.get()
 
     if chosen_algo == "choose" or chosen_shape == "choose":
-        print("you didn't chose!")
         return
 
     else:
@@ -332,7 +331,6 @@ def update_shape_options(*args):
     selected_algo = config.algo_var.get()
     labels = []
     if selected_algo == "Convex-hull" or selected_algo == "Triangulation":
-        print("yes")
         for shape in config.shapes:
             if isinstance(shape, Polygon):
                 labels.append(shape.get_label())
@@ -358,7 +356,7 @@ def shape_clicked(x, y):
                 if np.abs(x - shape.get_x()) <= threshold and np.abs(y - shape.get_y()) <= threshold:
                     return shape
             except TypeError:
-                print("")
+                pass
 
         elif isinstance(shape, Circle):
             center = shape.get_center()
@@ -464,7 +462,6 @@ def on_key(event):
         redo()
 
     elif event.key == 'delete':
-        print(config.last_shape)
         delete_by_label(config.last_shape.get_label())
 
 def on_press(event):
@@ -493,8 +490,6 @@ def on_press(event):
                 if label==config.selected_shape.get_label():
                     curr_widget = widget
 
-            # print(curr_widget.cget("text"))
-            # if curr_widget.cget("text") is not None:
 
             config.selected_shape.set_color('cyan')
             curr_widget.configure(fg='cyan')
@@ -514,7 +509,6 @@ def on_press(event):
         config.selected_shape = shape_clicked(event.xdata, event.ydata)
         if isinstance(config.selected_shape, Point):
             config.start_drag_x, config.start_drag_y = event.xdata, event.ydata
-            # print(config.set_shape)
             if config.set_shape == 0:
                 open_insert_window(config.selected_shape)
 
@@ -691,9 +685,7 @@ def hide(event):
     pattern = r'\((.*?)\)'
     matches = re.findall(pattern, equality)
     label = matches[0]
-    # print(label)
     shape = get_shape_by_label(label)
-    # print(label)
 
     if isinstance(shape, Point):
         if shape.is_hidden():
@@ -1198,11 +1190,6 @@ def draw_shape(shape):
     config.index = len(config.last_shapes_list) - 1
     config.last_pos.append(config.index+1)
 
-
-    # print(f"last_shapes_list: {config.last_shapes_list}")
-    # print(f"last_pos: {config.last_pos}")
-    # print(f"index: {config.index}")
-
     update_display()
     update_label()
 
@@ -1286,7 +1273,7 @@ def update_label():
                 label_text = f'{hidden_str} ({shape.get_label()}) Point: ({shape.get_x():.3f}, {shape.get_y():.3f})'
 
             except TypeError:
-                print(f'coords:')
+                pass
 
         elif isinstance(shape, Circle):
             x = shape.get_center().get_x()
@@ -1629,65 +1616,6 @@ def undo():
         do_opposite_command(command)
         config.redo_stack.append(command)
 
-# def undo():
-#
-#     if config.index > 0:
-#         config.index -= 1
-#         config.shapes = config.last_shapes_list[config.last_pos[config.index]]
-#         config.last_pos.append(config.index)
-#
-#
-#     print(f"last_shapes_list: {config.last_shapes_list}")
-#     print(f"last_pos: {config.last_pos}")
-#     print(f"index: {config.index}")
-#
-#     update_label()
-#     update_display()
-
-
-# def redo():
-#     if config.index<len(config.last_pos)-1:
-#         config.index += 1
-#         config.shapes = config.last_shapes_list[config.last_pos[config.index]]
-#         config.last_pos.append(config.index)
-#
-#     print(f"last_shapes_list: {config.last_shapes_list}")
-#     print(f"last_pos: {config.last_pos}")
-#     print(f"index: {config.index}")
-#
-#     update_label()
-#     update_display()
-
-
-# def undo():
-#     if config.index > 0:
-#         config.index -= 1
-#          config.shapes = list(config.last_shapes_list[config.last_pos[config.index]])
-#
-#         config.last_shapes_list.append(list(config.shapes))
-#         config.shapes = list(config.last_shapes_list[config.index])
-#
-#     print(f"last_shapes_list: {config.last_shapes_list}")
-#     print(f"last_pos: {config.last_pos}")
-#     print(f"index: {config.index}")
-#
-#     update_label()
-#     update_display()
-#
-#
-# def redo():
-#     if config.index < len(config.last_pos) - 1:
-#         # config.index += 1
-#         # config.shapes = list(config.last_shapes_list[config.last_pos[config.index]])
-#         config.index += 1
-#         config.shapes = list(config.last_shapes_list[config.index])
-#
-#     print(f"last_shapes_list: {config.last_shapes_list}")
-#     print(f"last_pos: {config.last_pos}")
-#     print(f"index: {config.index}")
-#
-#     update_label()
-#     update_display()
 
 def clear_history():
     config.undo_stack = []
