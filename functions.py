@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 import pickle
 import random
 import tkinter as tk
@@ -90,8 +91,7 @@ def create_buttons():
     undo_button = tk.Button(config.buttons_panel, text="undo", command=undo)
     redo_button = tk.Button(config.buttons_panel, text="redo", command=redo)
     clear_history_button = tk.Button(config.buttons_panel, text="clear history", command=clear_history)
-    # tmp = tk.Button(config.buttons_panel, text="convex", command=convex)
-    # ix = tk.Button(config.buttons_panel, text="x", command=x)
+    info_button = tk.Button(config.buttons_panel, text="Info", command=information)
 
     buttons = [save_button,
                load_button,
@@ -108,12 +108,14 @@ def create_buttons():
                # ix,
 
                # file_button,
+               info_button,
                clear_history_button,
                redo_button,
                undo_button]
 
     padding = 2
-    right = [clear_history_button,
+    right = [info_button,
+            clear_history_button,
              undo_button,
              redo_button, ]
     for i in range(len(buttons)):
@@ -122,6 +124,230 @@ def create_buttons():
         else:
             buttons[i].pack(side=tk.LEFT, padx=padding)
 
+
+# def show_algorithms():
+#     # Function to display the choices for Algorithms
+#     config.info_panel.config(text="Choose an algorithm:")
+#     choices = ["Yes", "No", "Maybe"]
+#     config.option_var.set(choices[0])  # Set the default choice
+#     config.option_menu = tk.OptionMenu(config.info_window, config.option_var, *choices)
+#     config.option_menu.pack(padx=10, pady=10)
+#     config.current_selection = "Algorithms"
+#
+# def show_shapes():
+#     # Function to display the choices for Shapes
+#     config.info_panel.config(text="Choose a shape:")
+#     choices = ["Line", "Segment", "Triangle", "Circle", "Polygon"]
+#     config.option_var.set(choices[0])  # Set the default choice
+#     config.option_menu = tk.OptionMenu(config.info_window, config.option_var, *choices)
+#     config.option_menu.pack(padx=10, pady=10)
+#     config.current_selection = "Shapes"
+#
+#
+# def information():
+#     if not config.isopen_info_panel:  # Check if info panel is not already open
+#         # Create a new window (panel) to display the message
+#         config.info_window = tk.Toplevel(config.root)  # 'root' is the main Tkinter window
+#
+#         # Set the window title
+#         config.info_window.title("Information Panel")
+#
+#         # Create a label with the message
+#         config.info_panel = tk.Label(config.info_window, text="Hello")
+#         config.info_panel.pack(padx=10, pady=10)
+#
+#         # Add a variable to store the selected choice
+#         config.option_var = tk.StringVar()
+#
+#         # Add a variable to store the current selection
+#         config.current_selection = ""
+#
+#         # Set config.isopen_info_panel to True to indicate that the panel is now open
+#         config.isopen_info_panel = True
+#
+#         # Create a menu for selecting Algorithms or Shapes
+#         menu_choices = ["Algorithms", "Shapes"]
+#         config.menu_var = tk.StringVar(config.info_window)
+#         config.menu_var.set(menu_choices[0])  # Set the default choice
+#         config.menu = tk.OptionMenu(config.info_window, config.menu_var, *menu_choices, command=menu_callback)
+#         config.menu.pack(padx=10, pady=10)
+#
+#
+# def menu_callback(selection):
+#     # Function to handle the selection from the Algorithms/Shapes menu
+#     if config.current_selection == selection:
+#         # If the same selection is chosen, do nothing
+#         return
+#
+#     # Remove the existing option menu if it exists
+#     if hasattr(config, "option_menu"):
+#         config.option_menu.pack_forget()
+#
+#     if selection == "Algorithms":
+#         show_algorithms()
+#     elif selection == "Shapes":
+#         show_shapes()
+
+
+# def show_information():
+#     # Function to display the information about the chosen shape
+#     config.info_label = tk.Label(config.info_window, text="", font=("Arial", 12), anchor="center")
+#     config.info_label.pack(padx=10, pady=5)
+#     chosen_shape = config.option_var.get()
+#     info_text = f"{chosen_shape}"
+#     config.info_label.config(text=info_text, font=("Arial", 18, "bold"), fg="blue")
+#
+#     # config.canvas.delete("all")
+#
+#     # Display the corresponding image based on the selected shape
+#     chosen_shape = config.option_var.get()
+#     image = None
+#     if chosen_shape != "Choose":
+#         l = os.listdir("./Images")
+#         print(l)
+#         image = tk.PhotoImage(file=f"./Images/{chosen_shape}.png")
+#         config.info_window.create_image(150, 50, image=image)
+#
+#
+# def show_shapes():
+#     # Function to display the choices for Shapes
+#     config.info_panel.config(text="Choose a shape:")
+#     choices = ["Choose", "Point", "Segment", "Line", "Circle", "Polygon"]
+#     config.option_var.set(choices[0])  # Set the default choice
+#     config.option_menu = tk.OptionMenu(config.info_window, config.option_var, *choices)
+#     config.option_menu.pack(padx=10, pady=10)
+#     config.current_selection = "Shapes"
+#
+# def on_panel_close():
+#     # Function to handle the event when the information panel is closed
+#     config.isopen_info_panel = False
+#     config.info_window.destroy()
+#     config.info_panel = None
+#     config.info_label = None
+#     config.current_selection = ""
+#
+#
+# def information():
+#     if not config.isopen_info_panel:
+#         # Create a new window (panel) to display the message
+#         config.info_window = tk.Toplevel(config.root)
+#
+#         # Set the window title
+#         config.info_window.title("Information Panel")
+#         config.info_window.geometry("400x700")
+#
+#         # Bind the event of closing the panel window to on_panel_close function
+#         config.info_window.protocol("WM_DELETE_WINDOW", on_panel_close)
+#
+#         # Create a label with the message
+#         config.info_panel = tk.Label(config.info_window, text="Choose a shape:")
+#         config.info_panel.pack(padx=10, pady=10)
+#
+#         # Add a variable to store the selected choice
+#         config.option_var = tk.StringVar()
+#
+#         # Add a variable to store the current selection
+#         config.current_selection = ""
+#
+#         # Create a menu for selecting Shapes
+#         choices = ["Choose", "Point", "Segment", "Line", "Circle", "Polygon"]
+#         config.option_var.set(choices[0])  # Set the default choice
+#         config.option_menu = tk.OptionMenu(config.info_window, config.option_var, *choices)
+#         config.option_menu.pack(padx=10, pady=10)
+#
+#
+#
+#         # Set config.isopen_info_panel to True to indicate that the panel is now open
+#         config.isopen_info_panel = True
+#
+#         # Create a "Show Information" button
+#         show_info_btn = tk.Button(config.info_window, text="Load Info", command=show_information)
+#         show_info_btn.pack(pady=5)
+from PIL import Image, ImageTk
+
+
+def display_shape_information(chosen_shape):
+    info_file_path = f"./Info/{chosen_shape}_info.txt"
+
+    if os.path.exists(info_file_path):
+        with open(info_file_path, "r") as info_file:
+            info_text = info_file.read()
+    else:
+        info_text = f"No information available for {chosen_shape}."
+
+    config.info_label.config(text=info_text, font=("Arial", 14), fg="black")
+
+def show_information():
+    config.info_label.config(text="", font=("Arial", 12), anchor="center")
+    chosen_shape = config.option_var.get()
+    info_text = f"{chosen_shape}"
+    config.info_label.config(text=info_text, font=("Arial", 18, "bold"), fg="blue")
+
+    display_shape_information(chosen_shape)
+
+    config.image_canvas.delete("all")
+
+    if chosen_shape != "Choose":
+        image_path = f"./Images/{chosen_shape}.png"
+        if os.path.exists(image_path):
+            pil_image = Image.open(image_path)
+
+            canvas_width = config.image_canvas.winfo_width()
+            canvas_height = config.image_canvas.winfo_height()
+            image_width, image_height = pil_image.size
+            scale_factor = min(canvas_width / image_width, canvas_height / image_height)
+
+            new_width = int(image_width * scale_factor)
+            new_height = int(image_height * scale_factor)
+            pil_image = pil_image.resize((new_width, new_height), Image.ANTIALIAS)
+
+            config.image = ImageTk.PhotoImage(pil_image)
+
+            config.image_canvas.config(width=canvas_width, height=canvas_height)
+            config.image_canvas.create_image((canvas_width - new_width) // 2, (canvas_height - new_height) // 2,
+                                             anchor=tk.NW, image=config.image)
+        else:
+            print(f"Image not found: {image_path}")
+
+
+def on_panel_close():
+    config.isopen_info_panel = False
+    config.info_window.destroy()
+    config.info_panel = None
+    config.info_label = None
+    config.image_canvas = None
+    config.current_selection = ""
+
+def information():
+    if not config.isopen_info_panel:
+        config.info_window = tk.Toplevel(config.root)
+
+        config.info_window.title("Information Panel")
+        config.info_window.geometry("900x1000")
+
+        config.info_window.protocol("WM_DELETE_WINDOW", on_panel_close)
+
+        config.info_panel = tk.Label(config.info_window, text="Choose a shape:")
+        config.info_panel.pack(padx=10, pady=10)
+
+        config.option_var = tk.StringVar()
+        config.current_selection = ""
+
+        choices = ["Choose", "Point", "Segment", "Line", "Circle", "Polygon"]
+        config.option_var.set(choices[0])  # Set the default choice
+        config.option_menu = tk.OptionMenu(config.info_window, config.option_var, *choices)
+        config.option_menu.pack(padx=10, pady=10)
+
+        show_info_btn = tk.Button(config.info_window, text="Load Info", command=show_information)
+        show_info_btn.pack(pady=5)
+
+        config.info_label = tk.Label(config.info_window, text="", font=("Arial", 12), anchor="center")
+        config.info_label.pack(padx=10, pady=5)
+
+        config.image_canvas = tk.Canvas(config.info_window, width=300, height=300)
+        config.image_canvas.pack()
+
+        config.isopen_info_panel = True
 
 def x():
     for shape in config.shapes:

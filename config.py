@@ -52,6 +52,9 @@ last_widget = None
 last_marked_shape = None
 last_shape = None
 menu = None
+info_panel = None
+info_label = None
+isopen_info_panel = False
 
 """ shapes_list
 need to insert there all the last config.shapes and then:
@@ -66,6 +69,7 @@ each command will be append to it and then:
 last_shapes_list = [[]]
 last_pos = [0]
 index = 0
+
 
 
 
