@@ -1,0 +1,14 @@
+Representation: A line AB is defined by its two endpoints:
+A(x1, y1) and B(x2, y2) on the Cartesian grid.
+
+The difference between a line and a segment is that line is infinite.
+
+It represents a finite straight line between A and B.
+The segment's length can be calculated using the distance formula:
+sqrt((x2 - x1)^2 + (y2 - y1)^2). 
+(note that those points are here only to calculate the line formula)
+
+For calculate the formula of a finite segment, 
+y = m(X-x1)+ y1 or y = m(X-x2)+ y2
+Line segments are essential for:
+constructing more complex shapes and measuring distances within them.

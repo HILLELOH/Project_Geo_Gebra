@@ -1,0 +1,23 @@
+Representation: A polygon is represented by a series of vertices (points)
+connected by straight line segments.
+
+Each vertex is denoted as P(x, y) where,
+(x, y) are its coordinates on the Cartesian grid.
+The vertices are ordered in sequence to form the sides of the polygon.
+A polygon with n sides is called an n-gon. 
+
+To calculate the area of a polygon, the Shoelace formula is used.
+For a convex polygon, all interior angles are less than 180 degrees, 
+while a non-convex polygon may have interior angles greater than 180 degrees.
+
+Triangulation is a method to divide a polygon into triangles, simplifying calculations and analyses.
+
+A convex hull is a fundamental concept in computational geometry.
+Given a set of points in a two-dimensional (2D) space, 
+the convex hull is the smallest convex polygon (2D) that contains all the given points.
+
+In other words, it is the smallest shape that 
+encloses all the points while having no indentations or "dents."
+
+Polygons are fundamental in geometry and find applications
+in various fields, including computer graphics, geography, and architecture.

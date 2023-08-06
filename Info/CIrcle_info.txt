@@ -1,0 +1,10 @@
+Representation: (x-a)^2 + (y-b)^2 = r^2
+
+where (a, b) is the center of the circle.
+r is the radius which is caculated by the distance
+between the center and each point on the perimeter.
+
+Calculations:
+Area : Pi*r^2
+perimete: 2*Pi*r
+Pi = 3.141 is necessary for different circle calculations.

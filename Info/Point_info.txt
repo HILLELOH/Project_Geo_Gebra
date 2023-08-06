@@ -1,0 +1,5 @@
+Representation: P(x, y)
+P is the name of the point
+(x, y)  represents its coordinates on the Cartesian grid. 
+Points serve as the fundamental building blocks for shape representation, 
+forming the basis for defining various geometric figures.
