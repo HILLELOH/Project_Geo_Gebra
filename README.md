@@ -24,7 +24,7 @@ and the Redo simply take an operation and do it as is.<br />
 
 
 ### Reset / delete history
-Reset is the abilit to reset the figure from shape (and it's included as operation that we can Undo or Redo)<br />
+Reset is the ability to reset the figure from shape (and it's included as operation that we can Undo or Redo)<br />
 Delete history simply delete all the operations from the history s.t you can't restore anymore and it is initialize (but save the shapes already drawn)<br />
 
 ### Save / Load
