@@ -36,7 +36,7 @@ Our Gui use two main classes:<br />
    1) matplotlib - to display information on the grids (such as plotting shapes).<br />
    2) tkinter - to display all the wrraper information (such as equalitions, buttons and other features).<br />
 
-<img src="Images/sample.png" alt="Image" width="1000" height="600">
+<img src="Images/sample1.png" alt="Image" width="1000" height="600">
 
 ## How to use it?
 ### Prerequisites
