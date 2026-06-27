@@ -33,7 +33,11 @@ class Segment(Shape):
         return m, b
 
     def draw(self, ax: Axes):
-        self.segment_obj, = ax.plot([self.p1.get_x(), self.p2.get_x()], [self.p1.get_y(), self.p2.get_y()], color='black', linestyle='-', linewidth=2)
+        self.segment_obj, = ax.plot(
+            [self.p1.get_x(), self.p2.get_x()],
+            [self.p1.get_y(), self.p2.get_y()],
+            color='#00e5a0', linestyle='-', linewidth=1.8, zorder=3,
+        )
 
 
     # def is_polygon_part(self, shapes=None):

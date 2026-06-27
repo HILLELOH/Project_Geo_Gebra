@@ -1,5 +1,14 @@
-Representation: P(x, y)
-P is the name of the point
-(x, y)  represents its coordinates on the Cartesian grid. 
-Points serve as the fundamental building blocks for shape representation, 
-forming the basis for defining various geometric figures.
+A Point is the most basic geometric object — a single location in 2D space.
+
+Representation:  P(x, y)
+  where x is the horizontal coordinate and y is the vertical coordinate
+  on the Cartesian plane.
+
+Properties:
+  • Has no size, length, area, or volume
+  • Identified by a unique label (A0, B0, …)
+  • Serves as the building block for all other shapes
+
+Interaction:
+  • Click to place  •  Drag to move  •  Right-click to set exact coordinates
+  • Left-click in the Algebra panel to select and highlight

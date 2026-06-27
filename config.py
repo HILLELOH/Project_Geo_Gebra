@@ -1,76 +1,89 @@
+"""Application global state — single module, no circular imports."""
+from __future__ import annotations
 
+# Tkinter / Matplotlib roots
+root = None
+fig = None
+ax = None
+canvas = None
+toolbar = None
 
-root, fig, ax, canvas, toolbar, shapes, side_panel, cid, circle_cid, selected_shape, start_drag_x,\
-    start_drag_y, press_cid, release_cid, motion_cid, buttons_panel = [None] * 16
+# UI panels
+buttons_panel = None
+side_panel = None
+algorithms_panel = None
 
-label_widgets = None
+# Shape collections
+shapes: list = []
+null_segments: list = []
+label_widgets: list = []
 label_widget = None
 
-x1, y1 = [None]*2
-
-circle_x, circle_y = [None]*2
-line_x, line_y = [None]*2
-segment_x, segment_y = [None]*2
-edit_frame, file_frame = [None]*2
-
-over_cid, leave_cid = [None]*2
-
-undo_stack = []
-redo_stack = []
-
-polygon_vertices = []
-
-last_command_undo = None
-last_command_redo = None
-
+# Label generation
 label_generator = None
-label_objects = None
-deleted_labels = []
-last_label_before_return = None
-last_turn_before_return = None
-last_reset = []
+deleted_labels: list = []
+last_label_before_return: str = "A"
+last_turn_before_return: int = 0
 
-polygon_x = None
-polygon_y = None
+# Selected / highlighted
+selected_shape = None
+last_shape = None
+last_widget = None
+
+# Drag state
+start_drag_x = None
+start_drag_y = None
+
+# Drawing state  (0 = idle, 1 = inserting coords via dialog)
+set_shape: int = 0
+this_point = None
+
+line_x = line_y = None
+segment_x = segment_y = None
+circle_x = circle_y = None
+circle_cid = None
+
+polygon_vertices: list = []
+polygon_x = polygon_y = None
 first_point_polygon = None
 last_point_polygon = None
 curr_polygon = None
 
-this_point = None
+# Canvas event connection IDs
+cid = None
+press_cid = None
+release_cid = None
+motion_cid = None
 
-set_shape = 0
-bool_conv = False
-bool_tria = False
-bool_panel_algo = False
-algorithms_panel = None
-algo_var, poly_var = [None]*2
-info = None
-calc = False
-conv_vx = ""
-null_segments = []
-last_widget = None
-last_marked_shape = None
-last_shape = None
+# Undo / redo
+undo_stack: list = []
+redo_stack: list = []
+last_command_undo = None
+last_command_redo = None
+
+# Algorithms panel
+bool_panel_algo: bool = False
+algo_var = None
+poly_var = None
 menu = None
+calc: bool = False
+conv_vx: str = ""
+
+# Info panel
+isopen_info_panel: bool = False
+info_window = None
 info_panel = None
 info_label = None
-isopen_info_panel = False
+image_canvas = None
+image = None
+option_var = None
+current_selection: str = ""
 
-""" shapes_list
-need to insert there all the last config.shapes and then:
-each command will be append to it and then:
- for undo:
-    return to the last version of config.shape until get to the bottom
- 
- for redo:
-    go forward in the version of config.shapes
-"""
+# History (position-based snapshot list)
+last_shapes_list: list = [[]]
+last_pos: list = [0]
+index: int = 0
 
-last_shapes_list = [[]]
-last_pos = [0]
-index = 0
-
-
-
-
-
+# UI extras
+status_bar = None
+active_tool: str = ""

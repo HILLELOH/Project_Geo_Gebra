@@ -5,7 +5,6 @@ import config
 from Shapes.Circle import Circle
 from Shapes.Line import Line
 from Shapes.Segment import Segment
-from Shapes.Polygon import Polygon
 from Shapes.shapes import Shape
 from matplotlib.axes import Axes
 
@@ -26,18 +25,24 @@ class Point(Shape):
         return self.y
 
     def draw(self, ax: Axes):
-        self.p = ax.plot(self.x, self.y, 'ro')
-        plt.annotate(self.label, (self.x, self.y))
+        self.p = ax.plot(self.x, self.y, 'o', color='#ff6b8a', markersize=6, zorder=5)
+        plt.annotate(
+            self.label, (self.x, self.y),
+            color='#ff6b8a',
+            fontsize=9,
+            xytext=(5, 5),
+            textcoords='offset points',
+        )
 
     def set_color(self, color):
         self.p[0].set_color(color)
-
 
     def __str__(self):
         return f"({self.x:0.3f} , {self.y:0.3f})"
 
     def __repr__(self):
         return f"({self.x:0.3f} , {self.y:0.3f})"
+
     def set_x(self, x):
         self.x += x
 
@@ -45,14 +50,14 @@ class Point(Shape):
         self.y += y
 
     def set_p(self, x, y):
-        self.x=x
-        self.y=y
+        self.x = x
+        self.y = y
 
     def is_hidden(self):
         return self.hidden
 
-    def set_hidden(self, bool):
-        self.hidden = bool
+    def set_hidden(self, b):
+        self.hidden = b
 
     def get_label(self):
         return self.label
@@ -60,55 +65,47 @@ class Point(Shape):
     def is_line_part(self, shapes=None):
         if shapes is None:
             shapes = config.shapes
-        flag = False
         for shape in shapes:
             if isinstance(shape, Line):
-                if shape.get_start() == self or shape.get_end() == self:
-                    flag = shape
-        return flag
+                if shape.get_start() is self or shape.get_end() is self:
+                    return shape
+        return False
 
     def is_segment_part(self, shapes=None):
         if shapes is None:
             shapes = config.shapes
-        flag = False
         for shape in shapes:
             if isinstance(shape, Segment):
-                if shape.get_start() == self or shape.get_end() == self:
-                    flag = shape
-        return flag
+                if shape.get_start() is self or shape.get_end() is self:
+                    return shape
+        return False
 
     def is_circle_part(self, shapes=None):
         if shapes is None:
             shapes = config.shapes
-        flag = False
         for shape in shapes:
             if isinstance(shape, Circle):
-                if shape.get_center() == self:
-                    flag = shape
-        return flag
-    
+                if shape.get_center() is self:
+                    return shape
+        return False
+
     def is_polygon_part(self, shapes=None):
-        segments_part=[]
+        from Shapes.Polygon import Polygon  # lazy import — breaks circular dependency
         if shapes is None:
             shapes = config.shapes
         for shape in shapes:
             if isinstance(shape, Polygon):
-                for segment in shape.get_segment_list():
-                    if segment.get_start() == self or segment.get_end() == self:
+                for seg in shape.get_segment_list():
+                    if seg.get_start() is self or seg.get_end() is self:
                         return shape
-                        # segments_part.append(segment)
-                        # if len(segments_part) == 2:
-                        #     return segments_part
-                        
-        # print(segments_part)
         return False
 
     def is_in_poly(self, poly):
-        for segment in poly.get_segment_list():
-            if segment.get_start() == self or segment.get_end() == self:
+        for seg in poly.get_segment_list():
+            if seg.get_start() is self or seg.get_end() is self:
                 return True
         return False
-    
+
     def area(self) -> float:
         return 0
 
@@ -117,7 +114,3 @@ class Point(Shape):
 
     def convex_hull(self):
         return self
-
-   
-
-

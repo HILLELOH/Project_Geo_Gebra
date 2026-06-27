@@ -1,10 +1,19 @@
-Representation: A line segment AB is defined by its two endpoints:
-A(x1, y1) and B(x2, y2) on the Cartesian grid.
-It represents a finite straight line between A and B.
-The segment's length can be calculated using the distance formula:
-sqrt((x2 - x1)^2 + (y2 - y1)^2).
+A Line Segment is a finite straight line bounded by two endpoints.
 
-For calculate the formula of a finite segment, 
-y = m(X-x1)+ y1 or y = m(X-x2)+ y2
-Line segments are essential for:
-constructing more complex shapes and measuring distances within them.
+Representation:  segment AB from A(x1, y1) to B(x2, y2)
+
+Equation of the line through the segment:
+  y = m(x − x1) + y1
+  where  m = (y2 − y1) / (x2 − x1)
+
+Length (Euclidean distance):
+  |AB| = √[(x2 − x1)² + (y2 − y1)²]
+
+Properties:
+  • Area   = 0
+  • Has two distinct endpoints
+  • Finite length
+
+Interaction:
+  Click to set start point, click again to set end point.
+  Drag either endpoint to reshape. Drag the segment itself to move it.

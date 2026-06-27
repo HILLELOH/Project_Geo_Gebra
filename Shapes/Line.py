@@ -32,8 +32,11 @@ class Line(Shape):
 
 
     def draw(self, ax: Axes):
-        self.line_obj = ax.axline((self.p1.get_x(), self.p1.get_y()), (self.p2.get_x(), self.p2.get_y()), color='black', label='by points')
-        # ax.legend()
+        self.line_obj = ax.axline(
+            (self.p1.get_x(), self.p1.get_y()),
+            (self.p2.get_x(), self.p2.get_y()),
+            color='#4d9fff', linewidth=1.5, label='by points',
+        )
 
     def set_color(self, color):
         self.line_obj.set_color(color)

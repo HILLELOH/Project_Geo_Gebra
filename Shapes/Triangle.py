@@ -19,8 +19,11 @@ class Triangle(Shape):
         return self.p3
 
     def draw(self, ax: Axes):
-        ax.plot([self.p1.get_x(), self.p2.get_x(), self.p3.get_x(), self.p1.get_x()], [self.p1.get_y(), self.p2.get_y(), self.p3.get_y(), self.p1.get_y()],
-                color='black', linestyle='-', linewidth=2)
+        ax.plot(
+            [self.p1.get_x(), self.p2.get_x(), self.p3.get_x(), self.p1.get_x()],
+            [self.p1.get_y(), self.p2.get_y(), self.p3.get_y(), self.p1.get_y()],
+            color='#c084fc', linestyle='--', linewidth=1.2, alpha=0.75,
+        )
 
 
     def set_p1(self, p1):
@@ -31,6 +34,9 @@ class Triangle(Shape):
 
     def set_p3(self, p3):
         self.p3 = p3
+
+    def set_color(self, color):
+        pass  # triangulation overlay shapes don't participate in colour highlighting
 
     def is_hidden(self):
         return self.hidden

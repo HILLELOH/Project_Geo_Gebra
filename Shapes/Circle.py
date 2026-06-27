@@ -21,7 +21,10 @@ class Circle(Shape):
         x = self.center.get_x()
         y = self.center.get_y()
 
-        self.circle_object = plt.Circle((x, y), self.radius, fill=False)
+        self.circle_object = plt.Circle(
+            (x, y), self.radius, fill=False,
+            edgecolor='#c084fc', linewidth=1.8,
+        )
         ax.add_patch(self.circle_object)
 
     def update_line_and_dashes(self):
@@ -30,7 +33,10 @@ class Circle(Shape):
 
         if self.circle_object:
             self.circle_object.pop(0).remove()  # remove old line
-        self.circle_object = plt.Circle((x, y), self.radius, fill=False)
+        self.circle_object = plt.Circle(
+            (x, y), self.radius, fill=False,
+            edgecolor='#c084fc', linewidth=1.8,
+        )
         config.ax.add_patch(self.circle_object)
 
         config.fig.canvas.draw_idle()

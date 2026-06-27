@@ -1,10 +1,19 @@
-Representation: (x-a)^2 + (y-b)^2 = r^2
+A Circle is the set of all points equidistant from a fixed center point.
 
-where (a, b) is the center of the circle.
-r is the radius which is caculated by the distance
-between the center and each point on the perimeter.
+Representation:  (x − a)² + (y − b)² = r²
+  (a, b)  =  center coordinates
+  r       =  radius (distance from center to any point on the circle)
 
 Calculations:
-Area : Pi*r^2
-perimete: 2*Pi*r
-Pi = 3.141 is necessary for different circle calculations.
+  Area          =  π · r²
+  Circumference =  2 · π · r
+  π ≈ 3.14159265…
+
+Properties:
+  • Perfectly symmetric around its center
+  • Every point on the boundary is exactly r units from the center
+
+Interaction:
+  Click to place the center, click again to set the radius.
+  Drag the center point to move the circle.
+  The radius is fixed at the distance you clicked.

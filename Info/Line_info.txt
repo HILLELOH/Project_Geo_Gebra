@@ -1,14 +1,21 @@
-Representation: A line AB is defined by its two endpoints:
-A(x1, y1) and B(x2, y2) on the Cartesian grid.
+A Line extends infinitely in both directions through two defined points.
 
-The difference between a line and a segment is that line is infinite.
+Representation:  y = mx + b
+  m  =  slope  =  (y2 − y1) / (x2 − x1)
+  b  =  y-intercept
 
-It represents a finite straight line between A and B.
-The segment's length can be calculated using the distance formula:
-sqrt((x2 - x1)^2 + (y2 - y1)^2). 
-(note that those points are here only to calculate the line formula)
+Special cases:
+  • Vertical line   →  x = c          (undefined slope)
+  • Horizontal line →  y = c          (slope = 0)
 
-For calculate the formula of a finite segment, 
-y = m(X-x1)+ y1 or y = m(X-x2)+ y2
-Line segments are essential for:
-constructing more complex shapes and measuring distances within them.
+Key distinction from Segment:
+  A line has no endpoints — it continues forever in both directions.
+  A segment is the bounded piece between two endpoints.
+
+Properties:
+  • Area    = 0
+  • Length  = undefined (infinite)
+
+Interaction:
+  Click two points to define the line's direction.
+  The line will extend beyond both points across the entire canvas.

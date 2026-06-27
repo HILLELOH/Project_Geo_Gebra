@@ -1,60 +1,161 @@
-# Geo-Gebra
+# PyGeoGebra
 
-## Introduction
-GeoGebra is a mathematical UI software that integrates geometry, algebra, and calculus. 
-It allows users to explore mathematical concepts through dynamic visualizations, making it an invaluable tool for students, teachers, and professionals alike.
-Our contribution is the translation of GeoGebra from Java to Python.
+A Python reimplementation of [GeoGebra](https://www.geogebra.org/) — an interactive geometry canvas with algebra, algorithms, and file persistence. Built with **matplotlib** for the canvas and **tkinter** for the UI.
 
-## features
-### Draw / Delete
-Our GUI is able to handle inputs of data, Draw it and Delete. <br />
-Current shapes availables: <br />
-Point, Line, Circle and others. <br /><br />
-Each shape have those following features: <br />
-   Label - Represent the shape in the text and also on the figure. <br />
-   Drag - Each shape can be drag from it place, the label will change as follow. <br />
-   Hide - hide the object from the figure but not from the list of shapes (not as delete). <br />
+![PyGeoGebra screenshot](Images/sample1.png)
 
+---
 
-### Undo / Redo
-In our program, all kind of operaiton are saved.<br />
-The Undo and Redo works in this way:<br />
-Undo take an operation that has occurred and do the opposite one to undo it, 
-and the Redo simply take an operation and do it as is.<br />
+## Features
 
+### Drawing Tools
+| Tool | Description |
+|------|-------------|
+| **Point** | Click anywhere to place a labelled point |
+| **Line** | Click two points (or existing points) to draw an infinite line |
+| **Segment** | Click two points to draw a bounded segment |
+| **Circle** | Click center then radius to draw a circle |
+| **Polygon** | Click vertices, then click the first point again to close |
 
-### Reset / delete history
-Reset is the ability to reset the figure from shape (and it's included as operation that we can Undo or Redo)<br />
-Delete history simply delete all the operations from the history s.t you can't restore anymore and it is initialize (but save the shapes already drawn)<br />
+### Interaction
+- **Drag** — click and drag any shape to move it; labels update in real time
+- **Hide / Show** — right-click a label in the Algebra panel to toggle visibility
+- **Delete** — toolbar button or `Delete` key after selecting a shape
+- **Select** — left-click a shape on the canvas or in the Algebra panel to highlight it
 
-### Save / Load
-Save the current poisition of the figure with all the shaped on it.<br />
-Load from file a position and continue from there.<br />
+### Algebra Panel
+Live equation view on the left — every shape's equation or coordinates update as you move things.
 
-## platform
-Our Gui use two main classes:<br />
-   1) matplotlib - to display information on the grids (such as plotting shapes).<br />
-   2) tkinter - to display all the wrraper information (such as equalitions, buttons and other features).<br />
+### Algorithms Panel
+Click **⚙ Algorithms** to open the panel. Select a shape and algorithm:
+- **Perimeter** — total edge length
+- **Area** — enclosed area (polygons and circles)
+- **Convex Hull** — Graham scan on polygon vertices
+- **Triangulation** — Delaunay triangulation on polygon vertices
 
-<img src="Images/sample1.png" alt="Image" width="1000" height="600">
+### History
+| Action | Shortcut |
+|--------|----------|
+| Undo | `Ctrl+Z` or toolbar button |
+| Redo | `Ctrl+Y` or toolbar button |
+| Clear history | toolbar button (keeps shapes, clears undo stack) |
 
-## How to use it?
+### File Operations
+- **Save** — persists the canvas to a `.p` (pickle) file
+- **Load** — restores a saved canvas, replacing the current one
+
+### Info Panel
+Click **ℹ Info** to view a description and reference image for each shape type.
+
+---
+
+## Installation
+
 ### Prerequisites
-- Python: If you do not have Python installed, please follow this [link](https://www.python.org/downloads/) to download and install the latest version.
+- Python 3.9+ with tkinter support
+- On macOS (Homebrew): `brew install python-tk@3.12`
+- On Ubuntu/Debian: `sudo apt install python3-tk`
+- On Windows: tkinter is bundled with the official Python installer from [python.org](https://www.python.org/downloads/)
 
-1. Clone the repository to your local machine using the following command: git clone https://github.com/HILLELOH/Project_Geo_Gebra.git
-2. Open your command prompt (CMD) or terminal and navigate to the project directory.
-3. Install the required packages by running the following commands: 
-    - pip install matplotlib,colorama,scipy
-   or simply, navigate to the requirements.txt in the cmd and run: pip install -r requirements.txt
+### Setup
 
-4. Run the `geogebra_interface.py` file using the following command:
-    - python geogebra_interface.py
+```bash
+# 1. Clone the repo
+git clone https://github.com/HILLELOH/Project_Geo_Gebra.git
+cd Project_Geo_Gebra
 
-### Original Java based project
-https://github.com/geogebra/geogebra.git
+# 2. Create and activate a virtual environment
+python3 -m venv venv
+source venv/bin/activate        # macOS / Linux
+# venv\Scripts\activate         # Windows
 
+# 3. Install dependencies
+pip install -r requirements.txt
 
+# 4. Run
+python PyGeoGebra.py
+```
 
+---
 
+## Project Structure
 
+```
+PyGeoGebra/
+├── main.py                   # Application entry point
+├── PyGeoGebra.py             # Launcher (calls main.py)
+├── config.py                 # Global application state
+├── label_generator.py        # Alphanumeric label generator (A0, B0 … Z0, A1 …)
+│
+├── Shapes/                   # Geometry primitives
+│   ├── shapes.py             # Base Shape class
+│   ├── Point.py
+│   ├── Line.py
+│   ├── Segment.py
+│   ├── Circle.py
+│   ├── Polygon.py
+│   └── Triangle.py
+│
+├── app/                      # Application logic (separated by concern)
+│   ├── ui/
+│   │   ├── styles.py         # Colour theme and font constants
+│   │   ├── panels.py         # SidePanel widget
+│   │   ├── toolbar.py        # Toolbar button factory
+│   │   ├── dialogs.py        # Info window, coordinate-input dialog
+│   │   └── algo_panel.py     # Algorithms panel
+│   ├── canvas/
+│   │   ├── renderer.py       # update_display(), update_label()
+│   │   └── events.py         # Mouse/keyboard/scroll event handlers
+│   ├── commands/
+│   │   ├── operations.py     # draw_shape(), delete_by_label(), reset_canvas()
+│   │   └── history.py        # undo(), redo(), clear_history()
+│   ├── io/
+│   │   └── persistence.py    # save(), load()
+│   └── algorithms.py         # Convex hull, triangulation
+│
+├── Info/                     # Shape description text files
+├── Images/                   # Shape reference images
+├── tests/                    # Test suite
+│   ├── test_shapes.py
+│   ├── test_label_generator.py
+│   └── test_algorithms.py
+└── requirements.txt
+```
+
+---
+
+## Running Tests
+
+```bash
+python -m pytest tests/ -v
+# or without pytest:
+python -m unittest discover tests/
+```
+
+---
+
+## Open Source
+
+PyGeoGebra is released under the **MIT License** — see [LICENSE](LICENSE).
+
+This project is a Python reimplementation inspired by [GeoGebra](https://github.com/geogebra/geogebra) (Java). GeoGebra is a separate project under its own license and is not affiliated with this repository.
+
+### Contributing
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/my-feature`
+3. Commit your changes: `git commit -m "Add my feature"`
+4. Push and open a Pull Request
+
+Bug reports and feature requests are welcome via [GitHub Issues](https://github.com/HILLELOH/Project_Geo_Gebra/issues).
+
+---
+
+## Dependencies
+
+| Package | Purpose |
+|---------|---------|
+| [matplotlib](https://matplotlib.org/) | Canvas rendering and interactive plot events |
+| [scipy](https://scipy.org/) | Convex hull (Graham scan) and Delaunay triangulation |
+| [Pillow](https://python-pillow.org/) | Image loading in the Info panel |
+| [colorama](https://github.com/tartley/colorama) | Cross-platform terminal colour output |

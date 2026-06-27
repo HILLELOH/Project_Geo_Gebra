@@ -1,23 +1,24 @@
-Representation: A polygon is represented by a series of vertices (points)
-connected by straight line segments.
+A Polygon is a closed shape formed by three or more straight line segments.
 
-Each vertex is denoted as P(x, y) where,
-(x, y) are its coordinates on the Cartesian grid.
-The vertices are ordered in sequence to form the sides of the polygon.
-A polygon with n sides is called an n-gon. 
+Representation:  vertices V1(x1,y1), V2(x2,y2), …, Vn(xn,yn) connected in order.
 
-To calculate the area of a polygon, the Shoelace formula is used.
-For a convex polygon, all interior angles are less than 180 degrees, 
-while a non-convex polygon may have interior angles greater than 180 degrees.
+Area (Shoelace formula):
+  A = ½ · |Σ(xᵢ · yᵢ₊₁ − xᵢ₊₁ · yᵢ)|
 
-Triangulation is a method to divide a polygon into triangles, simplifying calculations and analyses.
+Perimeter:
+  Sum of all side lengths using the distance formula for each edge.
 
-A convex hull is a fundamental concept in computational geometry.
-Given a set of points in a two-dimensional (2D) space, 
-the convex hull is the smallest convex polygon (2D) that contains all the given points.
+Types:
+  • Convex   — all interior angles < 180°
+  • Concave  — at least one interior angle > 180°
 
-In other words, it is the smallest shape that 
-encloses all the points while having no indentations or "dents."
+Algorithms available:
+  Convex Hull — finds the smallest convex polygon enclosing all vertices
+                using the Graham scan algorithm (O(n log n)).
 
-Polygons are fundamental in geometry and find applications
-in various fields, including computer graphics, geography, and architecture.
+  Triangulation — divides the polygon into triangles using Delaunay
+                  triangulation, useful for area calculations and rendering.
+
+Interaction:
+  Click to add vertices one by one.
+  Click the first vertex again to close and complete the polygon.
