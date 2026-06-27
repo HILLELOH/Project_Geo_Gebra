@@ -1,4 +1,4 @@
-# PyGeoGebra
+    # PyGeoGebra
 
 A Python reimplementation of [GeoGebra](https://www.geogebra.org/) — an interactive geometry canvas with algebra, algorithms, and file persistence. Built with **matplotlib** for the canvas and **tkinter** for the UI.
 
